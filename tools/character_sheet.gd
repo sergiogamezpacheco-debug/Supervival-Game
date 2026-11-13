@@ -95,6 +95,13 @@ func _inventory() -> void:
 			t.rotation_degrees.x = -80.0
 			c.hand.add_child(t)
 		await _shot(st[0], Vector2i(520, 1000), Vector3(0.0, 1.0, -4.7), Vector3(0, 0.92, 0), 26)
+	# Agachado, de lado y de frente
+	_clear()
+	var cr := _char(M, {}, {"torso": "camiseta", "piernas": "pantalon_cargo", "pies": "botas", "espalda": "mochila"}, Vector3.ZERO, 0.0)
+	cr.animate_walk(0.0, 0.0)
+	cr.animate_crouch(1.0)
+	await _shot("agachado_lado", Vector2i(700, 800), Vector3(-4.2, 0.9, 0.0), Vector3(0, 0.7, 0), 26)
+	await _shot("agachado_frente", Vector2i(700, 800), Vector3(1.5, 1.4, -3.8), Vector3(0, 0.7, 0), 26)
 
 
 func _all(only_heads := false) -> void:

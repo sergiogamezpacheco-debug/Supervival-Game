@@ -16,6 +16,14 @@ var _wander_target := Vector3.ZERO
 var _wander_timer := 0.0
 var _visual: Node3D
 var _player: Node3D
+var aware := false                # te ha visto u oído: te persigue
+var _lost := 0.0                  # segundos sin tenerte a tiro (deja de perseguir)
+var _bar: Node3D                  # barra de vida sobre la cabeza
+var _bar_fill: MeshInstance3D
+var _bar_time := 0.0
+var _meshes: Array = []
+
+static var _flash_mat: StandardMaterial3D
 
 
 func setup(p_kind: String) -> void:
@@ -59,12 +67,22 @@ func action_label() -> String:
 	return "Cazar" if behavior() != "aggressive" else "Atacar"
 
 
-func interact(_by: Node3D) -> void:
+func interact(by: Node3D) -> void:
 	if hp <= 0.0:
 		return
-	hp -= GS.hand_damage()
+	var dmg := GS.hand_damage()
+	# Golpe por sorpresa: agachado y sin que te haya visto
+	var sneak: bool = by != null and by.get("crouching") == true and not aware and provoked <= 0.0
+	if sneak:
+		dmg *= float(DB.bal("sneak_mult", 3.0))
+	hp -= dmg
 	GS.wear_hand()
 	provoked = 15.0
+	aware = true
+	_lost = 0.0
+	_show_damage(dmg, sneak)
+	_flash()
+	_bar_time = 4.0
 	var tw := create_tween()
 	_visual.scale = Vector3(1.2, 0.8, 1.2)
 	tw.tween_property(_visual, "scale", Vector3.ONE, 0.15)
@@ -92,14 +110,32 @@ func _physics_process(delta: float) -> void:
 	var speed := stat("speed", 2.3)
 	var move := Vector3.ZERO
 
+	# ¿Te ve o te oye? Agachado y con lluvia te ve menos; correr y golpear hace ruido.
+	var sight := stat("aggro_range", 9.0)
+	var see := sight
+	var heard := 0.0
+	if _player and _player.has_method("sight_factor"):
+		see = sight * _player.sight_factor()
+		heard = _player.noise_radius()
+	if not aware and dist < INF and ((dist < see and _in_front(to_player, dist)) or dist < heard):
+		aware = true
+	if aware:
+		if dist > sight * float(DB.bal("lose_interest", 1.7)) and provoked <= 0.0:
+			_lost += delta
+			if _lost > 3.0:
+				aware = false
+		else:
+			_lost = 0.0
+	_update_bar(delta)
+
 	var hostile := behavior() == "aggressive" or (behavior() == "neutral" and provoked > 0.0)
-	if hostile and dist < stat("aggro_range", 9.0):
+	if hostile and (aware or provoked > 0.0) and dist < sight * float(DB.bal("lose_interest", 1.7)):
 		if dist > stat("attack_range", 1.4):
 			move = to_player.normalized() * speed
 		elif _attack_cd <= 0.0:
 			_attack()
 		_face(to_player)
-	elif behavior() == "passive" and (dist < stat("flee_range", 6.0) or (provoked > 0.0 and dist < 14.0)):
+	elif behavior() == "passive" and (dist < stat("flee_range", 6.0) * (_player.sight_factor() if _player and _player.has_method("sight_factor") else 1.0) or dist < heard * 0.7 or (provoked > 0.0 and dist < 14.0)):
 		move = -to_player.normalized() * speed
 		_face(move)
 	else:
@@ -129,6 +165,15 @@ func _attack() -> void:
 	tw.tween_property(_visual, "scale", Vector3.ONE, 0.15)
 
 
+## Solo ve lo que tiene delante (unos 140°); por detrás solo te oye.
+func _in_front(to_player: Vector3, dist: float) -> bool:
+	if dist < 1.0:
+		return true
+	var r := _visual.rotation.y
+	var fwd := Vector3(-sin(r), 0.0, -cos(r))
+	return fwd.dot(to_player / dist) > 0.3
+
+
 func _face(dir: Vector3) -> void:
 	if dir.length() < 0.01:
 		return
@@ -148,7 +193,106 @@ func roll_loot(rng: RandomNumberGenerator) -> Array:
 
 func revive() -> void:
 	hp = stat("health", 10)
+	aware = false
+	provoked = 0.0
+	_bar_time = 0.0
 	provoked = 0.0
 	global_position = home
 	visible = true
 	process_mode = Node.PROCESS_MODE_INHERIT
+
+
+# ------------------------------------------------------------ sensación de golpe
+
+## Número de daño que sube y se desvanece (dorado y más grande si es crítico).
+func _show_damage(dmg: float, crit: bool) -> void:
+	var l := Label3D.new()
+	l.text = ("¡%d!" if crit else "%d") % roundi(dmg)
+	l.billboard = BaseMaterial3D.BILLBOARD_ENABLED
+	l.no_depth_test = true
+	l.font_size = 72 if crit else 52
+	l.pixel_size = 0.01
+	l.outline_size = 14
+	l.modulate = Color("f6c94e") if crit else Color("fff4e2")
+	l.outline_modulate = Color(0, 0, 0, 0.85)
+	l.position = Vector3(randf_range(-0.2, 0.2), _top() + 0.3, 0.0)
+	add_child(l)
+	var tw := l.create_tween()
+	tw.set_parallel(true)
+	tw.tween_property(l, "position:y", l.position.y + 1.0, 0.7)
+	tw.tween_property(l, "modulate:a", 0.0, 0.7).set_delay(0.25)
+	tw.tween_property(l, "outline_modulate:a", 0.0, 0.7).set_delay(0.25)
+	tw.chain().tween_callback(l.queue_free)
+	if crit:
+		GS.message.emit("¡Golpe por sorpresa! x%d" % int(DB.bal("sneak_mult", 3.0)))
+
+
+## Destello blanco breve sobre todo el cuerpo.
+func _flash() -> void:
+	if _flash_mat == null:
+		_flash_mat = StandardMaterial3D.new()
+		_flash_mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+		_flash_mat.albedo_color = Color(1, 1, 1, 0.55)
+		_flash_mat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+	if _meshes.is_empty():
+		_collect_meshes(_visual)
+	for m in _meshes:
+		m.material_overlay = _flash_mat
+	get_tree().create_timer(0.09).timeout.connect(func():
+		for m in _meshes:
+			if is_instance_valid(m):
+				m.material_overlay = null)
+
+
+func _collect_meshes(n: Node) -> void:
+	if n is MeshInstance3D:
+		_meshes.append(n)
+	for c in n.get_children():
+		_collect_meshes(c)
+
+
+func _top() -> float:
+	return 0.7 if behavior() == "passive" else 1.95
+
+
+## Barra de vida sobre la cabeza: aparece unos segundos al recibir un golpe.
+func _update_bar(delta: float) -> void:
+	_bar_time = maxf(_bar_time - delta, 0.0)
+	if _bar_time <= 0.0:
+		if _bar:
+			_bar.visible = false
+		return
+	if _bar == null:
+		_bar = Node3D.new()
+		add_child(_bar)
+		var bg := MeshInstance3D.new()
+		var q := QuadMesh.new()
+		q.size = Vector2(0.9, 0.12)
+		bg.mesh = q
+		bg.material_override = _bar_mat(Color(0, 0, 0, 0.7))
+		_bar.add_child(bg)
+		_bar_fill = MeshInstance3D.new()
+		var q2 := QuadMesh.new()
+		q2.size = Vector2(0.84, 0.07)
+		_bar_fill.mesh = q2
+		_bar_fill.material_override = _bar_mat(Color("d9443c"))
+		_bar_fill.position.z = 0.002
+		_bar.add_child(_bar_fill)
+	_bar.visible = true
+	_bar.position = Vector3(0, _top() + 0.35, 0)
+	var cam := get_viewport().get_camera_3d()
+	if cam:
+		_bar.global_basis = cam.global_basis
+	var f := clampf(hp / stat("health", 10), 0.0, 1.0)
+	_bar_fill.scale.x = maxf(f, 0.001)
+	_bar_fill.position.x = -0.42 * (1.0 - f)
+
+
+func _bar_mat(c: Color) -> StandardMaterial3D:
+	var m := StandardMaterial3D.new()
+	m.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	m.albedo_color = c
+	m.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+	m.no_depth_test = true
+	m.render_priority = 2
+	return m

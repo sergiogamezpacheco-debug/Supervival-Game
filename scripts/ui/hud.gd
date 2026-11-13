@@ -29,6 +29,10 @@ var _hand_label: Label
 var _death: Label
 var _inv_panel: Control
 var inv_btn: Button
+var crouch_button: Control
+var _clock_icon: TextureRect
+var _clock_label: Label
+var _rain_icon: TextureRect
 var _craft_panel: PanelContainer
 var _craft_list: VBoxContainer
 var _root: Control
@@ -197,6 +201,57 @@ func _build_controls() -> void:
 	action_button.offset_bottom = -40
 	_root.add_child(action_button)
 
+	# Agacharse: más lento y silencioso; golpe por sorpresa x3
+	crouch_button = TouchButtonScript.new()
+	crouch_button.anchor_left = 1.0
+	crouch_button.anchor_right = 1.0
+	crouch_button.anchor_top = 1.0
+	crouch_button.anchor_bottom = 1.0
+	crouch_button.offset_left = -360
+	crouch_button.offset_right = -250
+	crouch_button.offset_top = -140
+	crouch_button.offset_bottom = -30
+	crouch_button.base_color = Color(0.45, 0.5, 0.4)
+	crouch_button.set_text("Agachar")
+	crouch_button.pressed_changed.connect(func(on: bool):
+		if on:
+			toggle_crouch())
+	_root.add_child(crouch_button)
+
+	# Reloj: sol o luna, hora y lluvia
+	var clock := PanelContainer.new()
+	clock.anchor_left = 0.5
+	clock.anchor_right = 0.5
+	clock.offset_left = -95
+	clock.offset_right = 95
+	clock.offset_top = 10
+	var csb := StyleBoxFlat.new()
+	csb.bg_color = Color(0.055, 0.07, 0.047, 0.7)
+	csb.set_corner_radius_all(22)
+	csb.content_margin_left = 12
+	csb.content_margin_right = 16
+	csb.content_margin_top = 4
+	csb.content_margin_bottom = 4
+	clock.add_theme_stylebox_override("panel", csb)
+	clock.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	var ch := HBoxContainer.new()
+	ch.alignment = BoxContainer.ALIGNMENT_CENTER
+	ch.add_theme_constant_override("separation", 8)
+	clock.add_child(ch)
+	_clock_icon = TextureRect.new()
+	_clock_icon.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	_clock_icon.custom_minimum_size = Vector2(36, 36)
+	ch.add_child(_clock_icon)
+	_clock_label = Label.new()
+	_clock_label.add_theme_font_size_override("font_size", 26)
+	ch.add_child(_clock_label)
+	_rain_icon = TextureRect.new()
+	_rain_icon.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	_rain_icon.custom_minimum_size = Vector2(34, 34)
+	_rain_icon.texture = DB.ui_icon("lluvia")
+	ch.add_child(_rain_icon)
+	_root.add_child(clock)
+
 	var side := VBoxContainer.new()
 	side.anchor_left = 1.0
 	side.anchor_right = 1.0
@@ -273,6 +328,7 @@ func _process(delta: float) -> void:
 	var inv_open := _inv_panel != null and _inv_panel.visible
 	joystick.visible = not inv_open
 	action_button.visible = not inv_open
+	crouch_button.visible = not inv_open
 	if _gym_panel and _gym_panel.visible:
 		_station_refresh -= delta
 		if _station_refresh <= 0.0:
@@ -355,6 +411,22 @@ func _refresh_inventory() -> void:
 		_refresh_chest()
 	if _station_panel and _station_panel.visible:
 		_refresh_station()
+
+
+func set_clock(text: String, night: bool, rain: bool) -> void:
+	_clock_label.text = text
+	_clock_icon.texture = DB.ui_icon("luna" if night else "sol")
+	_rain_icon.visible = rain
+
+
+func toggle_crouch() -> void:
+	var p := get_tree().get_first_node_in_group("player")
+	if p == null:
+		return
+	p.set_crouch(not p.crouching)
+	crouch_button.base_color = Color(0.42, 0.62, 0.3) if p.crouching else Color(0.45, 0.5, 0.4)
+	crouch_button.set_text("De pie" if p.crouching else "Agachar")
+	crouch_button.queue_redraw()
 
 
 ## Elige una casilla del inventario (lo usan las herramientas de capturas).
@@ -663,7 +735,55 @@ func _refresh_station() -> void:
 			_refresh_station())
 		row.add_child(b)
 		_station_list.add_child(row)
+	_add_repair_rows()
 	_refresh_station_job()
+
+
+## Banco de trabajo y mesa de costura: reparar lo gastado.
+func _add_repair_rows() -> void:
+	if station.id != "banco_trabajo" and station.id != "mesa_costura":
+		return
+	var head := Label.new()
+	head.text = "Reparar" + ("  (herramientas y armas)" if station.id == "banco_trabajo" else "  (ropa)")
+	head.add_theme_font_size_override("font_size", 22)
+	head.add_theme_color_override("font_color", Color("e8b84a"))
+	_station_list.add_child(head)
+	var items: Array = GS.damaged_items(station.id)
+	if items.is_empty():
+		var none := Label.new()
+		none.text = "   No hay nada gastado."
+		none.add_theme_font_size_override("font_size", 18)
+		none.modulate = Color(1, 1, 1, 0.6)
+		_station_list.add_child(none)
+		return
+	for ref in items:
+		var it: Dictionary = ref["item"]
+		var id := str(it["id"])
+		var row := HBoxContainer.new()
+		row.add_theme_constant_override("separation", 12)
+		row.add_child(_row_icon(id))
+		var lbl := Label.new()
+		lbl.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		lbl.clip_text = true
+		lbl.custom_minimum_size.x = 100
+		lbl.add_theme_font_size_override("font_size", 19)
+		var mx := int(DB.item(id).get("durability", 1))
+		var where := " (en la mano)" if ref["where"] == "hand" else (" (puesto)" if ref["where"] == "worn" else "")
+		var cost := GS.repair_cost(it)
+		lbl.text = "%s%s  · %d%%\n   %s" % [DB.item_name(id), where, roundi(100.0 * float(it["dur"]) / mx), DB.cost_text(cost)]
+		row.add_child(lbl)
+		var b := Button.new()
+		b.text = "Reparar"
+		b.custom_minimum_size = Vector2(150, 56)
+		b.disabled = not GS.can_craft({"cost": cost})
+		var r: Dictionary = ref
+		b.pressed.connect(func():
+			var why := GS.repair(r)
+			if why != "":
+				show_message(why)
+			_refresh_station())
+		row.add_child(b)
+		_station_list.add_child(row)
 
 
 func _refresh_station_job() -> void:

@@ -19,6 +19,8 @@ func check(cond: bool, what: String) -> void:
 func _ready() -> void:
 	GS.save_path = "user://test_save.json"
 	GS.testing = true
+	GS.forced_hour = 12.0
+	GS.forced_rain = 0
 	DirAccess.remove_absolute(ProjectSettings.globalize_path(GS.save_path))
 	print("== Datos")
 	test_data()
@@ -42,6 +44,8 @@ func _ready() -> void:
 	await test_survivor()
 	print("== Inventario y mochilas")
 	await test_inventory_screen()
+	print("== Día, noche, sigilo y reparar")
+	await test_night_stealth()
 	print("== Creación de personaje")
 	await test_creator()
 	print("\nResultado: %d OK, %d fallos" % [passed, failures])
@@ -799,6 +803,153 @@ func test_inventory_screen() -> void:
 	for k in 3:
 		await get_tree().process_frame
 	check(not inv.visible and hud.joystick.visible, "al cerrar vuelve el joystick")
+	world.queue_free()
+	await _frames(2)
+	DirAccess.remove_absolute(ProjectSettings.globalize_path(GS.save_path))
+	GS.new_game()
+
+
+func test_night_stealth() -> void:
+	DirAccess.remove_absolute(ProjectSettings.globalize_path(GS.save_path))
+	GS.new_game()
+	# Reloj
+	GS.forced_hour = -1.0
+	GS.set_hour(3.0)
+	check(GS.is_night() and absf(GS.hour() - 3.0) < 0.05, "a las 3 es de noche")
+	GS.set_hour(13.0)
+	check(not GS.is_night() and is_equal_approx(GS.daylight(), 1.0), "a las 13 es pleno día")
+	check(GS.clock_text().length() == 5 and GS.clock_text().begins_with("13:"), "el reloj marca la hora (%s)" % GS.clock_text())
+	GS.time_offset = 0.0
+
+	# Noche en el mundo
+	GS.forced_hour = 23.0
+	var world := await _new_world()
+	var player: Node3D = world.player
+	world._update_night()
+	await _frames(2)
+	var night_n := get_tree().get_nodes_in_group("night_spawn").size()
+	check(night_n == int(world.map["night"]["count"]), "al caer la noche aparecen infectados (%d)" % night_n)
+	world._update_clock()
+	check(world.hud._clock_icon.texture == DB.ui_icon("luna"), "de noche el reloj muestra la luna")
+	world.daynight.update(0.0, true)
+	check(world.daynight.lantern.light_energy > 1.5 and world.daynight.sun.light_energy < 0.3, "de noche el sol se apaga y se enciende la linterna")
+	var ns: Node3D = get_tree().get_nodes_in_group("night_spawn")[0]
+	ns.global_position = player.global_position + Vector3(1.0, 0, 0)
+	world._on_creature_killed(ns)
+	await _frames(2)
+	check(not is_instance_valid(ns), "los infectados de la noche no reaparecen al morir")
+	GS.forced_hour = 12.0
+	world._update_night()
+	await _frames(2)
+	check(get_tree().get_nodes_in_group("night_spawn").is_empty(), "al amanecer se van los infectados lejanos")
+	world.daynight.update(0.0, true)
+	check(world.daynight.lantern.light_energy < 0.1 and world.daynight.sun.light_energy > 1.0, "de día no hace falta linterna")
+	# Lluvia
+	GS.forced_rain = 1
+	world.daynight.update(0.0, true)
+	check(world.daynight.rain.emitting and player.sight_factor() < 1.0, "con lluvia llueve y te ven menos")
+	GS.forced_rain = 0
+	world.daynight.update(0.0, true)
+
+	# Sigilo
+	for c in get_tree().get_nodes_in_group("creature"):
+		c.process_mode = Node.PROCESS_MODE_DISABLED
+	player.global_position = Vector3(0, 0, 0)
+	var z: Node3D = world.CreatureScript.new()
+	z.setup("infectado")
+	z.home = Vector3(6, 0, 0)
+	z.position = z.home
+	world.add_child(z)
+	world.hud.toggle_crouch()
+	check(player.crouching and world.hud.crouch_button.text == "De pie", "el botón agacha al superviviente")
+	await _frames(10)
+	check(not z.aware, "agachado y quieto, el infectado a 6 m no te ve")
+	world.hud.joystick.value = Vector2(1, 0)
+	await _frames(5)
+	check(not player.running, "agachado no se puede correr")
+	world.hud.joystick.value = Vector2.ZERO
+	await _frames(3)
+	player.global_position = Vector3(0, 0, 0)
+	z.process_mode = Node.PROCESS_MODE_DISABLED
+	z.global_position = Vector3(3.0, 0, 0)
+	z._face(Vector3(-1, 0, 0))     # mirándote
+	check(z._in_front(player.global_position - z.global_position, 3.0), "de frente, a 3 m agachado te ve")
+	z._face(Vector3(1, 0, 0))      # de espaldas
+	check(not z._in_front(player.global_position - z.global_position, 3.0), "de espaldas no te ve")
+	z.global_position = Vector3(1.6, 0, 0)
+	z.process_mode = Node.PROCESS_MODE_INHERIT
+	z._wander_timer = 99.0
+	z._wander_target = z.global_position
+	await _frames(2)
+	check(not z.aware, "puedes acercarte por detrás agachado")
+	var hp0: float = z.hp
+	z.interact(player)
+	check(is_equal_approx(hp0 - z.hp, GS.hand_damage() * float(DB.bal("sneak_mult", 3.0))), "golpe por sorpresa agachado: daño x3")
+	check(z.aware, "tras el golpe ya sabe dónde estás")
+	var hp1: float = z.hp
+	z.interact(player)
+	check(is_equal_approx(hp1 - z.hp, GS.hand_damage()), "el segundo golpe es normal")
+	await _frames(2)
+	check(z._bar != null and z._bar.visible, "aparece la barra de vida del enemigo")
+	var nums := 0
+	for c in z.get_children():
+		if c is Label3D:
+			nums += 1
+	check(nums >= 1, "salen números de daño")
+	world.hud.toggle_crouch()
+	check(not player.crouching, "el botón vuelve a poner de pie")
+	player.make_noise(13.0)
+	check(player.noise_radius() >= 13.0, "golpear hace ruido")
+	z.queue_free()
+	var z2: Node3D = world.CreatureScript.new()
+	z2.setup("infectado")
+	z2.home = Vector3(11, 0, 0)
+	z2.position = z2.home
+	world.add_child(z2)
+	player.make_noise(13.0)
+	await _frames(2)
+	check(z2.aware, "a 11 m te oye si haces mucho ruido")
+	z2.queue_free()
+
+	# Reparar
+	GS.hand = GS.make_item("hacha_piedra")
+	GS.hand["dur"] = 5
+	GS.add_item("chaleco", 1)
+	for i in GS.slots.size():
+		if GS.slots[i] != null and GS.slots[i]["id"] == "chaleco":
+			GS.wear_slot(i)
+	GS.worn["torso"]["dur"] = 20
+	GS.add_item("casco_obra", 1)
+	for i in GS.slots.size():
+		if GS.slots[i] != null and GS.slots[i]["id"] == "casco_obra":
+			GS.slots[i]["dur"] = 40
+	var tools: Array = GS.damaged_items("banco_trabajo")
+	var cloth: Array = GS.damaged_items("mesa_costura")
+	check(tools.size() == 1 and tools[0]["where"] == "hand", "el banco repara la herramienta de la mano")
+	check(cloth.size() == 2, "la mesa de costura repara la ropa puesta y la guardada (%d)" % cloth.size())
+	var cost: Dictionary = GS.repair_cost(GS.hand)
+	check(not cost.is_empty() and GS.repair(tools[0]) != "", "sin materiales no se repara (%s)" % DB.cost_text(cost))
+	for k in cost:
+		GS.add_item(str(k), int(cost[k]))
+	check(GS.repair(tools[0]) == "" and int(GS.hand["dur"]) == int(DB.item("hacha_piedra")["durability"]), "reparar deja la herramienta como nueva")
+	var helmet_ref: Dictionary = {}
+	for r in cloth:
+		if r["item"]["id"] == "casco_obra":
+			helmet_ref = r
+	check(not GS.repair_cost(helmet_ref["item"]).is_empty(), "lo que solo se encuentra también tiene coste de reparación")
+	GS.hand["dur"] = 3
+	for k in {"madera": 15, "piedra": 10}:
+		GS.add_item(k, 15)
+	var bench: Node3D = world.base.place("banco_trabajo", Vector2i(-4, -4), 0, 0, player.global_position)
+	world.hud.open_station(bench)
+	await _frames(2)
+	var rep_btn := false
+	for row in world.hud._station_list.get_children():
+		for c in row.get_children():
+			if c is Button and c.text == "Reparar":
+				rep_btn = true
+	check(rep_btn, "el panel del banco de trabajo tiene «Reparar»")
+	world.hud.close_panels()
 	world.queue_free()
 	await _frames(2)
 	DirAccess.remove_absolute(ProjectSettings.globalize_path(GS.save_path))

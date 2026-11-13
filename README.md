@@ -16,7 +16,8 @@ descarga `Supervival.apk` e instálalo (Android pedirá permitir "instalar apps 
 
 | Control | Qué hace |
 |---|---|
-| Joystick (mitad izquierda) | Moverse. A fondo: **correr** (gasta aguante) |
+| Joystick (mitad izquierda) | Moverse. A fondo: **correr** (gasta aguante y hace ruido) |
+| Agachar | Lento y silencioso; por la espalda y sin que te vean, el golpe hace x3 |
 | Botón redondo (abajo derecha) | Acción contextual: Talar, Picar, Recoger, Atacar, Beber, Recuperar… Mantener para repetir |
 | Botón de mochila (anillo = carga) | **Inventario**: el superviviente con sus 7 huecos de equipo y las casillas (8 bolsillos + 8 por nivel de mochila); toca un objeto para usarlo, equiparlo, ponértelo o tirarlo |
 | Fabricar | Recetas a mano (el resto, en las estaciones) |
@@ -37,6 +38,9 @@ Plan completo por fases (offline primero, online preparado): **[docs/hoja-de-rut
       (mesa de costura nivel 1, 2 y 3, también en cofres), 8 bolsillos y mochilas de lona, excursión y
       táctica (16/24/32 huecos), iconos propios para todos los objetos, aguante para correr,
       fuerza y resistencia que suben jugando y gimnasio para acelerarlas.
+- [x] **Mundo vivo:** día y noche de 24 minutos (reloj real; de noche aparecen infectados y se
+      enciende la linterna), lluvia, sigilo y ruido, reparar en el banco y en la costura,
+      barra de vida y números de daño en los enemigos.
 - [~] **Fase 3 – Mapa global:** ✅ viaje entre zonas con coste de comida/agua, ✅ Bosque de Pino Negro,
       ✅ Cantera de Peñas Rojas, contenedores saqueables, veneno. Pendiente: resto de zonas
       (ver [docs/zonas.md](docs/zonas.md)), sigilo y ruido, mapa definitivo.
@@ -56,6 +60,7 @@ Plan completo por fases (offline primero, online preparado): **[docs/hoja-de-rut
 - `tests/` — tests que se ejecutan antes de cada compilación.
 - `tools/screens.tscn` — genera capturas de pantalla para revisar la interfaz sin móvil.
 - `tools/survivor_shots.tscn` — capturas de la creación de personaje, el inventario y el gimnasio.
+- `tools/night_shots.tscn` — capturas de atardecer, noche, lluvia, sigilo y reparar.
 - `assets/icons/` — iconos SVG de objetos y huecos; se generan con `tools/iconos/generar.py`.
 
 ## Mapas

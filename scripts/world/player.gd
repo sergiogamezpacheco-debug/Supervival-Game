@@ -15,6 +15,10 @@ var _walk_amount := 0.0
 var _swing_t := -1.0
 var _hand_item := ""
 var running := false
+var crouching := false            # agachado: lento, silencioso y con golpe crítico por sorpresa
+var shake := 0.0                  # sacudida de cámara al recibir un golpe (la lee el mundo)
+var _crouch_amount := 0.0
+var _noise_pulse := 0.0           # ruido puntual (golpear, talar) que se apaga en un segundo
 var training := 0.0               # segundos de entrenamiento en el gimnasio (animación)
 var _exhausted := false
 var _rest := 0.0
@@ -52,9 +56,13 @@ func _physics_process(delta: float) -> void:
 		dir = Vector2.ZERO
 		training = maxf(training - delta, 0.0)
 	_update_stamina(dir, delta)
+	_noise_pulse = maxf(_noise_pulse - delta * 9.0, 0.0)
+	shake = maxf(shake - delta, 0.0)
 	var speed := float(DB.bal("player_speed", 4.5)) * GS.speed_factor()
 	if running:
 		speed *= float(DB.bal("run_mult", 1.5))
+	if crouching:
+		speed *= float(DB.bal("crouch_speed", 0.55))
 	velocity = Vector3(dir.x, 0.0, dir.y) * speed
 	move_and_slide()
 	position.y = floor_y
@@ -67,6 +75,8 @@ func _physics_process(delta: float) -> void:
 	if moving:
 		_walk_phase += delta * 9.0 * dir.length() * (1.35 if running else 1.0)
 	_visual.animate_walk(_walk_phase, _walk_amount)
+	_crouch_amount = move_toward(_crouch_amount, 1.0 if crouching else 0.0, delta * 6.0)
+	_visual.animate_crouch(_crouch_amount)
 	if training > 0.0:
 		_visual.animate_swing(fmod(training, 0.75) / 0.75)
 	if _swing_t >= 0.0:
@@ -83,6 +93,7 @@ func _physics_process(delta: float) -> void:
 		target.interact(self)
 		if target.is_in_group("resource") or target.is_in_group("creature"):
 			GS.exercise("fuerza", float(DB.bal("fitness_hit_gain", 0.0006)))
+			make_noise(float(DB.bal("noise_hit", 9.0)) * (0.6 if crouching else 1.0))
 		_swing()
 		_action_cd = float(DB.bal("action_interval", 0.6))
 
@@ -90,7 +101,7 @@ func _physics_process(delta: float) -> void:
 ## Correr: joystick a fondo (o Shift). Gasta aguante; la resistencia lo alarga
 ## y correr con la mochila cargada es lo que más la entrena.
 func _update_stamina(dir: Vector2, delta: float) -> void:
-	var wants := dir.length() >= float(DB.bal("run_threshold", 0.85)) or (dir.length() > 0.1 and Input.is_key_pressed(KEY_SHIFT))
+	var wants := not crouching and (dir.length() >= float(DB.bal("run_threshold", 0.85)) or (dir.length() > 0.1 and Input.is_key_pressed(KEY_SHIFT)))
 	var mx := GS.max_stamina()
 	if GS.stamina <= 0.0:
 		_exhausted = true
@@ -105,6 +116,43 @@ func _update_stamina(dir: Vector2, delta: float) -> void:
 		_rest += delta
 		if _rest >= float(DB.bal("stamina_regen_delay", 0.8)):
 			GS.stamina = minf(GS.stamina + float(DB.bal("stamina_regen", 18.0)) * (1.0 + float(GS.physique["resistencia"]) * 0.5) * delta, mx)
+
+
+# ------------------------------------------------------------ sigilo
+
+func set_crouch(on: bool) -> void:
+	crouching = on
+	if on:
+		running = false
+
+
+## Radio (m) en el que las criaturas oyen al superviviente.
+func noise_radius() -> float:
+	var moving := velocity.length() > 0.3
+	var r: float
+	if crouching:
+		r = float(DB.bal("noise_crouch_move", 2.5)) if moving else float(DB.bal("noise_crouch", 1.5))
+	elif running:
+		r = float(DB.bal("noise_run", 13.0))
+	elif moving:
+		r = float(DB.bal("noise_walk", 7.0))
+	else:
+		r = float(DB.bal("noise_idle", 3.0))
+	return maxf(r, _noise_pulse)
+
+
+func make_noise(radius: float) -> void:
+	_noise_pulse = maxf(_noise_pulse, radius)
+
+
+## Cuánto ven las criaturas: agachado y con lluvia se te ve menos.
+func sight_factor() -> float:
+	var f := 1.0
+	if crouching:
+		f *= float(DB.bal("crouch_sight", 0.45))
+	if GS.raining():
+		f *= float(DB.bal("rain_sight", 0.75))
+	return f
 
 
 ## Animación de entrenar en el gimnasio.
@@ -153,6 +201,9 @@ func refresh_look() -> void:
 
 
 func hurt_flash() -> void:
+	shake = 0.25
+	if OS.has_feature("mobile"):
+		Input.vibrate_handheld(60)
 	var tw := create_tween()
 	_visual.scale = Vector3(1.15, 0.85, 1.15)
 	tw.tween_property(_visual, "scale", Vector3.ONE, 0.2)

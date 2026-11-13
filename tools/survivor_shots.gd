@@ -11,6 +11,8 @@ func _ready() -> void:
 		out = args[0]
 	DirAccess.make_dir_recursive_absolute(out)
 	GS.save_path = "user://shots_save.json"
+	GS.forced_hour = 12.0
+	GS.forced_rain = 0
 	DirAccess.remove_absolute(ProjectSettings.globalize_path(GS.save_path))
 	get_window().size = Vector2i(1280, 720)
 	GS.new_game()

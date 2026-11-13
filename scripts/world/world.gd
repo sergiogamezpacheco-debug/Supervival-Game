@@ -12,6 +12,7 @@ const BaseScript := preload("res://scripts/world/base.gd")
 const HudScript := preload("res://scripts/ui/hud.gd")
 const ContainerScript := preload("res://scripts/world/container.gd")
 const CreatorScript := preload("res://scripts/ui/character_creator.gd")
+const DayNightScript := preload("res://scripts/world/daynight.gd")
 
 signal travelled(to_map: String)
 
@@ -41,6 +42,12 @@ var _build_cell := Vector2i.ZERO
 var _build_side := 0
 var _build_ok := false
 var creator: CanvasLayer = null
+var daynight: Node
+var _env: Environment
+var _sun: DirectionalLight3D
+var _was_night := false
+var _night_check := 0.0
+var _clock_t := 0.0
 
 
 func _ready() -> void:
@@ -78,6 +85,10 @@ func _ready() -> void:
 	GS.died.connect(_on_player_died)
 	if not world.is_empty():
 		_load_world(world)
+	daynight = DayNightScript.new()
+	add_child(daynight)
+	daynight.setup(_env, _sun, player)
+	_update_clock()
 	if not GS.pending_drop.is_empty():
 		spawn_bag(player.global_position + Vector3(1.2, 0, 0.6), GS.pending_drop, true)
 		GS.pending_drop = []
@@ -117,8 +128,10 @@ func _build_environment() -> void:
 	var we := WorldEnvironment.new()
 	we.environment = env
 	add_child(we)
+	_env = env
 
 	var sun := DirectionalLight3D.new()
+	_sun = sun
 	sun.rotation_degrees = Vector3(-55, -35, 0)
 	sun.light_energy = 1.1
 	sun.shadow_enabled = true
@@ -265,6 +278,16 @@ func _process(delta: float) -> void:
 	if build_mode != "":
 		_update_build()
 
+	daynight.update(delta)
+	_night_check -= delta
+	if _night_check <= 0.0:
+		_night_check = 1.0
+		_update_night()
+	_clock_t -= delta
+	if _clock_t <= 0.0:
+		_clock_t = 0.5
+		_update_clock()
+
 	for entry in _respawns.duplicate():
 		entry["t"] = float(entry["t"]) - delta
 		if float(entry["t"]) <= 0.0:
@@ -314,6 +337,49 @@ func _update_camera(delta: float) -> void:
 	var want := player.global_position + Vector3(0, 13.0, 8.5)
 	camera.global_position = camera.global_position.lerp(want, clampf(delta * 6.0, 0.0, 1.0))
 	camera.look_at(camera.global_position + Vector3(0, -13.0, -8.5), Vector3.UP)
+	if player.shake > 0.0:
+		var k: float = player.shake * 0.6
+		camera.global_position += Vector3(randf_range(-k, k), randf_range(-k, k) * 0.5, randf_range(-k, k))
+
+
+# ------------------------------------------------------------- noche
+
+func _update_clock() -> void:
+	hud.set_clock(GS.clock_text(), GS.is_night(), GS.raining())
+
+
+## Al caer la noche aparecen infectados alrededor; al amanecer se van los lejanos.
+func _update_night() -> void:
+	var night := GS.is_night()
+	if night and not _was_night:
+		spawn_night()
+	elif not night and _was_night:
+		for c in get_tree().get_nodes_in_group("night_spawn"):
+			if not c.visible or c.global_position.distance_to(player.global_position) > 10.0:
+				c.queue_free()
+	_was_night = night
+
+
+func spawn_night() -> void:
+	var cfg: Dictionary = map.get("night", {})
+	var kind := str(cfg.get("type", "infectado"))
+	var count := int(cfg.get("count", DB.bal("night_extra", 3)))
+	if count <= 0 or not DB.creatures.has(kind):
+		return
+	for i in count:
+		var ang := rng.randf_range(0.0, TAU)
+		var dist := rng.randf_range(14.0, 22.0)
+		var pos := player.global_position + Vector3(cos(ang), 0.0, sin(ang)) * dist
+		pos.x = clampf(pos.x, -_half + 1.0, _half - 1.0)
+		pos.z = clampf(pos.z, -_half + 1.0, _half - 1.0)
+		var c := CreatureScript.new()
+		c.setup(kind)
+		c.home = player.global_position.lerp(pos, 0.4)
+		c.position = pos
+		c.add_to_group("night_spawn")
+		c.killed.connect(_on_creature_killed)
+		add_child(c)
+	GS.message.emit("Cae la noche: se oyen pasos entre los árboles…")
 
 
 # --------------------------------------------------------------- construir
@@ -540,7 +606,10 @@ func _on_creature_killed(c: Node3D) -> void:
 		spawn_bag(c.global_position, loot, false)
 	c.visible = false
 	c.process_mode = Node.PROCESS_MODE_DISABLED
-	_respawns.append({"c": c, "t": float(c.data.get("respawn", 45))})
+	if c.is_in_group("night_spawn"):
+		c.queue_free()    # los de la noche no vuelven
+	else:
+		_respawns.append({"c": c, "t": float(c.data.get("respawn", 45))})
 	GS.message.emit("%s abatido" % str(c.data.get("name", "Enemigo")))
 
 

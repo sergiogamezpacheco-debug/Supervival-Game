@@ -31,7 +31,9 @@ var player_name := "Superviviente"
 var stamina := 100.0           # aguante para correr
 var train_ready: Dictionary = {} # ejercicio -> hora (unix) en que se puede volver a entrenar
 var testing := false           # los tests no muestran la pantalla de creación
-var pending_drop: Array = []   # objetos de partidas antiguas que ya no caben (se dejan en una bolsa)
+var pending_drop: Array = []
+var forced_hour := -1.0        # >= 0: hora fija (tests y capturas)
+var forced_rain := -1          # -1 según el reloj, 0 seco, 1 lloviendo   # objetos de partidas antiguas que ya no caben (se dejan en una bolsa)
 
 var _food_timer := 0.0
 var _water_timer := 0.0
@@ -505,6 +507,104 @@ func hit(amount: float) -> void:
 		_sync_outfit()
 		inventory_changed.emit()
 	damage(reduced)
+
+
+# ------------------------------------------------------------ reparar
+
+## Objetos gastados que se reparan en una estación: herramientas y armas en el
+## banco de trabajo, ropa en la mesa de costura. Cada uno: {"where", "i"/"slot", "item"}.
+func damaged_items(station_id: String) -> Array:
+	var types := ["wear"] if station_id == "mesa_costura" else ["tool", "weapon"]
+	var out: Array = []
+	var check := func(it, ref: Dictionary):
+		if it == null or not it.has("dur"):
+			return
+		var d := DB.item(str(it["id"]))
+		if not types.has(str(d.get("type", ""))):
+			return
+		if int(it["dur"]) < int(d.get("durability", 0)):
+			ref["item"] = it
+			out.append(ref)
+	check.call(hand, {"where": "hand"})
+	for k in WEAR_SLOTS:
+		check.call(worn.get(k), {"where": "worn", "slot": k})
+	for i in slots.size():
+		check.call(slots[i], {"where": "slot", "i": i})
+	return out
+
+
+## Coste de reparar: parte de la receta, según lo gastado que esté.
+func repair_cost(it: Dictionary) -> Dictionary:
+	var id := str(it["id"])
+	var d := DB.item(id)
+	var mx := float(d.get("durability", 1))
+	var worn_frac := clampf(1.0 - float(it.get("dur", mx)) / mx, 0.0, 1.0)
+	var frac := float(DB.bal("repair_fraction", 0.4)) * worn_frac
+	var base: Dictionary = DB.recipe(id).get("cost", {})
+	if base.is_empty():   # objetos que solo se encuentran
+		base = {"tela": 5, "cuerda": 2} if str(d.get("type", "")) == "wear" else {"madera": 5, "piedra": 5}
+	var cost := {}
+	for k in base:
+		var kd := DB.item(str(k))
+		if str(kd.get("type", "")) in ["wear", "tool", "weapon"]:
+			continue    # no se gasta otra prenda o herramienta para reparar
+		cost[k] = maxi(1, ceili(float(base[k]) * frac))
+	return cost
+
+
+func repair(ref: Dictionary) -> String:
+	var it: Dictionary = ref["item"]
+	var cost := repair_cost(it)
+	if not pay(cost):
+		return "Faltan materiales: %s" % DB.cost_text(cost)
+	it["dur"] = int(DB.item(str(it["id"])).get("durability", it["dur"]))
+	message.emit("%s reparado" % DB.item_name(str(it["id"])))
+	inventory_changed.emit()
+	return ""
+
+
+# ------------------------------------------------------- día, noche y tiempo
+
+## Hora del día (0..24). El día dura "day_seconds" segundos reales y sigue el reloj
+## aunque el juego esté cerrado (como las estaciones).
+func hour() -> float:
+	if forced_hour >= 0.0:
+		return forced_hour
+	var day := float(DB.bal("day_seconds", 1440))
+	return fposmod(now() / day, 1.0) * 24.0
+
+
+## 1 a pleno día, 0 de noche, con amanecer y anochecer de dos horas.
+func daylight() -> float:
+	var h := hour()
+	var dawn := float(DB.bal("dawn_hour", 6.0))
+	var dusk := float(DB.bal("dusk_hour", 21.0))
+	return minf(smoothstep(dawn - 1.0, dawn + 1.0, h), 1.0 - smoothstep(dusk - 1.0, dusk + 1.0, h))
+
+
+func is_night() -> bool:
+	return daylight() < 0.5
+
+
+## Lluvia: cada "weather_window" segundos se decide (igual para todos los mapas).
+func raining() -> bool:
+	if forced_rain >= 0:
+		return forced_rain == 1
+	var w := floori(now() / float(DB.bal("weather_window", 300)))
+	var r := RandomNumberGenerator.new()
+	r.seed = hash("lluvia%d" % w)
+	return r.randf() < float(DB.bal("rain_chance", 0.22))
+
+
+## Adelanta el reloj hasta la hora pedida (para pruebas y para dormir más adelante).
+func set_hour(h: float) -> void:
+	var day := float(DB.bal("day_seconds", 1440))
+	time_offset += fposmod(h - hour(), 24.0) / 24.0 * day
+
+
+func clock_text() -> String:
+	var h := hour()
+	return "%02d:%02d" % [floori(h), floori(fmod(h, 1.0) * 60.0)]
 
 
 # ------------------------------------------------------- físico y aguante

@@ -24,8 +24,10 @@
 | Ropa equipable (11 prendas, defensa y desgaste) cosida en la mesa de costura o encontrada | ✅ |
 | Inventario a pantalla completa con el superviviente en 3D, 8 bolsillos y 3 niveles de mochila (16/24/32), iconos propios | ✅ |
 | Físico que evoluciona (fuerza y resistencia), aguante para correr y gimnasio | ✅ |
+| Día y noche de 24 min (infectados nocturnos, linterna), lluvia, sigilo (agacharse, ruido, golpe por sorpresa x3) | ✅ |
+| Reparar herramientas (banco) y ropa (costura); barra de vida, números de daño y destello al golpear | ✅ |
 | Diseños: mapa antiguo, HUD y tienda · Documentos: zonas y tienda | ✅ |
-| 410 tests y APK automático | ✅ |
+| 440 tests y APK automático | ✅ |
 
 ---
 
@@ -55,10 +57,10 @@
 Objetivo: que la **primera hora** enganche.
 - HUD definitivo (diseño aprobado) y mapa antiguo dentro del juego.
 - ✅ Superviviente propio (sin fantasma), creación de personaje, ropa y gimnasio. Pendiente: modelos 3D buenos de árboles, rocas e infectado.
-- **Día y noche** (de noche hay más infectados y menos visión) y tiempo atmosférico básico.
-- **Sigilo y ruido**: agachado haces golpes críticos y correr atrae a los infectados.
-- Combate con más sensación: golpe, retroceso, esquivar y barra de vida del enemigo.
-- **Reparar** herramientas y armas en el banco de trabajo.
+- ✅ **Día y noche** (de noche hay más infectados) y lluvia.
+- ✅ **Sigilo y ruido**: agachado haces golpes críticos y correr atrae a los infectados.
+- Combate con más sensación: ✅ golpe, retroceso y barra de vida del enemigo; pendiente esquivar.
+- ✅ **Reparar** herramientas y armas en el banco de trabajo (y ropa en la costura).
 - Sonido y música (efectos libres y una pista por zona).
 - Ajustes: volumen, calidad gráfica, vibración e idioma (es/en).
 - **Hecho cuando:** 5 testers juegan 30 minutos sin bloquearse y quieren volver.

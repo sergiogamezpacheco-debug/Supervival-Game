@@ -644,6 +644,22 @@ func animate_walk(phase: float, amount: float) -> void:
 	j["hips"].position.y = float(d["thigh"]) + float(d["shin"]) + float(d["ankle"]) + 0.06 + absf(cos(phase)) * 0.02 * amount
 
 
+## Agachado (0..1): se suma a la pose de andar.
+func animate_crouch(amount: float) -> void:
+	if j.is_empty():
+		return
+	var d := dims()
+	j["hips"].position.y -= 0.3 * float(d["s"]) * amount
+	for side in ["l", "r"]:
+		j["leg_" + side].rotation.x += 1.05 * amount
+		j["knee_" + side].rotation.x -= 1.7 * amount
+		if j.has("foot_" + side):
+			j["foot_" + side].rotation.x = 0.65 * amount
+	j["spine"].rotation.x = -0.38 * amount
+	j["arm_l"].rotation.x += 0.45 * amount
+	j["arm_r"].rotation.x += 0.45 * amount
+
+
 ## Golpe con el brazo derecho (0..1).
 func animate_swing(t: float) -> void:
 	if j.is_empty():

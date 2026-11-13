@@ -9,6 +9,8 @@ func _ready() -> void:
 		out = args[0]
 	GS.save_path = "user://clean_save.json"
 	GS.testing = true
+	GS.forced_hour = 12.0
+	GS.forced_rain = 0
 	DirAccess.remove_absolute(ProjectSettings.globalize_path(GS.save_path))
 	get_window().size = Vector2i(1280, 720)
 	GS.new_game()

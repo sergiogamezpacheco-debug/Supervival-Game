@@ -62,7 +62,11 @@
           -5
         ]
       }
-    ]
+    ],
+    "night": {
+      "type": "infectado",
+      "count": 2
+    }
   },
   "bosque": {
     "name": "Bosque de Pino Negro",
@@ -154,7 +158,11 @@
         ],
         "min_dist": 30
       }
-    ]
+    ],
+    "night": {
+      "type": "infectado",
+      "count": 4
+    }
   },
   "cantera": {
     "name": "Cantera de Peñas Rojas",
@@ -254,6 +262,10 @@
         ],
         "min_dist": 18
       }
-    ]
+    ],
+    "night": {
+      "type": "minero",
+      "count": 3
+    }
   }
 }
