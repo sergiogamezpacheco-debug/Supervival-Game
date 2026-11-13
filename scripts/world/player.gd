@@ -5,6 +5,7 @@ extends CharacterBody3D
 var move_input := Vector2.ZERO   # lo rellena el HUD (joystick)
 var action_held := false          # lo rellena el HUD (botón de acción)
 var target: Node3D = null         # objetivo más cercano (lo calcula el mundo)
+var floor_y := 0.0                # altura del suelo (sube sobre los cimientos)
 
 var _action_cd := 0.0
 var _visual: Node3D
@@ -42,7 +43,7 @@ func _physics_process(delta: float) -> void:
 	var speed := float(DB.bal("player_speed", 4.5))
 	velocity = Vector3(dir.x, 0.0, dir.y) * speed
 	move_and_slide()
-	position.y = 0.0
+	position.y = floor_y
 	if dir.length() > 0.1:
 		_face(Vector3(dir.x, 0.0, dir.y))
 
@@ -53,6 +54,12 @@ func _physics_process(delta: float) -> void:
 		target.interact(self)
 		_swing()
 		_action_cd = float(DB.bal("action_interval", 0.6))
+
+
+## Dirección hacia la que mira el jugador.
+func facing() -> Vector3:
+	var r := _visual.rotation.y
+	return Vector3(-sin(r), 0.0, -cos(r))
 
 
 func _face(dir: Vector3) -> void:

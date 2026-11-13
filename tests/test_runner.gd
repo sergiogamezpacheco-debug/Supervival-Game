@@ -29,6 +29,10 @@ func _ready() -> void:
 	test_save()
 	print("== Mundo")
 	await test_world()
+	print("== Construcción y estaciones")
+	await test_base()
+	print("== Animales")
+	await test_animals()
 	print("\nResultado: %d OK, %d fallos" % [passed, failures])
 	DirAccess.remove_absolute(ProjectSettings.globalize_path(GS.save_path))
 	get_tree().quit(1 if failures > 0 else 0)
@@ -44,6 +48,30 @@ func test_data() -> void:
 			check(DB.items.has(str(id)), "receta %s usa %s, que existe" % [r["id"], id])
 	for k in DB.resources:
 		check(DB.items.has(str(DB.resources[k]["yield"])), "recurso %s da un objeto que existe" % k)
+	for r in DB.recipes:
+		var st := str(r.get("station", ""))
+		check(st == "" or DB.stations.has(st), "receta %s usa una estación que existe" % r["id"])
+	for m in DB.maps:
+		for k in DB.maps[m].get("resources", {}):
+			check(DB.resources.has(k), "mapa %s: recurso %s existe" % [m, k])
+		for g in DB.maps[m].get("creatures", []):
+			check(DB.creatures.has(str(g["type"])), "mapa %s: criatura %s existe" % [m, g["type"]])
+	for c in DB.creatures:
+		for id in DB.creatures[c].get("loot", {}):
+			check(DB.items.has(str(id)), "criatura %s suelta %s, que existe" % [c, id])
+	var all_costs: Array = []
+	for id in DB.structures:
+		for t in DB.structures[id]["tiers"]:
+			all_costs.append(t["cost"])
+	for id in DB.stations:
+		for l in DB.stations[id]["levels"]:
+			all_costs.append(l["cost"])
+	var bad := 0
+	for cost in all_costs:
+		for id in cost:
+			if not DB.items.has(str(id)):
+				bad += 1
+	check(bad == 0, "todos los costes de construcción usan objetos que existen")
 
 
 func test_inventory() -> void:
@@ -196,5 +224,183 @@ func test_world() -> void:
 		if b.get("player", false):
 			has_player_bag = true
 	check(has_player_bag, "la mochila tirada se guarda en la partida")
+	world.queue_free()
+	await _frames(2)
+
+
+func _new_world() -> Node3D:
+	var world: Node3D = load("res://scenes/main.tscn").instantiate()
+	add_child(world)
+	await _frames(5)
+	for c in get_tree().get_nodes_in_group("creature"):
+		c.home = Vector3(42, 0, 42)
+		c.global_position = Vector3(42, 0, 42)
+	return world
+
+
+func test_base() -> void:
+	DirAccess.remove_absolute(ProjectSettings.globalize_path(GS.save_path))
+	GS.new_game()
+	var world := await _new_world()
+	var base: Node3D = world.base
+	var player: Node3D = world.player
+	check(base != null, "el refugio tiene zona de construcción")
+	player.global_position = Vector3(1, 0, 1)
+	var pp := player.global_position
+	var c := Vector2i(4, 2)
+
+	check(base.check_place("pared", c, 0, pp) != "", "una pared necesita cimiento")
+	check(base.place("cimiento", c, 0, 0, pp) == null, "sin materiales no se construye")
+	GS.add_item("madera", 100)
+	GS.add_item("piedra", 100)
+	GS.add_item("tablon", 40)
+	var f: Node3D = base.place("cimiento", c, 0, 0, pp)
+	check(f != null and GS.count("madera") == 92, "cimiento colocado y cobrado")
+	check(base.place("cimiento", c, 0, 0, pp) == null, "no se pueden apilar cimientos")
+	check(base.place("cimiento", Vector2i(20, 0), 0, 0, pp) == null, "fuera del refugio no se construye")
+	var wall: Node3D = base.place("pared", c, 0, 0, pp)
+	check(wall != null and GS.count("tablon") == 35, "pared colocada en el borde norte")
+	check(base.place("pared", c, 0, 0, pp) == null, "no se repite pared en el mismo borde")
+	check(base.place("pared", Vector2i(c.x, c.y - 1), 2, 0, pp) == null, "el borde compartido cuenta como el mismo")
+	var door: Node3D = base.place("puerta", c, 1, 0, pp)
+	check(door != null, "puerta colocada")
+	door.interact(player)
+	check(door.is_open, "la puerta se abre")
+	door.interact(player)
+	check(not door.is_open, "la puerta se cierra")
+
+	# Mejorar pared de madera -> piedra
+	check(not base.upgrade(wall), "mejorar sin bloques de piedra falla")
+	GS.add_item("bloque_piedra", 6)
+	check(base.upgrade(wall) and wall.tier == 1, "pared mejorada a piedra")
+
+	# Desmontar
+	check(base.can_demolish(f) != "", "no deja quitar un cimiento que sujeta paredes")
+	var tab := GS.count("tablon")
+	check(base.demolish(door) and GS.count("tablon") == tab + 3, "desmontar devuelve la mitad")
+
+	# Construir desde el modo construir (como lo hace el jugador)
+	player.global_position = Vector3(-3, 0, -3)
+	player._face(Vector3(1, 0, 0))
+	world._on_build_selected("place", "cimiento")
+	await _frames(2)
+	var tgt: Array = world.build_target()
+	check(world.confirm_build(), "el modo construir coloca delante del jugador")
+	check(base.has_foundation(tgt[0]), "el cimiento está en la casilla apuntada")
+	world.exit_build()
+
+	# Estación con tiempo
+	pp = player.global_position
+	var carp: Node3D = base.place("carpinteria", Vector2i(-4, 4), 0, 0, pp)
+	check(carp != null, "banco de carpintería colocado")
+	check(carp.start("tablon") == "", "empieza a fabricar un tablón")
+	check(carp.start("tablon") != "", "una estación fabrica de una en una")
+	check(not carp.is_done(), "aún no está listo")
+	world.hud.open_station(carp)
+	await _frames(2)
+	check(world.hud._station_panel.visible, "se abre el panel de la estación")
+	world.hud.close_panels()
+	GS.time_offset += 9.0
+	check(carp.is_done(), "terminado al pasar el tiempo")
+	var t0 := GS.count("tablon")
+	check(carp.collect() and GS.count("tablon") == t0 + 1, "recoger el tablón")
+
+	var bench: Node3D = base.place("banco_trabajo", Vector2i(-6, 4), 0, 0, pp)
+	check(bench != null, "banco de trabajo colocado")
+	GS.add_item("lingote_hierro", 10)
+	GS.add_item("cuerda", 5)
+	check(bench.start("machete") != "", "el machete pide banco de nivel 2")
+	GS.add_item("bloque_piedra", 10)
+	check(base.upgrade(bench) and bench.level == 2, "banco mejorado a nivel 2")
+	check(bench.start("machete") == "", "con nivel 2 ya fabrica el machete")
+
+	var fire: Node3D = base.place("hoguera", Vector2i(-2, 6), 0, 0, pp)
+	GS.add_item("carne_cruda", 1)
+	check(fire != null and fire.start("carne_asada") == "", "la hoguera cocina carne")
+	GS.time_offset += 11.0
+	fire.collect()
+	check(GS.count("carne_asada") == 1, "carne asada recogida")
+
+	# Cofre
+	var chest: Node3D = base.place("cofre", Vector2i(-8, 6), 0, 0, pp)
+	check(chest != null and chest.storage.size() == 12, "cofre con 12 huecos")
+	var slot := -1
+	for i in GS.slots.size():
+		if GS.slots[i] != null and GS.slots[i]["id"] == "piedra":
+			slot = i
+	var stones := GS.count("piedra")
+	chest.bag_to_chest(slot)
+	check(GS.count("piedra") < stones and chest.storage[0] != null, "guardar en el cofre")
+	chest.chest_to_bag(0)
+	check(GS.count("piedra") == stones, "sacar del cofre")
+	chest.bag_to_chest(slot if GS.slots[slot] != null else 0)
+
+	# Guardar y volver a cargar el refugio entero
+	carp.start("tablon")
+	var n_found: int = base.foundations.size()
+	world.save()
+	world.queue_free()
+	await _frames(3)
+	var world2 := await _new_world()
+	var base2: Node3D = world2.base
+	check(base2.foundations.size() == n_found, "se cargan los cimientos")
+	check(base2.edges.size() == 1, "se carga la pared")
+	var wall2: Node3D = base2.edges.values()[0]
+	check(wall2.tier == 1, "se carga el nivel de la pared")
+	var loaded_carp: Node3D = base2.objects.get(Base_key(-4, 4))
+	check(loaded_carp != null and not loaded_carp.job.is_empty(), "la estación sigue fabricando tras cargar")
+	var loaded_chest: Node3D = base2.objects.get(Base_key(-8, 6))
+	check(loaded_chest != null and loaded_chest.storage[0] != null, "se carga el contenido del cofre")
+	var loaded_bench: Node3D = base2.objects.get(Base_key(-6, 4))
+	check(loaded_bench != null and loaded_bench.level == 2, "se carga el nivel del banco")
+	world2.queue_free()
+	GS.time_offset = 0.0
+	DirAccess.remove_absolute(ProjectSettings.globalize_path(GS.save_path))
+	await _frames(2)
+
+
+func Base_key(x: int, y: int) -> String:
+	return "%d,%d" % [x, y]
+
+
+func test_animals() -> void:
+	GS.new_game()
+	var world := await _new_world()
+	var player: Node3D = world.player
+	player.global_position = Vector3(30, 0, -30)
+	var rabbit: Node3D = null
+	var boar: Node3D = null
+	for c in get_tree().get_nodes_in_group("creature"):
+		if c.kind == "conejo" and rabbit == null:
+			rabbit = c
+		if c.kind == "jabali" and boar == null:
+			boar = c
+	check(rabbit != null and boar != null, "hay conejos y jabalíes en el mapa")
+
+	rabbit.home = player.global_position + Vector3(3, 0, 0)
+	rabbit.global_position = rabbit.home
+	await _frames(40)
+	var d := rabbit.global_position.distance_to(player.global_position)
+	check(d > 4.0, "el conejo huye (%.1f m)" % d)
+
+	rabbit.global_position = player.global_position + Vector3(1, 0, 0)
+	rabbit.hp = 1.0
+	rabbit.interact(player)
+	await _frames(2)
+	var meat_bag := false
+	for b in get_tree().get_nodes_in_group("bag"):
+		for it in b.items:
+			if it["id"] == "carne_cruda":
+				meat_bag = true
+	check(meat_bag, "el conejo deja carne")
+
+	boar.home = player.global_position + Vector3(1.2, 0, 0)
+	boar.global_position = boar.home
+	var hp0 := GS.health
+	await _frames(100)
+	check(is_equal_approx(GS.health, hp0), "el jabalí no ataca si no le molestas")
+	boar.interact(player)
+	await _frames(120)
+	check(GS.health < hp0, "el jabalí ataca si le pegas")
 	world.queue_free()
 	await _frames(2)

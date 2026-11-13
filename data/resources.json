@@ -1,6 +1,7 @@
 {
-  "pino":    { "name": "Pino",    "action": "Talar",   "yield": "madera", "amount": [1, 2], "hits": 6, "tool": "axe",     "hand_ok": true, "respawn": 60, "count": 70, "radius": 0.5 },
-  "roca":    { "name": "Roca",    "action": "Picar",   "yield": "piedra", "amount": [1, 2], "hits": 6, "tool": "pickaxe", "hand_ok": true, "respawn": 75, "count": 40, "radius": 0.7 },
-  "arbusto": { "name": "Arbusto", "action": "Recoger", "yield": "baya",   "amount": [1, 2], "hits": 3, "tool": "",        "hand_ok": true, "respawn": 45, "count": 30, "radius": 0.0 },
-  "hierba":  { "name": "Hierba",  "action": "Recoger", "yield": "fibra",  "amount": [1, 2], "hits": 2, "tool": "",        "hand_ok": true, "respawn": 40, "count": 40, "radius": 0.0 }
+  "pino":        { "name": "Pino",           "action": "Talar",   "yield": "madera",         "amount": [1, 2], "hits": 6, "tool": "axe",     "hand_ok": true,  "respawn": 60,  "radius": 0.5 },
+  "roca":        { "name": "Roca",           "action": "Picar",   "yield": "piedra",         "amount": [1, 2], "hits": 6, "tool": "pickaxe", "hand_ok": true,  "respawn": 75,  "radius": 0.7 },
+  "veta_hierro": { "name": "Veta de hierro", "action": "Picar",   "yield": "mineral_hierro", "amount": [1, 2], "hits": 5, "tool": "pickaxe", "hand_ok": false, "respawn": 120, "radius": 0.7 },
+  "arbusto":     { "name": "Arbusto",        "action": "Recoger", "yield": "baya",           "amount": [1, 2], "hits": 3, "tool": "",        "hand_ok": true,  "respawn": 45,  "radius": 0.0 },
+  "hierba":      { "name": "Hierba",         "action": "Recoger", "yield": "fibra",          "amount": [1, 2], "hits": 2, "tool": "",        "hand_ok": true,  "respawn": 40,  "radius": 0.0 }
 }

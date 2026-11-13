@@ -19,15 +19,17 @@ descarga `Supervival.apk` e instálalo (Android pedirá permitir "instalar apps 
 | Joystick (mitad izquierda) | Moverse |
 | Botón redondo (abajo derecha) | Acción contextual: Talar, Picar, Recoger, Atacar, Beber, Recuperar… Mantener para repetir |
 | Mochila | Inventario: usar, equipar o tirar objetos |
-| Fabricar | Recetas disponibles |
+| Fabricar | Recetas a mano (el resto, en las estaciones) |
+| Construir | Colocar cimientos, paredes, puertas, estaciones y cofres; mejorar o desmontar |
 
 ## Hoja de ruta
 
 - [x] **Fase 0 – Montaje:** Godot 4.4, tests automáticos y APK automático en GitHub.
 - [x] **Fase 1 – Base jugable:** recolección con herramientas y durabilidad, inventario por casillas,
       fabricación, hambre/sed/vida, infectados, botín, mochila al morir, guardado automático.
-- [ ] **Fase 2 – Construcción y base:** cuadrícula, cimientos/paredes/puertas, cofres, mesas de trabajo
-      por niveles, fabricación con tiempo, hoguera y cocina.
+- [x] **Fase 2 – Construcción y base:** cuadrícula, cimientos/paredes/puertas (madera → piedra → metal),
+      mejorar y desmontar, cofres, banco de trabajo por niveles, carpintería, cantería, hoguera, horno
+      y mesa de costura con fabricación por tiempo real. Animales salvajes (conejo, jabalí, lobo).
 - [ ] **Fase 3 – Mapa global:** zonas por dificultad, viaje con coste de comida/agua, zonas temporales,
       sigilo y ruido.
 - [ ] **Fase 4 – Combate y equipo:** armas a distancia, munición, armaduras, más enemigos, tablas de botín.
@@ -44,3 +46,9 @@ descarga `Supervival.apk` e instálalo (Android pedirá permitir "instalar apps 
 - `scripts/world/` — mundo, jugador, recursos, infectados, bolsas, pozo, modelos provisionales.
 - `scripts/ui/` — HUD, joystick y botón táctil multitoque.
 - `tests/` — tests que se ejecutan antes de cada compilación.
+- `tools/screens.tscn` — genera capturas de pantalla para revisar la interfaz sin móvil.
+
+## Mapas
+
+Cada zona es una entrada de `data/maps.json` (recursos, grupos de criaturas, zona de construcción).
+Nuevas zonas = nuevas entradas + los recursos/criaturas que falten en sus JSON.

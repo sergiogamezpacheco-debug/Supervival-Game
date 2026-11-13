@@ -14,9 +14,15 @@ var health := 100.0
 var food := 100.0
 var water := 100.0
 var dead := false
+var time_offset := 0.0         # solo para tests: adelanta el reloj
 
 var _food_timer := 0.0
 var _water_timer := 0.0
+
+
+## Reloj real (sigue corriendo con el juego cerrado: las estaciones fabrican igual).
+func now() -> float:
+	return Time.get_unix_time_from_system() + time_offset
 
 
 func _ready() -> void:
@@ -166,16 +172,30 @@ func free_slots() -> int:
 
 
 func can_craft(r: Dictionary) -> bool:
-	var cost: Dictionary = r.get("cost", {})
+	return has_cost(r.get("cost", {}))
+
+
+func has_cost(cost: Dictionary) -> bool:
 	for id in cost:
 		if count(str(id)) < int(cost[id]):
 			return false
 	return true
 
 
+## Cobra un coste. Devuelve false (sin cobrar nada) si falta algo.
+func pay(cost: Dictionary) -> bool:
+	if not has_cost(cost):
+		return false
+	for id in cost:
+		remove_item(str(id), int(cost[id]))
+	return true
+
+
 func craft(recipe_id: String) -> bool:
 	var r := DB.recipe(recipe_id)
-	if r.is_empty() or not can_craft(r):
+	if r.is_empty() or str(r.get("station", "")) != "":
+		return false
+	if not can_craft(r):
 		message.emit("Faltan materiales")
 		return false
 	var result := str(r["result"])
@@ -205,7 +225,11 @@ func use_slot(i: int) -> void:
 			if data.has("water"):
 				drink(float(data["water"]))
 			if data.has("heal"):
-				heal(float(data["heal"]))
+				var h := float(data["heal"])
+				if h >= 0.0:
+					heal(h)
+				else:
+					damage(-h)
 			s["qty"] = int(s["qty"]) - 1
 			if int(s["qty"]) <= 0:
 				slots[i] = null

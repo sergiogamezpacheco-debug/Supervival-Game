@@ -1,0 +1,15 @@
+{
+  "refugio": {
+    "name": "Refugio",
+    "size": 90,
+    "seed": 1337,
+    "base_half": 18,
+    "resources": { "pino": 60, "roca": 35, "veta_hierro": 8, "arbusto": 30, "hierba": 40 },
+    "creatures": [
+      { "type": "infectado", "groups": 5, "size": [1, 2], "min_dist": 26 },
+      { "type": "conejo",    "groups": 5, "size": [1, 2], "min_dist": 20 },
+      { "type": "jabali",    "groups": 2, "size": [1, 1], "min_dist": 28 },
+      { "type": "lobo",      "groups": 1, "size": [2, 3], "min_dist": 34 }
+    ]
+  }
+}

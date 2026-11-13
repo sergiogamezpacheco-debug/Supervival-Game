@@ -1,6 +1,10 @@
 extends CanvasLayer
 ## Interfaz: barras de vida/comida/agua, joystick, botón de acción,
-## mochila (inventario) y fabricación. Todo creado por código.
+## mochila, fabricación a mano, construcción, estaciones y cofres.
+## Todo creado por código.
+
+signal build_selected(mode: String, id: String)   # mode: place | upgrade | demolish
+signal build_action(action: String)               # rotate | confirm | exit
 
 const JoystickScript := preload("res://scripts/ui/joystick.gd")
 const TouchButtonScript := preload("res://scripts/ui/touch_button.gd")
@@ -20,6 +24,24 @@ var _selected := -1
 var _craft_panel: PanelContainer
 var _craft_list: VBoxContainer
 var _root: Control
+var _build_panel: PanelContainer
+var _build_list: VBoxContainer
+var _build_bar: PanelContainer
+var _build_info: Label
+var _build_rotate: Button
+var _build_confirm: Button
+var _station_panel: PanelContainer
+var _station_title: Label
+var _station_job: Label
+var _station_bar: ProgressBar
+var _station_collect: Button
+var _station_list: VBoxContainer
+var _chest_panel: PanelContainer
+var _chest_title: Label
+var _chest_grid: GridContainer
+var _chest_bag_grid: GridContainer
+var station: Node3D = null       # estación o cofre abierto
+var _station_refresh := 0.0
 
 
 func _ready() -> void:
@@ -35,6 +57,11 @@ func _ready() -> void:
 	_build_controls()
 	_build_inventory()
 	_build_crafting()
+	_build_build_menu()
+	_build_build_bar()
+	_build_station_panel()
+	_build_chest_panel()
+	add_to_group("hud")
 
 	_msg = Label.new()
 	_msg.anchor_left = 0.5
@@ -147,6 +174,9 @@ func _build_controls() -> void:
 	var craft_btn := _big_button("Fabricar")
 	craft_btn.pressed.connect(func(): _toggle(_craft_panel))
 	side.add_child(craft_btn)
+	var build_btn := _big_button("Construir")
+	build_btn.pressed.connect(func(): _toggle(_build_panel))
+	side.add_child(build_btn)
 
 
 func _big_button(t: String) -> Button:
@@ -167,11 +197,24 @@ func set_action(label: String) -> void:
 
 func _toggle(panel: Control) -> void:
 	var opening := not panel.visible
-	_inv_panel.visible = false
-	_craft_panel.visible = false
+	close_panels()
 	panel.visible = opening
 	if opening:
 		_refresh_inventory()
+
+
+func close_panels() -> void:
+	for p in [_inv_panel, _craft_panel, _build_panel, _station_panel, _chest_panel]:
+		if p:
+			p.visible = false
+	station = null
+
+
+func any_panel_open() -> bool:
+	for p in [_inv_panel, _craft_panel, _build_panel, _station_panel, _chest_panel]:
+		if p and p.visible:
+			return true
+	return false
 
 
 func show_message(t: String) -> void:
@@ -185,6 +228,11 @@ func show_death(v: bool) -> void:
 
 
 func _process(delta: float) -> void:
+	if _station_panel and _station_panel.visible:
+		_station_refresh -= delta
+		if _station_refresh <= 0.0:
+			_station_refresh = 0.25
+			_refresh_station_job()
 	if _msg_timer > 0.0:
 		_msg_timer -= delta
 		if _msg_timer < 0.5:
@@ -193,16 +241,16 @@ func _process(delta: float) -> void:
 
 # ---------------------------------------------------------------- mochila
 
-func _panel(title: String) -> Array:
+func _panel(title: String, half := Vector2(390, 280)) -> Array:
 	var panel := PanelContainer.new()
 	panel.anchor_left = 0.5
 	panel.anchor_right = 0.5
 	panel.anchor_top = 0.5
 	panel.anchor_bottom = 0.5
-	panel.offset_left = -390
-	panel.offset_right = 390
-	panel.offset_top = -280
-	panel.offset_bottom = 280
+	panel.offset_left = -half.x
+	panel.offset_right = half.x
+	panel.offset_top = -half.y
+	panel.offset_bottom = half.y
 	var style := StyleBoxFlat.new()
 	style.bg_color = Color(0.1, 0.11, 0.1, 0.94)
 	style.set_corner_radius_all(14)
@@ -220,7 +268,10 @@ func _panel(title: String) -> Array:
 	head.add_child(t)
 	var close := Button.new()
 	close.text = "  X  "
-	close.pressed.connect(func(): panel.visible = false)
+	close.pressed.connect(func():
+		panel.visible = false
+		if panel == _station_panel or panel == _chest_panel:
+			station = null)
 	head.add_child(close)
 	v.add_child(head)
 	_root.add_child(panel)
@@ -282,6 +333,11 @@ func _refresh_inventory() -> void:
 		_inv_grid.add_child(b)
 	_refresh_detail()
 	_refresh_crafting()
+	_refresh_build_menu()
+	if _chest_panel and _chest_panel.visible:
+		_refresh_chest()
+	if _station_panel and _station_panel.visible:
+		_refresh_station()
 
 
 func _select(i: int) -> void:
@@ -330,8 +386,12 @@ func _build_crafting() -> void:
 	var parts := _panel("Fabricar")
 	_craft_panel = parts[0]
 	var v: VBoxContainer = parts[1]
+	var hint := Label.new()
+	hint.text = "A mano. Las demás recetas están en las estaciones del refugio."
+	hint.add_theme_font_size_override("font_size", 18)
+	v.add_child(hint)
 	var scroll := ScrollContainer.new()
-	scroll.custom_minimum_size = Vector2(720, 420)
+	scroll.custom_minimum_size = Vector2(720, 380)
 	v.add_child(scroll)
 	_craft_list = VBoxContainer.new()
 	_craft_list.size_flags_horizontal = Control.SIZE_EXPAND_FILL
@@ -344,7 +404,7 @@ func _refresh_crafting() -> void:
 		return
 	for c in _craft_list.get_children():
 		c.queue_free()
-	for r in DB.recipes:
+	for r in DB.recipes_for(""):
 		var row := HBoxContainer.new()
 		var lbl := Label.new()
 		lbl.size_flags_horizontal = Control.SIZE_EXPAND_FILL
@@ -363,3 +423,296 @@ func _refresh_crafting() -> void:
 		b.pressed.connect(func(): GS.craft(rid))
 		row.add_child(b)
 		_craft_list.add_child(row)
+
+
+# ------------------------------------------------------------- construir
+
+func _build_build_menu() -> void:
+	var parts := _panel("Construir")
+	_build_panel = parts[0]
+	var v: VBoxContainer = parts[1]
+	var tools := HBoxContainer.new()
+	tools.add_theme_constant_override("separation", 12)
+	var up := Button.new()
+	up.text = "Mejorar estructura"
+	up.pressed.connect(func(): _pick_build("upgrade", ""))
+	tools.add_child(up)
+	var dem := Button.new()
+	dem.text = "Desmontar"
+	dem.pressed.connect(func(): _pick_build("demolish", ""))
+	tools.add_child(dem)
+	v.add_child(tools)
+	var scroll := ScrollContainer.new()
+	scroll.custom_minimum_size = Vector2(720, 380)
+	v.add_child(scroll)
+	_build_list = VBoxContainer.new()
+	_build_list.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_build_list.add_theme_constant_override("separation", 8)
+	scroll.add_child(_build_list)
+
+
+func _refresh_build_menu() -> void:
+	if _build_list == null:
+		return
+	for c in _build_list.get_children():
+		c.queue_free()
+	_section(_build_list, "Estructuras")
+	for id in DB.structures:
+		_build_row(str(id), str(DB.structure_tier(str(id), 0).get("name", id)), DB.structure_tier(str(id), 0).get("cost", {}))
+	_section(_build_list, "Estaciones y almacenaje")
+	for id in DB.stations:
+		var d: Dictionary = DB.stations[id]
+		_build_row(str(id), "%s — %s" % [d.get("name", id), d.get("desc", "")], DB.station_level(str(id), 1).get("cost", {}))
+
+
+func _section(box: VBoxContainer, title: String) -> void:
+	var l := Label.new()
+	l.text = title
+	l.add_theme_color_override("font_color", Color(0.95, 0.8, 0.4))
+	box.add_child(l)
+
+
+func _build_row(id: String, title: String, cost: Dictionary) -> void:
+	var row := HBoxContainer.new()
+	var lbl := Label.new()
+	lbl.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	lbl.add_theme_font_size_override("font_size", 19)
+	lbl.text = "%s\n   %s" % [title, DB.cost_text(cost)]
+	row.add_child(lbl)
+	var b := Button.new()
+	b.text = "Colocar"
+	b.custom_minimum_size = Vector2(140, 56)
+	b.disabled = not GS.has_cost(cost)
+	b.pressed.connect(func(): _pick_build("place", id))
+	row.add_child(b)
+	_build_list.add_child(row)
+
+
+func _pick_build(mode: String, id: String) -> void:
+	close_panels()
+	build_selected.emit(mode, id)
+
+
+func _build_build_bar() -> void:
+	_build_bar = PanelContainer.new()
+	_build_bar.anchor_left = 0.5
+	_build_bar.anchor_right = 0.5
+	_build_bar.anchor_top = 1.0
+	_build_bar.anchor_bottom = 1.0
+	_build_bar.offset_left = -330
+	_build_bar.offset_right = 330
+	_build_bar.offset_top = -150
+	_build_bar.offset_bottom = -12
+	var style := StyleBoxFlat.new()
+	style.bg_color = Color(0.08, 0.09, 0.08, 0.85)
+	style.set_corner_radius_all(12)
+	style.set_content_margin_all(10)
+	_build_bar.add_theme_stylebox_override("panel", style)
+	_build_bar.visible = false
+	var v := VBoxContainer.new()
+	_build_bar.add_child(v)
+	_build_info = Label.new()
+	_build_info.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_build_info.autowrap_mode = TextServer.AUTOWRAP_WORD
+	_build_info.add_theme_font_size_override("font_size", 19)
+	v.add_child(_build_info)
+	var h := HBoxContainer.new()
+	h.alignment = BoxContainer.ALIGNMENT_CENTER
+	h.add_theme_constant_override("separation", 14)
+	v.add_child(h)
+	_build_rotate = Button.new()
+	_build_rotate.text = "Girar"
+	_build_rotate.custom_minimum_size = Vector2(140, 56)
+	_build_rotate.pressed.connect(func(): build_action.emit("rotate"))
+	h.add_child(_build_rotate)
+	_build_confirm = Button.new()
+	_build_confirm.text = "Colocar"
+	_build_confirm.custom_minimum_size = Vector2(170, 56)
+	_build_confirm.pressed.connect(func(): build_action.emit("confirm"))
+	h.add_child(_build_confirm)
+	var ex := Button.new()
+	ex.text = "Salir"
+	ex.custom_minimum_size = Vector2(140, 56)
+	ex.pressed.connect(func(): build_action.emit("exit"))
+	h.add_child(ex)
+	_root.add_child(_build_bar)
+
+
+## La llama el mundo cada frame mientras se está construyendo.
+func set_build_info(visible_bar: bool, mode: String, text: String, ok: bool) -> void:
+	_build_bar.visible = visible_bar
+	if not visible_bar:
+		return
+	_build_info.text = text
+	_build_info.add_theme_color_override("font_color", Color(0.75, 1.0, 0.75) if ok else Color(1.0, 0.6, 0.55))
+	_build_rotate.visible = mode == "place"
+	_build_confirm.disabled = not ok
+	match mode:
+		"place": _build_confirm.text = "Colocar"
+		"upgrade": _build_confirm.text = "Mejorar"
+		"demolish": _build_confirm.text = "Desmontar"
+
+
+# -------------------------------------------------------------- estaciones
+
+func open_station(s: Node3D) -> void:
+	close_panels()
+	station = s
+	if s.is_chest():
+		_chest_panel.visible = true
+		_refresh_chest()
+	else:
+		_station_panel.visible = true
+		_refresh_station()
+
+
+func _build_station_panel() -> void:
+	var parts := _panel("Estación")
+	_station_panel = parts[0]
+	var v: VBoxContainer = parts[1]
+	_station_title = (v.get_child(0) as HBoxContainer).get_child(0) as Label
+	_station_job = Label.new()
+	_station_job.add_theme_font_size_override("font_size", 20)
+	v.add_child(_station_job)
+	var h := HBoxContainer.new()
+	_station_bar = ProgressBar.new()
+	_station_bar.custom_minimum_size = Vector2(520, 30)
+	_station_bar.max_value = 1.0
+	_station_bar.show_percentage = false
+	_station_bar.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	var fill := StyleBoxFlat.new()
+	fill.bg_color = Color("6fbf4a")
+	fill.set_corner_radius_all(6)
+	_station_bar.add_theme_stylebox_override("fill", fill)
+	h.add_child(_station_bar)
+	_station_collect = Button.new()
+	_station_collect.text = "Recoger"
+	_station_collect.custom_minimum_size = Vector2(160, 52)
+	_station_collect.pressed.connect(func():
+		if station and station.collect():
+			_refresh_station())
+	h.add_child(_station_collect)
+	v.add_child(h)
+	var scroll := ScrollContainer.new()
+	scroll.custom_minimum_size = Vector2(720, 330)
+	v.add_child(scroll)
+	_station_list = VBoxContainer.new()
+	_station_list.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_station_list.add_theme_constant_override("separation", 8)
+	scroll.add_child(_station_list)
+
+
+func _refresh_station() -> void:
+	if station == null or not is_instance_valid(station) or station.is_chest():
+		return
+	_station_title.text = station.display_name()
+	for c in _station_list.get_children():
+		c.queue_free()
+	for r in DB.recipes_for(station.id):
+		var row := HBoxContainer.new()
+		var lbl := Label.new()
+		lbl.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		lbl.add_theme_font_size_override("font_size", 19)
+		var unlocked: bool = station.recipe_unlocked(r)
+		var head := "%s  (%ds)" % [DB.item_name(str(r["result"])), int(r.get("time", 0))]
+		if not unlocked:
+			head += "  — requiere nivel %d" % int(r.get("level", 1))
+		lbl.text = "%s\n   %s" % [head, DB.cost_text(r.get("cost", {}))]
+		if not unlocked:
+			lbl.modulate = Color(1, 1, 1, 0.5)
+		row.add_child(lbl)
+		var b := Button.new()
+		b.text = "Fabricar"
+		b.custom_minimum_size = Vector2(150, 56)
+		b.disabled = not unlocked or not station.job.is_empty() or not GS.can_craft(r)
+		var rid := str(r["id"])
+		b.pressed.connect(func():
+			var why: String = station.start(rid)
+			if why != "":
+				show_message(why)
+			_refresh_station())
+		row.add_child(b)
+		_station_list.add_child(row)
+	_refresh_station_job()
+
+
+func _refresh_station_job() -> void:
+	if station == null or not is_instance_valid(station) or station.is_chest():
+		return
+	if station.job.is_empty():
+		_station_job.text = "Libre. Elige qué fabricar."
+		_station_bar.value = 0.0
+		_station_collect.disabled = true
+		return
+	var nm := DB.item_name(str(DB.recipe(str(station.job["recipe"]))["result"]))
+	if station.is_done():
+		_station_job.text = "¡%s listo!" % nm
+		_station_collect.disabled = false
+	else:
+		var t := int(ceil(station.time_left()))
+		_station_job.text = "Fabricando %s — %d:%02d" % [nm, t / 60, t % 60]
+		_station_collect.disabled = true
+	_station_bar.value = station.progress()
+
+
+# ------------------------------------------------------------------- cofre
+
+func _build_chest_panel() -> void:
+	var parts := _panel("Cofre", Vector2(560, 300))
+	_chest_panel = parts[0]
+	var v: VBoxContainer = parts[1]
+	_chest_title = (v.get_child(0) as HBoxContainer).get_child(0) as Label
+	var hint := Label.new()
+	hint.text = "Toca un objeto para pasarlo de un lado a otro."
+	hint.add_theme_font_size_override("font_size", 18)
+	v.add_child(hint)
+	var h := HBoxContainer.new()
+	h.add_theme_constant_override("separation", 24)
+	v.add_child(h)
+	var left := VBoxContainer.new()
+	var lt := Label.new()
+	lt.text = "Cofre"
+	left.add_child(lt)
+	_chest_grid = GridContainer.new()
+	_chest_grid.columns = 4
+	left.add_child(_chest_grid)
+	h.add_child(left)
+	var right := VBoxContainer.new()
+	var rt := Label.new()
+	rt.text = "Mochila"
+	right.add_child(rt)
+	_chest_bag_grid = GridContainer.new()
+	_chest_bag_grid.columns = 4
+	right.add_child(_chest_bag_grid)
+	h.add_child(right)
+
+
+func _slot_button(s: Variant) -> Button:
+	var b := Button.new()
+	b.custom_minimum_size = Vector2(124, 50)
+	b.add_theme_font_size_override("font_size", 15)
+	b.clip_text = true
+	if s != null:
+		var label := DB.item_name(str(s["id"]))
+		if int(s["qty"]) > 1:
+			label += " x%d" % int(s["qty"])
+		b.text = label
+	return b
+
+
+func _refresh_chest() -> void:
+	if station == null or not is_instance_valid(station) or not station.is_chest():
+		return
+	_chest_title.text = station.display_name()
+	for c in _chest_grid.get_children():
+		c.queue_free()
+	for c in _chest_bag_grid.get_children():
+		c.queue_free()
+	for i in station.storage.size():
+		var b := _slot_button(station.storage[i])
+		b.pressed.connect(func(): station.chest_to_bag(i))
+		_chest_grid.add_child(b)
+	for i in GS.slots.size():
+		var b := _slot_button(GS.slots[i])
+		b.pressed.connect(func(): station.bag_to_chest(i))
+		_chest_bag_grid.add_child(b)

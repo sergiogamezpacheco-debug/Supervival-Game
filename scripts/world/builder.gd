@@ -67,6 +67,12 @@ static func resource_mesh(kind: String) -> Node3D:
 			var r := part(sphere(0.8, 1.0), Color("7d7f82"), Vector3(0, 0.35, 0))
 			r.scale = Vector3(1.0, 0.8, 0.85)
 			root.add_child(r)
+		"veta_hierro":
+			var v := part(sphere(0.8, 1.1), Color("5f5650"), Vector3(0, 0.4, 0))
+			v.scale = Vector3(1.0, 0.85, 0.9)
+			root.add_child(v)
+			for p in [Vector3(0.4, 0.6, 0.3), Vector3(-0.35, 0.5, 0.35), Vector3(0.1, 0.85, -0.3), Vector3(-0.2, 0.75, -0.1)]:
+				root.add_child(part(box(Vector3(0.22, 0.18, 0.2)), Color("b5651d"), p))
 		"arbusto":
 			root.add_child(part(sphere(0.55), Color("2e5e2a"), Vector3(0, 0.45, 0)))
 			for p in [Vector3(0.3, 0.6, 0.25), Vector3(-0.25, 0.7, 0.2), Vector3(0.05, 0.55, -0.4)]:
@@ -149,3 +155,153 @@ static func well_mesh() -> Node3D:
 	root.add_child(part(box(Vector3(0.12, 1.6, 0.12)), Color("6b4423"), Vector3(-0.85, 1.2, 0)))
 	root.add_child(part(box(Vector3(2.0, 0.12, 0.5)), Color("7a4f2a"), Vector3(0, 2.0, 0)))
 	return root
+
+
+static func creature_mesh(kind: String) -> Node3D:
+	match kind:
+		"conejo":
+			var r := Node3D.new()
+			var fur := Color("a08a6e")
+			r.add_child(part(sphere(0.22, 0.36), fur, Vector3(0, 0.2, 0.05)))
+			r.add_child(part(sphere(0.13), fur, Vector3(0, 0.33, -0.2)))
+			r.add_child(part(box(Vector3(0.05, 0.22, 0.06)), fur, Vector3(0.05, 0.52, -0.2)))
+			r.add_child(part(box(Vector3(0.05, 0.22, 0.06)), fur, Vector3(-0.05, 0.52, -0.2)))
+			r.add_child(part(sphere(0.06), Color.WHITE, Vector3(0, 0.25, 0.27)))
+			return r
+		"jabali":
+			var r := Node3D.new()
+			var hide := Color("4a3a2e")
+			r.add_child(part(box(Vector3(0.6, 0.6, 1.2)), hide, Vector3(0, 0.6, 0)))
+			r.add_child(part(box(Vector3(0.45, 0.45, 0.45)), hide, Vector3(0, 0.6, -0.75)))
+			r.add_child(part(box(Vector3(0.2, 0.15, 0.15)), Color("6b5545"), Vector3(0, 0.5, -1.02)))
+			r.add_child(part(cyl(0.0, 0.03, 0.18), Color("eee8d5"), Vector3(0.12, 0.45, -0.98)))
+			r.add_child(part(cyl(0.0, 0.03, 0.18), Color("eee8d5"), Vector3(-0.12, 0.45, -0.98)))
+			for p in [Vector3(0.2, 0.15, 0.4), Vector3(-0.2, 0.15, 0.4), Vector3(0.2, 0.15, -0.4), Vector3(-0.2, 0.15, -0.4)]:
+				r.add_child(part(box(Vector3(0.12, 0.3, 0.12)), hide.darkened(0.3), p))
+			return r
+		"lobo":
+			var r := Node3D.new()
+			var grey := Color("6e7276")
+			r.add_child(part(box(Vector3(0.4, 0.45, 1.1)), grey, Vector3(0, 0.65, 0)))
+			r.add_child(part(box(Vector3(0.32, 0.32, 0.42)), grey, Vector3(0, 0.85, -0.7)))
+			r.add_child(part(box(Vector3(0.16, 0.14, 0.25)), grey.darkened(0.2), Vector3(0, 0.78, -0.98)))
+			r.add_child(part(cyl(0.0, 0.07, 0.18), grey, Vector3(0.1, 1.08, -0.65)))
+			r.add_child(part(cyl(0.0, 0.07, 0.18), grey, Vector3(-0.1, 1.08, -0.65)))
+			r.add_child(part(sphere(0.04), Color("ffd23f"), Vector3(0.08, 0.9, -0.92), 3.0))
+			r.add_child(part(sphere(0.04), Color("ffd23f"), Vector3(-0.08, 0.9, -0.92), 3.0))
+			for p in [Vector3(0.14, 0.22, 0.4), Vector3(-0.14, 0.22, 0.4), Vector3(0.14, 0.22, -0.4), Vector3(-0.14, 0.22, -0.4)]:
+				r.add_child(part(box(Vector3(0.1, 0.45, 0.1)), grey.darkened(0.25), p))
+			var tail := part(box(Vector3(0.1, 0.1, 0.45)), grey, Vector3(0, 0.8, 0.7))
+			tail.rotation_degrees.x = 25
+			r.add_child(tail)
+			return r
+	return zombie_mesh()
+
+
+# ------------------------------------------------------------ construcción
+
+static func ghost_mat(ok: bool) -> StandardMaterial3D:
+	return mat(Color(0.3, 1.0, 0.4, 0.45) if ok else Color(1.0, 0.25, 0.2, 0.45), 0.6)
+
+
+static func structure_mesh(kind: String, color: Color) -> Node3D:
+	var root := Node3D.new()
+	match kind:
+		"foundation":
+			root.add_child(part(box(Vector3(2.0, 0.12, 2.0)), color, Vector3(0, 0.06, 0)))
+			root.add_child(part(box(Vector3(1.9, 0.02, 0.05)), color.darkened(0.25), Vector3(0, 0.125, -0.5)))
+			root.add_child(part(box(Vector3(1.9, 0.02, 0.05)), color.darkened(0.25), Vector3(0, 0.125, 0.5)))
+		"wall":
+			root.add_child(part(box(Vector3(2.0, 2.6, 0.25)), color, Vector3(0, 1.3, 0)))
+			root.add_child(part(box(Vector3(2.04, 0.15, 0.3)), color.darkened(0.3), Vector3(0, 2.55, 0)))
+		"door":
+			root.add_child(part(box(Vector3(0.3, 2.6, 0.3)), color.darkened(0.25), Vector3(0.85, 1.3, 0)))
+			root.add_child(part(box(Vector3(0.3, 2.6, 0.3)), color.darkened(0.25), Vector3(-0.85, 1.3, 0)))
+			root.add_child(part(box(Vector3(2.0, 0.35, 0.3)), color.darkened(0.25), Vector3(0, 2.43, 0)))
+			# Hoja de la puerta: gira sobre la bisagra izquierda.
+			var hinge := Node3D.new()
+			hinge.name = "Hinge"
+			hinge.position = Vector3(-0.7, 0, 0)
+			hinge.add_child(part(box(Vector3(1.4, 2.2, 0.12)), color, Vector3(0.7, 1.1, 0)))
+			hinge.add_child(part(sphere(0.06), Color("d4b45a"), Vector3(1.2, 1.1, -0.1)))
+			root.add_child(hinge)
+	return root
+
+
+static func station_mesh(kind: String, level: int) -> Node3D:
+	var root := Node3D.new()
+	var wood := Color("8b5a2b")
+	var stone := Color("85837d")
+	match kind:
+		"banco_trabajo":
+			root.add_child(part(box(Vector3(1.7, 0.12, 0.9)), wood, Vector3(0, 0.9, 0)))
+			for p in [Vector3(0.75, 0.45, 0.35), Vector3(-0.75, 0.45, 0.35), Vector3(0.75, 0.45, -0.35), Vector3(-0.75, 0.45, -0.35)]:
+				root.add_child(part(box(Vector3(0.1, 0.9, 0.1)), wood.darkened(0.3), p))
+			root.add_child(part(box(Vector3(0.35, 0.25, 0.25)), Color("7d7f82"), Vector3(-0.5, 1.08, 0)))
+			if level >= 2:
+				root.add_child(part(box(Vector3(0.5, 0.2, 0.35)), Color("6f7a82"), Vector3(0.45, 1.06, 0)))
+		"carpinteria":
+			root.add_child(part(box(Vector3(1.8, 0.15, 0.8)), wood, Vector3(0, 0.8, 0)))
+			root.add_child(part(box(Vector3(1.6, 0.8, 0.6)), wood.darkened(0.35), Vector3(0, 0.4, 0)))
+			var saw := part(cyl(0.35, 0.35, 0.03), Color("c8c8c8"), Vector3(0.2, 0.95, 0))
+			saw.rotation_degrees.x = 90
+			root.add_child(saw)
+			root.add_child(part(box(Vector3(1.4, 0.15, 0.2)), Color("c49a6c"), Vector3(-0.1, 0.95, 0.25)))
+		"cantero":
+			root.add_child(part(box(Vector3(1.6, 0.8, 1.0)), stone, Vector3(0, 0.4, 0)))
+			root.add_child(part(box(Vector3(0.45, 0.35, 0.45)), stone.lightened(0.2), Vector3(0.3, 0.98, 0)))
+			root.add_child(part(box(Vector3(0.1, 0.5, 0.1)), wood, Vector3(-0.4, 1.05, 0.1)))
+		"hoguera":
+			for i in 8:
+				var a := TAU * float(i) / 8.0
+				root.add_child(part(sphere(0.16), stone, Vector3(cos(a) * 0.55, 0.12, sin(a) * 0.55)))
+			var l1 := part(cyl(0.08, 0.08, 0.8), wood, Vector3(0, 0.15, 0))
+			l1.rotation_degrees = Vector3(0, 30, 80)
+			root.add_child(l1)
+			var l2 := part(cyl(0.08, 0.08, 0.8), wood, Vector3(0, 0.15, 0))
+			l2.rotation_degrees = Vector3(0, -40, 80)
+			root.add_child(l2)
+			root.add_child(part(cyl(0.0, 0.25, 0.6), Color(1.0, 0.55, 0.1, 0.85), Vector3(0, 0.45, 0), 3.0))
+			var light := OmniLight3D.new()
+			light.light_color = Color(1.0, 0.6, 0.3)
+			light.omni_range = 5.0
+			light.light_energy = 1.2
+			light.position = Vector3(0, 1.0, 0)
+			root.add_child(light)
+		"horno":
+			root.add_child(part(box(Vector3(1.4, 1.3, 1.2)), stone.darkened(0.15), Vector3(0, 0.65, 0)))
+			root.add_child(part(box(Vector3(0.5, 0.4, 0.05)), Color(1.0, 0.45, 0.1), Vector3(0, 0.45, -0.61), 2.5))
+			root.add_child(part(box(Vector3(0.35, 1.0, 0.35)), stone.darkened(0.3), Vector3(0.35, 1.8, 0.3)))
+		"mesa_costura":
+			root.add_child(part(box(Vector3(1.4, 0.1, 0.8)), wood.lightened(0.15), Vector3(0, 0.85, 0)))
+			for p in [Vector3(0.6, 0.42, 0.3), Vector3(-0.6, 0.42, 0.3), Vector3(0.6, 0.42, -0.3), Vector3(-0.6, 0.42, -0.3)]:
+				root.add_child(part(box(Vector3(0.08, 0.85, 0.08)), wood.darkened(0.3), p))
+			root.add_child(part(cyl(0.1, 0.1, 0.2), Color("c0392b"), Vector3(0.4, 1.0, 0)))
+			root.add_child(part(box(Vector3(0.6, 0.03, 0.5)), Color("d9cfb4"), Vector3(-0.25, 0.92, 0)))
+		"cofre":
+			var c := wood if level <= 1 else Color("6b4a2a")
+			root.add_child(part(box(Vector3(1.2, 0.6, 0.7)), c, Vector3(0, 0.3, 0)))
+			root.add_child(part(box(Vector3(1.24, 0.22, 0.74)), c.darkened(0.2), Vector3(0, 0.7, 0)))
+			root.add_child(part(box(Vector3(0.15, 0.18, 0.05)), Color("d4b45a"), Vector3(0, 0.55, -0.37)))
+			if level >= 2:
+				root.add_child(part(box(Vector3(1.26, 0.06, 0.76)), Color("6f7a82"), Vector3(0, 0.45, 0)))
+	return root
+
+
+static func base_border(half: float) -> Node3D:
+	var root := Node3D.new()
+	var c := Color(0.85, 0.8, 0.5, 0.5)
+	var w := half * 2.0
+	root.add_child(part(box(Vector3(w, 0.03, 0.12)), c, Vector3(0, 0.02, -half)))
+	root.add_child(part(box(Vector3(w, 0.03, 0.12)), c, Vector3(0, 0.02, half)))
+	root.add_child(part(box(Vector3(0.12, 0.03, w)), c, Vector3(-half, 0.02, 0)))
+	root.add_child(part(box(Vector3(0.12, 0.03, w)), c, Vector3(half, 0.02, 0)))
+	return root
+
+
+## Aplica un material a todas las mallas (para la vista previa fantasma).
+static func tint(node: Node, m: Material) -> void:
+	if node is MeshInstance3D:
+		(node as MeshInstance3D).material_override = m
+	for c in node.get_children():
+		tint(c, m)
