@@ -35,6 +35,8 @@ func _ready() -> void:
 	await test_animals()
 	print("== Viajes y zonas")
 	await test_travel()
+	print("== Personaje")
+	await test_character()
 	print("\nResultado: %d OK, %d fallos" % [passed, failures])
 	DirAccess.remove_absolute(ProjectSettings.globalize_path(GS.save_path))
 	get_tree().quit(1 if failures > 0 else 0)
@@ -155,6 +157,8 @@ func test_world() -> void:
 	await _frames(5)
 	var player: Node3D = world.player
 	check(player != null, "aparece el jugador")
+	check(player._visual is CharacterModel and player._visual.hand != null, "el jugador es el superviviente con mano para herramientas")
+	check(player._visual.j.has("leg_l") and player._visual.j.has("arm_r"), "el superviviente tiene articulaciones para animar")
 	check(get_tree().get_nodes_in_group("resource").size() > 50, "se generan recursos")
 	check(get_tree().get_nodes_in_group("enemy").size() > 0, "se generan infectados")
 
@@ -535,3 +539,46 @@ func test_travel() -> void:
 	GS.new_game()
 	DirAccess.remove_absolute(ProjectSettings.globalize_path(GS.save_path))
 	await _frames(2)
+
+
+func test_character() -> void:
+	GS.new_game()
+	var looks := 0
+	for sex in ["m", "f"]:
+		for i in 5:
+			var c := CharacterModel.new({"sex": sex, "hair": i, "skin": i, "eyes": i, "nose": i, "mouth": i, "eye_color": i, "hair_color": i})
+			add_child(c)
+			if c.hand != null and c.get_child_count() > 0:
+				looks += 1
+			c.queue_free()
+	check(looks == 10, "se construyen las 5 variantes de cada rasgo en hombre y mujer")
+	var thin := CharacterModel.new({}, {"fuerza": 0.0})
+	var strong := CharacterModel.new({}, {"fuerza": 1.0})
+	check(strong.dims()["arm"] > thin.dims()["arm"] * 1.3, "la fuerza ensancha los brazos")
+	var dressed := CharacterModel.new({"sex": "f"}, {}, {"torso": "chaqueta_piel", "piernas": "pantalon_cargo", "pies": "botas", "cabeza": "gorra", "manos": "guantes", "espalda": "mochila"})
+	add_child(dressed)
+	var bare := CharacterModel.new({"sex": "f"})
+	add_child(bare)
+	await _frames(1)
+	check(dressed.get_child_count() > 0 and _count_meshes(dressed) > _count_meshes(bare) + 10, "la ropa añade piezas al personaje")
+	dressed.animate_walk(1.0, 1.0)
+	check(absf(dressed.j["leg_l"].rotation.x) > 0.1, "las piernas se mueven al andar")
+	dressed.queue_free()
+	bare.queue_free()
+	GS.look["sex"] = "f"
+	GS.look["hair"] = 3
+	GS.outfit["torso"] = "camiseta"
+	GS.save_game({})
+	GS.new_game()
+	GS.load_game()
+	check(GS.look["sex"] == "f" and int(GS.look["hair"]) == 3 and GS.outfit["torso"] == "camiseta", "el aspecto y la ropa se guardan")
+	DirAccess.remove_absolute(ProjectSettings.globalize_path(GS.save_path))
+	GS.new_game()
+	await _frames(2)
+
+
+func _count_meshes(n: Node) -> int:
+	var c := 1 if n is MeshInstance3D else 0
+	for ch in n.get_children():
+		c += _count_meshes(ch)
+	return c

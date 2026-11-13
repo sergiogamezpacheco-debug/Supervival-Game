@@ -18,6 +18,10 @@ var time_offset := 0.0         # solo para tests: adelanta el reloj
 var poison := 0.0              # segundos de veneno que quedan
 var current_map := "refugio"   # zona en la que está el jugador
 var maps_state: Dictionary = {} # estado guardado de cada zona (refugio, bolsas…)
+# Aspecto del superviviente (se elige al crear el personaje)
+var look := {"sex": "m", "skin": 1, "hair": 1, "hair_color": 1, "eyes": 0, "eye_color": 0, "nose": 0, "mouth": 1}
+var physique := {"fuerza": 0.0, "resistencia": 0.0}
+var outfit := {"cabeza": "", "torso": "", "piernas": "", "pies": "", "manos": "", "espalda": ""}
 
 var _food_timer := 0.0
 var _water_timer := 0.0
@@ -35,6 +39,9 @@ func _ready() -> void:
 func new_game() -> void:
 	current_map = "refugio"
 	maps_state = {}
+	look = {"sex": "m", "skin": 1, "hair": 1, "hair_color": 1, "eyes": 0, "eye_color": 0, "nose": 0, "mouth": 1}
+	physique = {"fuerza": 0.0, "resistencia": 0.0}
+	outfit = {"cabeza": "", "torso": "", "piernas": "", "pies": "", "manos": "", "espalda": ""}
 	slots.clear()
 	slots.resize(int(DB.bal("inventory_slots", 20)))
 	hand = null
@@ -344,6 +351,9 @@ func to_dict() -> Dictionary:
 		"health": health,
 		"food": food,
 		"water": water,
+		"look": look,
+		"physique": physique,
+		"outfit": outfit,
 	}
 
 
@@ -363,6 +373,12 @@ func from_dict(d: Dictionary) -> void:
 		if h.has("dur"):
 			h["dur"] = int(h["dur"])
 		hand = h
+	for k in d.get("look", {}):
+		look[k] = d["look"][k] if typeof(d["look"][k]) == TYPE_STRING else int(d["look"][k])
+	for k in d.get("physique", {}):
+		physique[k] = float(d["physique"][k])
+	for k in d.get("outfit", {}):
+		outfit[k] = str(d["outfit"][k])
 	health = float(d.get("health", health))
 	food = float(d.get("food", food))
 	water = float(d.get("water", water))

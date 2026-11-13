@@ -8,8 +8,11 @@ var target: Node3D = null         # objetivo más cercano (lo calcula el mundo)
 var floor_y := 0.0                # altura del suelo (sube sobre los cimientos)
 
 var _action_cd := 0.0
-var _visual: Node3D
+var _visual: CharacterModel
 var _hand: Node3D
+var _walk_phase := 0.0
+var _walk_amount := 0.0
+var _swing_t := -1.0
 var _hand_item := ""
 
 
@@ -23,9 +26,9 @@ func _ready() -> void:
 	shape.shape = cap
 	shape.position.y = 0.8
 	add_child(shape)
-	_visual = Builder.player_mesh()
+	_visual = CharacterModel.new(GS.look, GS.physique, GS.outfit)
 	add_child(_visual)
-	_hand = _visual.get_node("Hand")
+	_hand = _visual.hand
 	GS.inventory_changed.connect(_refresh_hand)
 	_refresh_hand()
 
@@ -46,6 +49,19 @@ func _physics_process(delta: float) -> void:
 	position.y = floor_y
 	if dir.length() > 0.1:
 		_face(Vector3(dir.x, 0.0, dir.y))
+
+	# Animación de andar y golpe
+	var moving := dir.length() > 0.1
+	_walk_amount = move_toward(_walk_amount, 1.0 if moving else 0.0, delta * 6.0)
+	if moving:
+		_walk_phase += delta * 9.0 * dir.length()
+	_visual.animate_walk(_walk_phase, _walk_amount)
+	if _swing_t >= 0.0:
+		_swing_t += delta / 0.3
+		if _swing_t >= 1.0:
+			_swing_t = -1.0
+		else:
+			_visual.animate_swing(_swing_t)
 
 	_action_cd = maxf(_action_cd - delta, 0.0)
 	var acting := action_held or Input.is_key_pressed(KEY_SPACE)
@@ -70,9 +86,7 @@ func _face(dir: Vector3) -> void:
 
 
 func _swing() -> void:
-	var tw := create_tween()
-	tw.tween_property(_hand, "rotation_degrees:x", -70.0, 0.08)
-	tw.tween_property(_hand, "rotation_degrees:x", 0.0, 0.15)
+	_swing_t = 0.0
 
 
 func _refresh_hand() -> void:
@@ -82,7 +96,20 @@ func _refresh_hand() -> void:
 	_hand_item = id
 	for c in _hand.get_children():
 		c.queue_free()
-	_hand.add_child(Builder.tool_mesh(id))
+	var tool := Builder.tool_mesh(id)
+	tool.rotation_degrees.x = -80.0
+	_hand.add_child(tool)
+
+
+## El aspecto ha cambiado (creación de personaje, ropa nueva, físico).
+func refresh_look() -> void:
+	_visual.look = GS.look.duplicate()
+	_visual.physique = GS.physique.duplicate()
+	_visual.outfit = GS.outfit.duplicate()
+	_visual.rebuild()
+	_hand = _visual.hand
+	_hand_item = "-"
+	_refresh_hand()
 
 
 func hurt_flash() -> void:

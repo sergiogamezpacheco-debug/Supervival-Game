@@ -35,6 +35,8 @@ func _ready() -> void:
 	base.place("hoguera", Vector2i(3, 2), 0, 0, pp)
 	base.place("carpinteria", Vector2i(-3, 1), 0, 1, pp)
 	base.place("horno", Vector2i(-3, -1), 0, 0, pp)
+	GS.hand = GS.make_item("hacha_piedra")
+	GS.inventory_changed.emit()
 	world.player.global_position = Vector3(4.5, 0, 3.5)
 	world.player._face(Vector3(-1, 0, -0.4))
 	world.camera.global_position = world.player.global_position + Vector3(0, 13.0, 8.5)
