@@ -31,6 +31,7 @@ var player_name := "Superviviente"
 var stamina := 100.0           # aguante para correr
 var train_ready: Dictionary = {} # ejercicio -> hora (unix) en que se puede volver a entrenar
 var testing := false           # los tests no muestran la pantalla de creación
+var pending_drop: Array = []   # objetos de partidas antiguas que ya no caben (se dejan en una bolsa)
 
 var _food_timer := 0.0
 var _water_timer := 0.0
@@ -244,14 +245,14 @@ func craft(recipe_id: String) -> bool:
 	var result := str(r["result"])
 	var qty := int(r.get("qty", 1))
 	if free_slots() == 0 and count(result) == 0:
-		message.emit("Mochila llena")
+		message.emit("Inventario lleno")
 		return false
 	var cost: Dictionary = r["cost"]
 	for id in cost:
 		remove_item(str(id), int(cost[id]))
 	var left := add_item(result, qty)
 	if left > 0:
-		message.emit("Mochila llena: se perdió parte del objeto")
+		message.emit("Inventario lleno: se perdió parte del objeto")
 	message.emit("Fabricado: %s" % DB.item_name(result))
 	return true
 
@@ -307,7 +308,7 @@ func unequip() -> void:
 		hand = null
 		inventory_changed.emit()
 	else:
-		message.emit("Mochila llena")
+		message.emit("Inventario lleno")
 
 
 func drop_slot(i: int) -> Variant:
@@ -405,7 +406,7 @@ func take_off(slot: String) -> bool:
 		message.emit("Vacía primero los huecos de la mochila")
 		return false
 	if free_slots() - extra < 1:
-		message.emit("Mochila llena")
+		message.emit("Inventario lleno")
 		return false
 	worn[slot] = null
 	_resize_bag()
@@ -414,6 +415,21 @@ func take_off(slot: String) -> bool:
 	message.emit("Te quitas: %s" % DB.item_name(str(it["id"])))
 	inventory_changed.emit()
 	return true
+
+
+func _first_free() -> int:
+	for i in slots.size():
+		if slots[i] == null:
+			return i
+	return -1
+
+
+## Nivel de la mochila puesta: 0 sin mochila, 1 lona, 2 excursión, 3 táctica.
+func bag_level() -> int:
+	var it = worn.get("espalda")
+	if it == null:
+		return 0
+	return clampi(int(DB.item(str(it["id"])).get("bag_slots", 0)) / 8, 0, 3)
 
 
 func bag_size() -> int:
@@ -584,13 +600,21 @@ func from_dict(d: Dictionary) -> void:
 		if it2 != null:
 			extra += int(DB.item(str(it2.get("id", ""))).get("bag_slots", 0))
 	slots.resize(slots.size() + extra)
-	for i in mini(saved.size(), slots.size()):
+	# Se colocan en orden; lo que ya no cabe (partidas de cuando había 20 huecos) va a una bolsa.
+	pending_drop = []
+	for i in saved.size():
 		var s = saved[i]
-		if s != null and DB.items.has(str(s.get("id", ""))):
-			s["qty"] = int(s["qty"])
-			if s.has("dur"):
-				s["dur"] = int(s["dur"])
+		if s == null or not DB.items.has(str(s.get("id", ""))):
+			continue
+		s["qty"] = int(s["qty"])
+		if s.has("dur"):
+			s["dur"] = int(s["dur"])
+		if i < slots.size() and slots[i] == null:
 			slots[i] = s
+		elif _first_free() >= 0:
+			slots[_first_free()] = s
+		else:
+			pending_drop.append(s)
 	var h = d.get("hand", null)
 	if h != null and DB.items.has(str(h.get("id", ""))):
 		h["qty"] = int(h["qty"])

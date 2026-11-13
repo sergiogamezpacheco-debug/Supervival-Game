@@ -40,6 +40,8 @@ func _ready() -> void:
 	await test_character()
 	print("== Ropa, físico y gimnasio")
 	await test_survivor()
+	print("== Inventario y mochilas")
+	await test_inventory_screen()
 	print("== Creación de personaje")
 	await test_creator()
 	print("\nResultado: %d OK, %d fallos" % [passed, failures])
@@ -102,7 +104,7 @@ func test_inventory() -> void:
 	check(not GS.remove_item("madera", 6), "no deja quitar más de lo que hay")
 	GS.new_game()
 	var left := GS.add_item("hacha_piedra", 25)
-	check(left == 5, "las herramientas no se apilan (sobran 5 con 20 casillas)")
+	check(left == 25 - GS.slots.size(), "las herramientas no se apilan (sobran %d con %d casillas)" % [left, GS.slots.size()])
 	GS.new_game()
 
 
@@ -721,6 +723,88 @@ func test_survivor() -> void:
 	GS.new_game()
 
 
+func test_inventory_screen() -> void:
+	DirAccess.remove_absolute(ProjectSettings.globalize_path(GS.save_path))
+	GS.new_game()
+	# Iconos para todo
+	var sin_icono := PackedStringArray()
+	for id in DB.items:
+		if DB.item_icon(id) == null:
+			sin_icono.append(id)
+	check(sin_icono.is_empty(), "todos los objetos tienen icono %s" % str(sin_icono))
+	for sl in ["cabeza", "torso", "piernas", "pies", "manos", "espalda", "arma"]:
+		check(DB.ui_icon("slot_" + sl) != null, "silueta del hueco %s" % sl)
+	# Bolsillos y niveles de mochila
+	check(GS.slots.size() == 8 and GS.bag_level() == 0, "sin mochila hay 8 bolsillos")
+	var sizes := []
+	for bid in ["mochila", "mochila_excursion", "mochila_tactica"]:
+		GS.add_item(bid, 1)
+		for i in GS.slots.size():
+			if GS.slots[i] != null and GS.slots[i]["id"] == bid:
+				GS.wear_slot(i)
+				break
+		sizes.append([GS.slots.size(), GS.bag_level()])
+	check(sizes == [[16, 1], [24, 2], [32, 3]], "lona 16, excursión 24, táctica 32 huecos (%s)" % str(sizes))
+	check(int(DB.recipe("mochila_excursion")["cost"].get("mochila", 0)) == 1 and int(DB.recipe("mochila_excursion")["level"]) == 2, "la mochila de excursión se cose con la de lona (costura nv 2)")
+	check(int(DB.recipe("mochila_tactica")["level"]) == 3 and DB.station_level("mesa_costura", 3).size() > 0, "la táctica pide mesa de costura nivel 3")
+
+	# Partida antigua con 20 casillas llenas: lo que no cabe queda en una bolsa
+	GS.new_game()
+	var old_slots: Array = []
+	for i in 20:
+		old_slots.append({"id": "piedra", "qty": 10 + i})
+	var f := FileAccess.open(GS.save_path, FileAccess.WRITE)
+	f.store_string(JSON.stringify({"version": 1, "slots": old_slots, "created": true, "maps": {}, "current_map": "refugio"}))
+	f = null
+	var world := await _new_world()
+	check(GS.slots.size() == 8 and GS.free_slots() == 0, "la partida antigua carga 8 objetos en los bolsillos")
+	var spill := 0
+	for b in get_tree().get_nodes_in_group("bag"):
+		if b.is_player_bag and b.global_position.distance_to(world.player.global_position) < 3.0:
+			spill += b.items.size()
+	check(spill == 12, "los otros 12 quedan en una bolsa al lado (%d)" % spill)
+
+	# Pantalla de inventario
+	var hud: CanvasLayer = world.hud
+	for i in GS.slots.size():
+		GS.slots[i] = null
+	GS.add_item("camiseta", 1)
+	GS.add_item("madera", 12)
+	hud.inv_btn.pressed.emit()
+	await _frames(3)
+	var inv: Control = hud._inv_panel
+	check(inv.visible and inv.tiles.size() == 32, "el botón de la mochila abre el inventario con 32 casillas")
+	check(not hud.joystick.visible, "con el inventario abierto se oculta el joystick")
+	var locked := 0
+	for t in inv.tiles:
+		if t.modulate.a < 0.9:
+			locked += 1
+	check(locked == 24, "sin mochila hay 24 casillas bloqueadas (%d)" % locked)
+	check(inv.tiles[0].get_meta("icon").texture == DB.item_icon("camiseta"), "las casillas muestran el icono del objeto")
+	inv.select_slot(0)
+	await _frames(1)
+	check(inv.action_buttons.size() == 2 and inv.action_buttons[0].text == "Ponerse", "la ficha ofrece «Ponerse» y «Tirar»")
+	inv.action_buttons[0].pressed.emit()
+	await _frames(2)
+	check(GS.outfit["torso"] == "camiseta", "ponerse la camiseta desde la ficha")
+	check(inv.eq_buttons["torso"].get_meta("icon").texture == DB.item_icon("camiseta"), "la camiseta aparece en el hueco del torso")
+	inv.select_eq("torso")
+	await _frames(1)
+	check(inv.action_buttons.size() == 1 and inv.action_buttons[0].text == "Quitar", "en el equipo la ficha ofrece «Quitar»")
+	inv.select_slot(20)
+	await _frames(1)
+	check(inv._d_desc.text.contains("excursión"), "una casilla bloqueada dice qué mochila hace falta")
+	check(hud.inv_btn.get_child(0).texture == DB.item_icon("mochila"), "el botón del HUD es el icono de la mochila")
+	hud.close_panels()
+	for k in 3:
+		await get_tree().process_frame
+	check(not inv.visible and hud.joystick.visible, "al cerrar vuelve el joystick")
+	world.queue_free()
+	await _frames(2)
+	DirAccess.remove_absolute(ProjectSettings.globalize_path(GS.save_path))
+	GS.new_game()
+
+
 func test_creator() -> void:
 	DirAccess.remove_absolute(ProjectSettings.globalize_path(GS.save_path))
 	GS.new_game()
@@ -747,7 +831,9 @@ func test_creator() -> void:
 		ev.global_position = center
 		ev.pressed = pressed
 		Input.parse_input_event(ev)
-		await _frames(2)
+		# fotogramas de proceso: tras uno lento, varios de física pasan antes de leer la entrada
+		for k in 3:
+			await get_tree().process_frame
 	check(GS.created and str(GS.look["sex"]) == "f" and int(GS.look["nose"]) == 2 and GS.player_name == "Lucía", "«Empezar» guarda el personaje")
 	check(not get_tree().paused and world.creator == null, "el juego arranca tras crear el personaje")
 	check(str(world.player._visual.look["sex"]) == "f", "el jugador tiene el aspecto elegido")

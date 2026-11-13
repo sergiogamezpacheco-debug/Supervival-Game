@@ -18,6 +18,7 @@ const LEVEL_NAMES := {
 
 const JoystickScript := preload("res://scripts/ui/joystick.gd")
 const TouchButtonScript := preload("res://scripts/ui/touch_button.gd")
+const InventoryScript := preload("res://scripts/ui/inventory_screen.gd")
 
 var joystick: Control
 var action_button: Control
@@ -26,11 +27,8 @@ var _msg: Label
 var _msg_timer := 0.0
 var _hand_label: Label
 var _death: Label
-var _inv_panel: PanelContainer
-var _inv_grid: GridContainer
-var _inv_detail: Label
-var _inv_buttons: HBoxContainer
-var _selected := -1
+var _inv_panel: Control
+var inv_btn: Button
 var _craft_panel: PanelContainer
 var _craft_list: VBoxContainer
 var _root: Control
@@ -60,8 +58,6 @@ var _map_travel: Button
 var _map_selected := ""
 var _status: Label
 var build_btn: Button
-var _equip_box: VBoxContainer
-var _equip_stats: Label
 var _gym_panel: PanelContainer
 var _gym_info: Label
 var _gym_rows: VBoxContainer
@@ -112,6 +108,9 @@ func _ready() -> void:
 	_death.visible = false
 	_root.add_child(_death)
 
+	# El inventario ocupa toda la pantalla: va encima de todo (salvo los avisos).
+	_root.move_child(_inv_panel, -1)
+	_root.move_child(_msg, -1)
 	GS.stats_changed.connect(_refresh_stats)
 	GS.inventory_changed.connect(_refresh_inventory)
 	GS.message.connect(show_message)
@@ -206,8 +205,7 @@ func _build_controls() -> void:
 	side.offset_top = 20
 	side.add_theme_constant_override("separation", 10)
 	_root.add_child(side)
-	var inv_btn := _big_button("Mochila")
-	inv_btn.pressed.connect(func(): _toggle(_inv_panel))
+	inv_btn = _make_inv_button()
 	side.add_child(inv_btn)
 	var craft_btn := _big_button("Fabricar")
 	craft_btn.pressed.connect(func(): _toggle(_craft_panel))
@@ -272,6 +270,9 @@ func show_death(v: bool) -> void:
 
 func _process(delta: float) -> void:
 	_refresh_stamina()
+	var inv_open := _inv_panel != null and _inv_panel.visible
+	joystick.visible = not inv_open
+	action_button.visible = not inv_open
 	if _gym_panel and _gym_panel.visible:
 		_station_refresh -= delta
 		if _station_refresh <= 0.0:
@@ -328,48 +329,8 @@ func _panel(title: String, half := Vector2(390, 280)) -> Array:
 
 
 func _build_inventory() -> void:
-	var parts := _panel("Mochila", Vector2(610, 320))
-	_inv_panel = parts[0]
-	var outer: VBoxContainer = parts[1]
-	var h := HBoxContainer.new()
-	h.add_theme_constant_override("separation", 16)
-	outer.add_child(h)
-	# Equipo: lo que lleva puesto el superviviente. Tocar una prenda la quita.
-	var eq := VBoxContainer.new()
-	eq.custom_minimum_size = Vector2(250, 0)
-	eq.add_theme_constant_override("separation", 6)
-	h.add_child(eq)
-	var et := Label.new()
-	et.text = "Equipo"
-	et.add_theme_font_size_override("font_size", 20)
-	eq.add_child(et)
-	_equip_box = VBoxContainer.new()
-	_equip_box.add_theme_constant_override("separation", 6)
-	eq.add_child(_equip_box)
-	_equip_stats = Label.new()
-	_equip_stats.add_theme_font_size_override("font_size", 17)
-	_equip_stats.add_theme_color_override("font_color", Color("d8cfae"))
-	eq.add_child(_equip_stats)
-	var v := VBoxContainer.new()
-	v.add_theme_constant_override("separation", 10)
-	h.add_child(v)
-	var scroll := ScrollContainer.new()
-	scroll.custom_minimum_size = Vector2(900, 330)
-	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
-	v.add_child(scroll)
-	_inv_grid = GridContainer.new()
-	_inv_grid.columns = 6
-	_inv_grid.add_theme_constant_override("h_separation", 8)
-	_inv_grid.add_theme_constant_override("v_separation", 8)
-	scroll.add_child(_inv_grid)
-	_inv_detail = Label.new()
-	_inv_detail.autowrap_mode = TextServer.AUTOWRAP_WORD
-	_inv_detail.custom_minimum_size = Vector2(880, 56)
-	_inv_detail.add_theme_font_size_override("font_size", 20)
-	v.add_child(_inv_detail)
-	_inv_buttons = HBoxContainer.new()
-	_inv_buttons.add_theme_constant_override("separation", 12)
-	v.add_child(_inv_buttons)
+	_inv_panel = InventoryScript.new()
+	_root.add_child(_inv_panel)
 
 
 func _refresh_inventory() -> void:
@@ -382,32 +343,12 @@ func _refresh_inventory() -> void:
 		if h.has("dur"):
 			dur = " (%d/%d)" % [int(h["dur"]), int(DB.item(str(h["id"])).get("durability", 0))]
 		_hand_label.text = "Mano: %s%s" % [DB.item_name(str(h["id"])), dur]
+	if inv_btn:
+		inv_btn.queue_redraw()
 	if _inv_panel == null:
 		return
-	# Casillas
-	for c in _inv_grid.get_children():
-		c.queue_free()
-	for i in GS.slots.size():
-		var s = GS.slots[i]
-		var b := Button.new()
-		b.custom_minimum_size = Vector2(136, 64)
-		b.add_theme_font_size_override("font_size", 17)
-		b.clip_text = true
-		if s == null:
-			b.text = ""
-		else:
-			var label := DB.item_name(str(s["id"]))
-			if int(s["qty"]) > 1:
-				label += " x%d" % int(s["qty"])
-			elif s.has("dur"):
-				label += " %d" % int(s["dur"])
-			b.text = label
-		if i == _selected:
-			b.modulate = Color(1.0, 0.85, 0.4)
-		b.pressed.connect(_select.bind(i))
-		_inv_grid.add_child(b)
-	_refresh_equipment()
-	_refresh_detail()
+	if _inv_panel.visible:
+		_inv_panel.refresh()
 	_refresh_crafting()
 	_refresh_build_menu()
 	if _chest_panel and _chest_panel.visible:
@@ -416,86 +357,38 @@ func _refresh_inventory() -> void:
 		_refresh_station()
 
 
-func _refresh_equipment() -> void:
-	for c in _equip_box.get_children():
-		c.queue_free()
-	for k in GS.WEAR_SLOTS:
-		var b := Button.new()
-		b.custom_minimum_size = Vector2(250, 46)
-		b.add_theme_font_size_override("font_size", 16)
-		b.alignment = HORIZONTAL_ALIGNMENT_LEFT
-		b.clip_text = true
-		var it = GS.worn[k]
-		if it == null:
-			b.text = "%s: —" % GS.WEAR_NAMES[k]
-			b.modulate = Color(1, 1, 1, 0.55)
-		else:
-			var dur := ""
-			if it.has("dur"):
-				dur = " %d%%" % roundi(100.0 * float(it["dur"]) / maxf(float(DB.item(str(it["id"])).get("durability", 1)), 1.0))
-			b.text = "%s: %s%s" % [GS.WEAR_NAMES[k], DB.item_name(str(it["id"])), dur]
-			var slot: String = k
-			b.pressed.connect(func(): GS.take_off(slot))
-		_equip_box.add_child(b)
-	_equip_stats.text = "Defensa %d%%\nFuerza %d%%  ·  Resistencia %d%%\nCarga %d/%d" % [
-		roundi(GS.armor()), roundi(float(GS.physique["fuerza"]) * 100.0), roundi(float(GS.physique["resistencia"]) * 100.0),
-		GS.slots.size() - GS.free_slots(), GS.slots.size()]
-
-
+## Elige una casilla del inventario (lo usan las herramientas de capturas).
 func _select(i: int) -> void:
-	_selected = i
-	_refresh_inventory()
+	_inv_panel.select_slot(i)
 
 
-func _refresh_detail() -> void:
-	for c in _inv_buttons.get_children():
-		c.queue_free()
-	if GS.hand != null:
-		var ub := Button.new()
-		ub.text = "Guardar lo de la mano"
-		ub.pressed.connect(func(): GS.unequip())
-		_inv_buttons.add_child(ub)
-	if _selected < 0 or _selected >= GS.slots.size() or GS.slots[_selected] == null:
-		_inv_detail.text = "Toca una casilla para ver el objeto. Casillas libres: %d" % GS.free_slots()
-		return
-	var s: Dictionary = GS.slots[_selected]
-	var data := DB.item(str(s["id"]))
-	_inv_detail.text = "%s — %s" % [DB.item_name(str(s["id"])), str(data.get("desc", ""))]
-	var idx := _selected
-	match str(data.get("type", "")):
-		"consumable":
-			var b := Button.new()
-			b.text = "Usar"
-			b.pressed.connect(func(): GS.use_slot(idx))
-			_inv_buttons.add_child(b)
-		"tool", "weapon":
-			var b2 := Button.new()
-			b2.text = "Equipar"
-			b2.pressed.connect(func(): GS.equip_slot(idx))
-			_inv_buttons.add_child(b2)
-		"wear":
-			var b3 := Button.new()
-			b3.text = "Ponerse"
-			b3.pressed.connect(func():
-				GS.wear_slot(idx)
-				_selected = -1
-				_refresh_inventory())
-			_inv_buttons.add_child(b3)
-			var extra := PackedStringArray()
-			if data.has("armor"):
-				extra.append("Defensa +%d%%" % int(data["armor"]))
-			if data.has("bag_slots"):
-				extra.append("+%d huecos" % int(data["bag_slots"]))
-			if s.has("dur"):
-				extra.append("Estado %d/%d" % [int(s["dur"]), int(data.get("durability", 0))])
-			_inv_detail.text += "  (%s)" % ", ".join(extra)
-	var drop := Button.new()
-	drop.text = "Tirar"
-	drop.pressed.connect(func():
-		GS.drop_slot(idx)
-		_selected = -1
-		_refresh_inventory())
-	_inv_buttons.add_child(drop)
+## Botón del HUD: icono de mochila con un anillo que se llena con la carga.
+func _make_inv_button() -> Button:
+	var b := Button.new()
+	b.custom_minimum_size = Vector2(96, 96)
+	b.size_flags_horizontal = Control.SIZE_SHRINK_END
+	b.tooltip_text = "Inventario"
+	var empty := StyleBoxEmpty.new()
+	for st in ["normal", "hover", "pressed", "focus"]:
+		b.add_theme_stylebox_override(st, empty)
+	var ic := TextureRect.new()
+	ic.texture = DB.item_icon("mochila")
+	ic.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	ic.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	ic.position = Vector2(19, 17)
+	ic.size = Vector2(58, 58)
+	ic.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	b.add_child(ic)
+	b.draw.connect(func():
+		var c := b.size / 2.0
+		var r := minf(c.x, c.y) - 3.0
+		b.draw_circle(c, r + 1.0, Color(0.055, 0.07, 0.047, 0.88))
+		b.draw_arc(c, r - 3.0, 0.0, TAU, 64, Color(0.91, 0.86, 0.72, 0.2), 6.0, true)
+		var f := GS.load_ratio()
+		if f > 0.0:
+			b.draw_arc(c, r - 3.0, -PI / 2.0, -PI / 2.0 + TAU * f, 64, Color("e8b84a") if f < 1.0 else Color("d9534a"), 6.0, true))
+	b.pressed.connect(func(): _toggle(_inv_panel))
+	return b
 
 
 # ------------------------------------------------------------- fabricación
@@ -509,6 +402,7 @@ func _build_crafting() -> void:
 	hint.add_theme_font_size_override("font_size", 18)
 	v.add_child(hint)
 	var scroll := ScrollContainer.new()
+	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
 	scroll.custom_minimum_size = Vector2(720, 380)
 	v.add_child(scroll)
 	_craft_list = VBoxContainer.new()
@@ -524,8 +418,12 @@ func _refresh_crafting() -> void:
 		c.queue_free()
 	for r in DB.recipes_for(""):
 		var row := HBoxContainer.new()
+		row.add_theme_constant_override("separation", 12)
+		row.add_child(_row_icon(str(r["result"])))
 		var lbl := Label.new()
 		lbl.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		lbl.clip_text = true
+		lbl.custom_minimum_size.x = 100
 		lbl.add_theme_font_size_override("font_size", 20)
 		var cost: Dictionary = r.get("cost", {})
 		var parts := PackedStringArray()
@@ -561,6 +459,7 @@ func _build_build_menu() -> void:
 	tools.add_child(dem)
 	v.add_child(tools)
 	var scroll := ScrollContainer.new()
+	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
 	scroll.custom_minimum_size = Vector2(720, 380)
 	v.add_child(scroll)
 	_build_list = VBoxContainer.new()
@@ -715,6 +614,7 @@ func _build_station_panel() -> void:
 	h.add_child(_station_collect)
 	v.add_child(h)
 	var scroll := ScrollContainer.new()
+	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
 	scroll.custom_minimum_size = Vector2(720, 330)
 	v.add_child(scroll)
 	_station_list = VBoxContainer.new()
@@ -731,8 +631,12 @@ func _refresh_station() -> void:
 		c.queue_free()
 	for r in DB.recipes_for(station.id):
 		var row := HBoxContainer.new()
+		row.add_theme_constant_override("separation", 12)
+		row.add_child(_row_icon(str(r["result"])))
 		var lbl := Label.new()
 		lbl.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		lbl.clip_text = true
+		lbl.custom_minimum_size.x = 100
 		lbl.add_theme_font_size_override("font_size", 19)
 		var unlocked: bool = station.recipe_unlocked(r)
 		var head := "%s  (%ds)" % [DB.item_name(str(r["result"])), int(r.get("time", 0))]
@@ -810,6 +714,8 @@ func _refresh_gym() -> void:
 		var row := HBoxContainer.new()
 		var lbl := Label.new()
 		lbl.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		lbl.clip_text = true
+		lbl.custom_minimum_size.x = 100
 		lbl.add_theme_font_size_override("font_size", 20)
 		var val := float(GS.physique[def[0]])
 		lbl.text = "%s  %d%%\n   %s" % [def[1], roundi(val * 100.0), def[2]]
@@ -878,30 +784,57 @@ func _build_chest_panel() -> void:
 	lt.text = "Cofre"
 	left.add_child(lt)
 	_chest_grid = GridContainer.new()
-	_chest_grid.columns = 4
+	_chest_grid.columns = 7
 	left.add_child(_chest_grid)
 	h.add_child(left)
 	var right := VBoxContainer.new()
 	var rt := Label.new()
-	rt.text = "Mochila"
+	rt.text = "Inventario"
 	right.add_child(rt)
 	_chest_bag_grid = GridContainer.new()
-	_chest_bag_grid.columns = 4
+	_chest_bag_grid.columns = 7
 	right.add_child(_chest_bag_grid)
 	h.add_child(right)
 
 
 func _slot_button(s: Variant) -> Button:
 	var b := Button.new()
-	b.custom_minimum_size = Vector2(124, 50)
+	b.custom_minimum_size = Vector2(64, 64)
 	b.add_theme_font_size_override("font_size", 15)
 	b.clip_text = true
 	if s != null:
-		var label := DB.item_name(str(s["id"]))
-		if int(s["qty"]) > 1:
-			label += " x%d" % int(s["qty"])
-		b.text = label
+		var tex := DB.item_icon(str(s["id"]))
+		if tex:
+			b.icon = tex
+			b.expand_icon = true
+			b.icon_alignment = HORIZONTAL_ALIGNMENT_CENTER
+			b.add_theme_constant_override("icon_max_width", 46)
+			b.tooltip_text = DB.item_name(str(s["id"]))
+			if int(s["qty"]) > 1:
+				var q := Label.new()
+				q.text = str(int(s["qty"]))
+				q.position = Vector2(30, 40)
+				q.size = Vector2(30, 20)
+				q.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
+				q.add_theme_font_size_override("font_size", 15)
+				q.add_theme_color_override("font_outline_color", Color.BLACK)
+				q.add_theme_constant_override("outline_size", 4)
+				q.mouse_filter = Control.MOUSE_FILTER_IGNORE
+				b.add_child(q)
+		else:
+			b.text = DB.item_name(str(s["id"]))
 	return b
+
+
+## Icono pequeño para las filas de recetas.
+func _row_icon(id: String) -> TextureRect:
+	var t := TextureRect.new()
+	t.texture = DB.item_icon(id)
+	t.custom_minimum_size = Vector2(52, 52)
+	t.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	t.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	t.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	return t
 
 
 func _refresh_chest() -> void:

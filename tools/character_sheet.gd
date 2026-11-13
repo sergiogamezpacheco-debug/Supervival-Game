@@ -38,7 +38,9 @@ func _ready() -> void:
 	vp.add_child(cam)
 	stage = Node3D.new()
 	vp.add_child(stage)
-	if OS.get_cmdline_user_args().size() > 1 and OS.get_cmdline_user_args()[1] == "heads":
+	if OS.get_cmdline_user_args().size() > 1 and OS.get_cmdline_user_args()[1] == "inv":
+		await _inventory()
+	elif OS.get_cmdline_user_args().size() > 1 and OS.get_cmdline_user_args()[1] == "heads":
 		await _all(true)
 	elif OS.get_cmdline_user_args().size() > 1:
 		await _quick()
@@ -73,6 +75,26 @@ func _shot(file: String, size: Vector2i, eye: Vector3, target: Vector3, fov := 3
 	var img := vp.get_texture().get_image()
 	img.save_png("%s/%s.png" % [out, file])
 	print("render ", file)
+
+
+## Superviviente de frente para la pantalla de mochila.
+func _inventory() -> void:
+	var M := {"sex": "m", "skin": 1, "hair": 4, "hair_color": 1, "eyes": 0, "eye_color": 0, "nose": 0, "mouth": 4}
+	var F := {"sex": "f", "skin": 2, "hair": 1, "hair_color": 0, "eyes": 1, "eye_color": 2, "nose": 0, "mouth": 2}
+	var sets := [
+		["inv_m_ropa", M, {"fuerza": 0.35}, {"cabeza": "gorra", "torso": "chaqueta_piel", "piernas": "pantalon_cargo", "pies": "botas", "manos": "guantes", "espalda": "mochila"}, "hacha_hierro"],
+		["inv_m_basico", M, {}, {"torso": "camiseta", "piernas": "pantalon_tela", "pies": "zapatillas"}, "hacha_piedra"],
+		["inv_f_ropa", F, {"fuerza": 0.2}, {"cabeza": "casco_obra", "torso": "chaleco", "piernas": "pantalon_cargo", "pies": "botas", "espalda": "mochila"}, "machete"],
+		["inv_m_interior", M, {}, {}, ""],
+	]
+	for st in sets:
+		_clear()
+		var c := _char(st[1], st[2], st[3], Vector3.ZERO, 0.18)
+		if st[4] != "" and false:
+			var t := Builder.tool_mesh(st[4])
+			t.rotation_degrees.x = -80.0
+			c.hand.add_child(t)
+		await _shot(st[0], Vector2i(520, 1000), Vector3(0.0, 1.0, -4.7), Vector3(0, 0.92, 0), 26)
 
 
 func _all(only_heads := false) -> void:

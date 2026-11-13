@@ -19,6 +19,10 @@
   `xvfb-run -s "-screen 0 1280x720x24" godot --audio-driver Dummy --rendering-driver opengl3 res://tools/screens.tscn -- /tmp/screens`
 - Ropa: objetos `type: wear` en `data/items.json` (`slot`, `model` = clave de `CharacterModel.CLOTH`).
   `GS.testing = true` en tests y herramientas para no abrir la pantalla de creación de personaje.
+- Iconos: `assets/icons/items/<id>.svg` (uno por objeto, lo comprueba un test), `DB.item_icon(id)`.
+  Se generan con `tools/iconos/generar.py` (Python, sin dependencias).
+- En tests, tras un fotograma lento (modelos 3D, miniaturas) esperar `process_frame` y no solo
+  `physics_frame` antes de comprobar un toque: si no, el evento aún no se ha procesado.
 - Mapas en `data/maps.json`; criaturas genéricas en `scripts/world/creature.gd` (aggressive/neutral/passive).
 - Construcción: `scripts/world/base.gd` (cuadrícula 2 m; claves "i,j" casillas, "i,j,d" bordes).
 - Hoja de ruta y estado: `README.md`.

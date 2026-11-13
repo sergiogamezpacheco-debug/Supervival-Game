@@ -283,6 +283,24 @@
     "slot": "espalda",
     "model": "mochila",
     "bag_slots": 8,
-    "desc": "Lleva 8 objetos más. Con saco de dormir."
+    "desc": "8 huecos más. Con saco de dormir."
+  },
+  "mochila_excursion": {
+    "name": "Mochila de excursión",
+    "type": "wear",
+    "stack": 1,
+    "slot": "espalda",
+    "model": "mochila_excursion",
+    "bag_slots": 16,
+    "desc": "16 huecos más. Bolsillos laterales."
+  },
+  "mochila_tactica": {
+    "name": "Mochila táctica",
+    "type": "wear",
+    "stack": 1,
+    "slot": "espalda",
+    "model": "mochila_tactica",
+    "bag_slots": 24,
+    "desc": "24 huecos más. Cinchas y placas."
   }
 }

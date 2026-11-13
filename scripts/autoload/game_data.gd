@@ -49,6 +49,23 @@ func item(id: String) -> Dictionary:
 	return {}
 
 
+## Icono del objeto (assets/icons/items/<id>.svg) o null si no tiene.
+var _icons: Dictionary = {}
+func item_icon(id: String) -> Texture2D:
+	if not _icons.has(id):
+		var path := "res://assets/icons/items/%s.svg" % id
+		_icons[id] = load(path) if ResourceLoader.exists(path) else null
+	return _icons[id]
+
+
+func ui_icon(name_: String) -> Texture2D:
+	var key := "ui:" + name_
+	if not _icons.has(key):
+		var path := "res://assets/icons/ui/%s.svg" % name_
+		_icons[key] = load(path) if ResourceLoader.exists(path) else null
+	return _icons[key]
+
+
 func item_name(id: String) -> String:
 	return str(item(id).get("name", id))
 

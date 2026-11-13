@@ -283,5 +283,34 @@
       "cuerda": 3,
       "lingote_hierro": 1
     }
+  },
+  {
+    "id": "mochila_excursion",
+    "result": "mochila_excursion",
+    "qty": 1,
+    "station": "mesa_costura",
+    "level": 2,
+    "time": 60,
+    "cost": {
+      "mochila": 1,
+      "piel": 6,
+      "tela": 8,
+      "cuerda": 4
+    }
+  },
+  {
+    "id": "mochila_tactica",
+    "result": "mochila_tactica",
+    "qty": 1,
+    "station": "mesa_costura",
+    "level": 3,
+    "time": 90,
+    "cost": {
+      "mochila_excursion": 1,
+      "tela": 10,
+      "cuerda": 6,
+      "chatarra": 6,
+      "lingote_hierro": 2
+    }
   }
 ]

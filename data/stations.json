@@ -4,7 +4,7 @@
   "cantero": {"name": "Mesa de cantería", "desc": "Piedra → bloques.", "levels": [{"cost": {"madera": 12, "piedra": 20}}]},
   "hoguera": {"name": "Hoguera", "desc": "Cocinar carne.", "levels": [{"cost": {"madera": 6, "piedra": 4}}]},
   "horno": {"name": "Horno de fundición", "desc": "Mineral → lingotes.", "levels": [{"cost": {"bloque_piedra": 10, "madera": 10}}]},
-  "mesa_costura": {"name": "Mesa de costura", "desc": "Vendas y ropa. Nivel 2: piel y chaleco táctico.", "levels": [{"cost": {"tablon": 8, "fibra": 10}}, {"cost": {"tablon": 12, "cuerda": 6, "lingote_hierro": 2}}]},
+  "mesa_costura": {"name": "Mesa de costura", "desc": "Vendas, ropa y mochilas. Nivel 2: piel; nivel 3: mochila táctica.", "levels": [{"cost": {"tablon": 8, "fibra": 10}}, {"cost": {"tablon": 12, "cuerda": 6, "lingote_hierro": 2}}, {"cost": {"tablon": 16, "lingote_hierro": 6, "cuerda": 8, "piel": 6}}]},
   "cofre": {"name": "Cofre", "desc": "Guarda objetos a salvo.", "levels": [{"cost": {"madera": 12}, "storage": 12}, {"cost": {"tablon": 10, "cuerda": 2}, "storage": 20}]},
   "gimnasio": {"name": "Gimnasio", "desc": "Entrena fuerza y resistencia más rápido.", "levels": [{"cost": {"madera": 20, "piedra": 12, "cuerda": 4}, "gain": 0.03, "cooldown": 90}, {"cost": {"tablon": 10, "lingote_hierro": 4, "cuerda": 4}, "gain": 0.05, "cooldown": 60}]}
 }

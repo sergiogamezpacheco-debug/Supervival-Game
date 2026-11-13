@@ -34,10 +34,10 @@ func interact(_by: Node3D) -> void:
 			got += 1
 	items = remaining
 	if items.is_empty():
-		GS.message.emit("Mochila recuperada" if is_player_bag else "Botín recogido")
+		GS.message.emit("Bolsa recuperada" if is_player_bag else "Botín recogido")
 		queue_free()
 	elif got == 0:
-		GS.message.emit("Mochila llena")
+		GS.message.emit("Inventario lleno")
 
 
 func to_dict() -> Dictionary:

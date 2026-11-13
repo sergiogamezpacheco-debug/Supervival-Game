@@ -21,10 +21,11 @@
 | Criaturas: infectado, minero, acorazado, víbora, lobo, jabalí, ciervo, conejo | ✅ |
 | Viaje entre zonas (coste de comida y agua): Refugio, Bosque, Cantera | ✅ |
 | Superviviente low poly realista: creación de personaje (hombre/mujer, 5 opciones de pelo, ojos, nariz, boca, piel y colores) | ✅ |
-| Ropa equipable (11 prendas, defensa y desgaste) cosida en la mesa de costura o encontrada; mochila con +8 huecos | ✅ |
+| Ropa equipable (11 prendas, defensa y desgaste) cosida en la mesa de costura o encontrada | ✅ |
+| Inventario a pantalla completa con el superviviente en 3D, 8 bolsillos y 3 niveles de mochila (16/24/32), iconos propios | ✅ |
 | Físico que evoluciona (fuerza y resistencia), aguante para correr y gimnasio | ✅ |
 | Diseños: mapa antiguo, HUD y tienda · Documentos: zonas y tienda | ✅ |
-| 368 tests y APK automático | ✅ |
+| 410 tests y APK automático | ✅ |
 
 ---
 

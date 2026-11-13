@@ -18,7 +18,7 @@ descarga `Supervival.apk` e instálalo (Android pedirá permitir "instalar apps 
 |---|---|
 | Joystick (mitad izquierda) | Moverse. A fondo: **correr** (gasta aguante) |
 | Botón redondo (abajo derecha) | Acción contextual: Talar, Picar, Recoger, Atacar, Beber, Recuperar… Mantener para repetir |
-| Mochila | Inventario y equipo: usar, equipar, ponerse ropa (tocar una prenda puesta la quita) o tirar |
+| Botón de mochila (anillo = carga) | **Inventario**: el superviviente con sus 7 huecos de equipo y las casillas (8 bolsillos + 8 por nivel de mochila); toca un objeto para usarlo, equiparlo, ponértelo o tirarlo |
 | Fabricar | Recetas a mano (el resto, en las estaciones) |
 | Mapa | Viajar a otras zonas (cuesta comida y agua) |
 | Construir | Colocar cimientos, paredes, puertas, estaciones y cofres; mejorar o desmontar |
@@ -34,7 +34,8 @@ Plan completo por fases (offline primero, online preparado): **[docs/hoja-de-rut
       mejorar y desmontar, cofres, banco de trabajo por niveles, carpintería, cantería, hoguera, horno
       y mesa de costura con fabricación por tiempo real. Animales salvajes (conejo, jabalí, lobo).
 - [x] **Superviviente:** creación de personaje en el primer arranque, ropa con defensa y desgaste
-      (mesa de costura nivel 1 y 2, también en cofres), mochila de lona (+8 huecos), aguante para correr,
+      (mesa de costura nivel 1, 2 y 3, también en cofres), 8 bolsillos y mochilas de lona, excursión y
+      táctica (16/24/32 huecos), iconos propios para todos los objetos, aguante para correr,
       fuerza y resistencia que suben jugando y gimnasio para acelerarlas.
 - [~] **Fase 3 – Mapa global:** ✅ viaje entre zonas con coste de comida/agua, ✅ Bosque de Pino Negro,
       ✅ Cantera de Peñas Rojas, contenedores saqueables, veneno. Pendiente: resto de zonas
@@ -54,7 +55,8 @@ Plan completo por fases (offline primero, online preparado): **[docs/hoja-de-rut
 - `scripts/ui/` — HUD, joystick y botón táctil multitoque.
 - `tests/` — tests que se ejecutan antes de cada compilación.
 - `tools/screens.tscn` — genera capturas de pantalla para revisar la interfaz sin móvil.
-- `tools/survivor_shots.tscn` — capturas de la creación de personaje, la mochila con ropa y el gimnasio.
+- `tools/survivor_shots.tscn` — capturas de la creación de personaje, el inventario y el gimnasio.
+- `assets/icons/` — iconos SVG de objetos y huecos; se generan con `tools/iconos/generar.py`.
 
 ## Mapas
 

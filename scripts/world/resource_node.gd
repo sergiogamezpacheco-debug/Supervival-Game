@@ -54,7 +54,7 @@ func interact(_player: Node3D) -> void:
 	var yield_id := str(data["yield"])
 	var left := GS.add_item(yield_id, amount)
 	if left == amount:
-		GS.message.emit("Mochila llena")
+		GS.message.emit("Inventario lleno")
 		return
 	GS.message.emit("+%d %s" % [amount - left, DB.item_name(yield_id)])
 	_punch()

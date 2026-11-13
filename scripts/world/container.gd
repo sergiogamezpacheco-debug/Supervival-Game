@@ -85,7 +85,7 @@ func chest_to_bag(i: int) -> void:
 		storage[i] = null
 	else:
 		s["qty"] = left
-		GS.message.emit("Mochila llena")
+		GS.message.emit("Inventario lleno")
 	GS.inventory_changed.emit()
 
 

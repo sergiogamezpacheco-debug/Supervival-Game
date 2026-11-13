@@ -78,6 +78,10 @@ func _ready() -> void:
 	GS.died.connect(_on_player_died)
 	if not world.is_empty():
 		_load_world(world)
+	if not GS.pending_drop.is_empty():
+		spawn_bag(player.global_position + Vector3(1.2, 0, 0.6), GS.pending_drop, true)
+		GS.pending_drop = []
+		GS.message.emit("Ahora llevas 8 bolsillos: lo que no cabía está en una bolsa a tu lado")
 	camera.global_position = player.global_position + Vector3(0, 13.0, 8.5)
 	_update_camera(1.0)
 	GS.message.emit(str(map.get("name", "")))

@@ -28,6 +28,7 @@ const CLOTH := {
 	"botas": Color("4a3a2c"), "zapatillas": Color("5f646a"),
 	"gorra": Color("6f6450"), "casco_obra": Color("d9a925"),
 	"guantes": Color("3d3732"), "mochila": Color("6b6243"),
+	"mochila_excursion": Color("3f5f73"), "mochila_tactica": Color("4b4d3f"),
 }
 
 var look := {"sex": "m", "skin": 1, "hair": 1, "hair_color": 1, "eyes": 0, "eye_color": 0, "nose": 0, "mouth": 1}
@@ -615,7 +616,7 @@ func _build_outfit(d: Dictionary) -> void:
 			var hh: Node3D = j["hand_" + ("l" if side < 0 else "r")]
 			_p(hh, loft([[0.005, 0.032, 0.022], [-0.035, 0.038, 0.02], [-0.07, 0.037, 0.018]], 6), CLOTH["guantes"], Vector3.ZERO, Vector3(0.15, 0, 0))
 	if _has("espalda"):
-		var c6: Color = CLOTH["mochila"]
+		var c6: Color = CLOTH.get(str(outfit.get("espalda", "")), CLOTH["mochila"])
 		var back := 0.115 * ch + 0.07
 		_p(spine, loft([[0.0, 0.13, 0.06], [0.2 * s, 0.14, 0.07], [0.33 * s, 0.12, 0.06], [0.36 * s, 0.08, 0.03]], 8), c6, Vector3(0, 0.08 * s, back))
 		_p(spine, box(Vector3(0.18, 0.1, 0.04)), c6.darkened(0.15), Vector3(0, 0.16 * s, back + 0.07))

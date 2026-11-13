@@ -152,10 +152,10 @@ func collect() -> bool:
 	var qty := int(r.get("qty", 1))
 	var left := GS.add_item(result, qty)
 	if left == qty:
-		GS.message.emit("Mochila llena")
+		GS.message.emit("Inventario lleno")
 		return false
 	if left > 0:
-		GS.message.emit("Mochila llena: parte se ha perdido")
+		GS.message.emit("Inventario lleno: parte se ha perdido")
 	job = {}
 	GS.message.emit("+%d %s" % [qty - left, DB.item_name(result)])
 	return true
@@ -172,7 +172,7 @@ func chest_to_bag(i: int) -> void:
 		storage[i] = null
 	else:
 		s["qty"] = left
-		GS.message.emit("Mochila llena")
+		GS.message.emit("Inventario lleno")
 	GS.inventory_changed.emit()
 
 
