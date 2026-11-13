@@ -25,6 +25,8 @@ descarga `Supervival.apk` e instálalo (Android pedirá permitir "instalar apps 
 
 ## Hoja de ruta
 
+Plan completo por fases (offline primero, online preparado): **[docs/hoja-de-ruta.md](docs/hoja-de-ruta.md)**.
+
 - [x] **Fase 0 – Montaje:** Godot 4.4, tests automáticos y APK automático en GitHub.
 - [x] **Fase 1 – Base jugable:** recolección con herramientas y durabilidad, inventario por casillas,
       fabricación, hambre/sed/vida, infectados, botín, mochila al morir, guardado automático.
