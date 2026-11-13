@@ -480,7 +480,10 @@ func test_travel() -> void:
 	GS.damage(1000)
 	await _frames(2)
 	bosque._death_timer = 0.0
-	await _frames(3)
+	for i in 60:
+		if GS.current_map == "refugio":
+			break
+		await _frames(1)
 	check(GS.current_map == "refugio", "al morir fuera reapareces en el refugio")
 	var bags: Array = GS.maps_state.get("bosque", {}).get("bags", [])
 	var has_pbag := false

@@ -38,7 +38,9 @@ func _ready() -> void:
 	vp.add_child(cam)
 	stage = Node3D.new()
 	vp.add_child(stage)
-	if OS.get_cmdline_user_args().size() > 1:
+	if OS.get_cmdline_user_args().size() > 1 and OS.get_cmdline_user_args()[1] == "heads":
+		await _all(true)
+	elif OS.get_cmdline_user_args().size() > 1:
 		await _quick()
 	else:
 		await _all()
@@ -73,21 +75,21 @@ func _shot(file: String, size: Vector2i, eye: Vector3, target: Vector3, fov := 3
 	print("render ", file)
 
 
-func _all() -> void:
+func _all(only_heads := false) -> void:
 	var M := {"sex": "m", "skin": 1, "hair": 1, "hair_color": 1, "eyes": 0, "eye_color": 0, "nose": 0, "mouth": 1}
 	var F := {"sex": "f", "skin": 2, "hair": 2, "hair_color": 0, "eyes": 1, "eye_color": 2, "nose": 4, "mouth": 2}
 	var body_eye := Vector3(1.6, 1.25, -4.2)
 	var body_t := Vector3(0, 0.88, 0)
 
 	# 1. Personaje principal (cuerpo entero, tres cuartos)
-	for pair in [["hero_m", M], ["hero_f", F]]:
+	for pair in ([] if only_heads else [["hero_m", M], ["hero_f", F]]):
 		_clear()
 		_char(pair[1])
 		await _shot(pair[0], Vector2i(600, 1000), body_eye, body_t, 28)
 
 	# 2. Cabezas para las opciones (5 de cada)
-	var head_eye := Vector3(0.18, 1.69, -0.95)
-	var head_t := Vector3(0, 1.6, 0)
+	var head_eye := Vector3(0.18, 1.76, -0.95)
+	var head_t := Vector3(0, 1.67, 0)
 	for sex in ["m", "f"]:
 		var base: Dictionary = (M if sex == "m" else F).duplicate()
 		for i in 5:
@@ -116,9 +118,12 @@ func _all() -> void:
 			var l4 := M.duplicate()
 			l4[feat] = i
 			_char(l4)
-			var ty := 1.628 if feat == "eyes" or feat == "eye_color" else (1.595 if feat == "nose" else 1.55)
-			await _shot("%s_%d" % [feat, i], Vector2i(260, 260), Vector3(0.0, ty + 0.02, -0.42), Vector3(0, ty, 0), 24)
+			var ty := 1.698 if feat == "eyes" or feat == "eye_color" else (1.675 if feat == "nose" else 1.63)
+			var side_x := 0.0 if feat == "eyes" or feat == "eye_color" else 0.2
+			await _shot("%s_%d" % [feat, i], Vector2i(260, 260), Vector3(side_x, ty + 0.02, -0.42), Vector3(0, ty, 0), 24)
 
+	if only_heads:
+		return
 	# 3. Despiece de partes
 	_clear()
 	_char(M, {}, {}, Vector3.ZERO, 0.35, 1.0)
@@ -167,4 +172,4 @@ func _quick() -> void:
 	await _shot("quick2", Vector2i(900, 1000), Vector3(0.6, 1.3, -4.8), Vector3(0, 0.88, 0), 30)
 	_clear()
 	_char(M)
-	await _shot("quick3", Vector2i(400, 400), Vector3(0.12, 1.66, -0.75), Vector3(0, 1.6, 0), 28)
+	await _shot("quick3", Vector2i(400, 400), Vector3(0.25, 1.72, -0.8), Vector3(0, 1.67, 0), 28)
