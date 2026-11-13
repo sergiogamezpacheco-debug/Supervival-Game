@@ -33,6 +33,8 @@ func _ready() -> void:
 	await test_base()
 	print("== Animales")
 	await test_animals()
+	print("== Viajes y zonas")
+	await test_travel()
 	print("\nResultado: %d OK, %d fallos" % [passed, failures])
 	DirAccess.remove_absolute(ProjectSettings.globalize_path(GS.save_path))
 	get_tree().quit(1 if failures > 0 else 0)
@@ -59,6 +61,14 @@ func test_data() -> void:
 	for c in DB.creatures:
 		for id in DB.creatures[c].get("loot", {}):
 			check(DB.items.has(str(id)), "criatura %s suelta %s, que existe" % [c, id])
+	for m in DB.maps:
+		check(DB.world_map.has(m), "el mapa %s aparece en el mapa del mundo" % m)
+		for pf in DB.maps[m].get("prefabs", []):
+			for c in pf.get("containers", []):
+				check(DB.containers.has(str(c["type"])), "contenedor %s existe" % c["type"])
+	for c in DB.containers:
+		for e in DB.containers[c]["loot"]:
+			check(DB.items.has(str(e["id"])), "el contenedor %s da %s, que existe" % [c, e["id"]])
 	var all_costs: Array = []
 	for id in DB.structures:
 		for t in DB.structures[id]["tiers"]:
@@ -403,4 +413,125 @@ func test_animals() -> void:
 	await _frames(120)
 	check(GS.health < hp0, "el jabalí ataca si le pegas")
 	world.queue_free()
+	await _frames(2)
+
+
+func _creatures_away() -> void:
+	for c in get_tree().get_nodes_in_group("creature"):
+		c.home = Vector3(500, 0, 500)
+		c.global_position = Vector3(500, 0, 500)
+
+
+func test_travel() -> void:
+	DirAccess.remove_absolute(ProjectSettings.globalize_path(GS.save_path))
+	GS.new_game()
+	var world := await _new_world()
+	_creatures_away()
+	GS.add_item("madera", 20)
+	var f: Node3D = world.base.place("cimiento", Vector2i(3, 3), 0, 0, Vector3(-5, 0, -5))
+	check(f != null, "cimiento antes de viajar")
+	check(world.travel_to("marisma") != "", "no se puede ir a zonas que aún no existen")
+	var z: Node3D = get_tree().get_nodes_in_group("enemy")[0]
+	z.global_position = world.player.global_position + Vector3(3, 0, 0)
+	check(world.travel_to("bosque") != "", "no se puede viajar con enemigos cerca")
+	_creatures_away()
+	var cost := DB.travel_cost("refugio", "bosque")
+	check(world.travel_to("bosque") == "", "viajar al bosque")
+	check(is_equal_approx(GS.food, 100.0 - cost["food"]) and is_equal_approx(GS.water, 100.0 - cost["water"]), "el viaje gasta comida y agua")
+	check(GS.current_map == "bosque", "la partida queda en el bosque")
+	world.queue_free()
+	await _frames(3)
+
+	var bosque := await _new_world()
+	check(bosque.map_id == "bosque", "carga el Bosque de Pino Negro")
+	check(bosque.base == null, "en el bosque no se construye")
+	check(bosque.player.global_position.distance_to(bosque.SPAWN) < 0.5, "apareces en la entrada de la zona")
+	var kinds := {}
+	for c in get_tree().get_nodes_in_group("creature"):
+		kinds[c.kind] = true
+	check(kinds.has("ciervo") and kinds.has("lobo"), "hay ciervos y lobos en el bosque")
+	var setas := 0
+	for r in get_tree().get_nodes_in_group("resource"):
+		if r.kind == "seta":
+			setas += 1
+	check(setas > 0, "hay setas en el bosque")
+	var boxes := get_tree().get_nodes_in_group("container")
+	check(boxes.size() == 2, "cabaña y aserradero tienen contenedores")
+	var box: Node3D = boxes[0]
+	var full := -1
+	for i in box.storage.size():
+		if box.storage[i] != null:
+			full = i
+	check(full >= 0, "el contenedor tiene botín")
+	var before := GS.slots.size() - GS.free_slots()
+	box.chest_to_bag(full)
+	check(GS.slots.size() - GS.free_slots() > before or box.storage[full] == null, "saquear el contenedor")
+	bosque.player.global_position = box.global_position + Vector3(1.4, 0, 0)
+	await _frames(2)
+	check(bosque.find_target() == box, "el contenedor se puede registrar")
+
+	# Morir en una zona: vuelves al refugio y la mochila se queda allí.
+	_creatures_away()
+	GS.add_item("piedra", 3)
+	GS.damage(1000)
+	await _frames(2)
+	bosque._death_timer = 0.0
+	await _frames(3)
+	check(GS.current_map == "refugio", "al morir fuera reapareces en el refugio")
+	var bags: Array = GS.maps_state.get("bosque", {}).get("bags", [])
+	var has_pbag := false
+	for b in bags:
+		if b.get("player", false):
+			has_pbag = true
+	check(has_pbag, "tu mochila se queda en el bosque")
+	bosque.queue_free()
+	await _frames(3)
+
+	var home := await _new_world()
+	check(home.map_id == "refugio" and home.base.foundations.size() == 1, "el refugio conserva lo construido")
+	_creatures_away()
+	GS.food = 100.0
+	GS.water = 100.0
+	check(home.travel_to("cantera") == "", "viajar a la cantera")
+	home.queue_free()
+	await _frames(3)
+
+	var cantera := await _new_world()
+	check(cantera.map_id == "cantera", "carga la Cantera de Peñas Rojas")
+	kinds = {}
+	for c in get_tree().get_nodes_in_group("creature"):
+		kinds[c.kind] = true
+	check(kinds.has("minero") and kinds.has("acorazado") and kinds.has("vibora"), "mineros, acorazados y víboras en la cantera")
+	var res := {}
+	for r in get_tree().get_nodes_in_group("resource"):
+		res[r.kind] = true
+	check(res.has("veta_carbon") and res.has("chatarra") and res.has("veta_hierro"), "carbón, chatarra y hierro en la cantera")
+	var snake: Node3D = null
+	for c in get_tree().get_nodes_in_group("creature"):
+		if c.kind == "vibora":
+			snake = c
+		else:
+			c.home = Vector3(500, 0, 500)
+			c.global_position = Vector3(500, 0, 500)
+	snake.home = cantera.player.global_position + Vector3(0.8, 0, 0)
+	snake.global_position = snake.home
+	await _frames(40)
+	check(GS.poison > 0.0, "la víbora envenena")
+	var hp_before := GS.health
+	await _frames(30)
+	check(GS.health < hp_before, "el veneno quita vida")
+	snake.global_position = Vector3(500, 0, 500)
+	snake.home = snake.global_position
+	GS.add_item("venda", 1)
+	for i in GS.slots.size():
+		if GS.slots[i] != null and GS.slots[i]["id"] == "venda":
+			GS.use_slot(i)
+			break
+	check(GS.poison == 0.0, "la venda cura el veneno")
+
+	# Horno con chatarra y carbón
+	check(not DB.recipe("lingote_carbon").is_empty() and not DB.recipe("lingote_chatarra").is_empty(), "recetas de horno con carbón y chatarra")
+	cantera.queue_free()
+	GS.new_game()
+	DirAccess.remove_absolute(ProjectSettings.globalize_path(GS.save_path))
 	await _frames(2)

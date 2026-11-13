@@ -1,23 +1,177 @@
 {
-  "madera":         { "name": "Madera",            "type": "material",   "stack": 50, "desc": "Troncos de pino. Base de casi todo." },
-  "piedra":         { "name": "Piedra",            "type": "material",   "stack": 50, "desc": "Piedra suelta para herramientas y estaciones." },
-  "fibra":          { "name": "Fibra vegetal",     "type": "material",   "stack": 50, "desc": "Hierba seca para cuerdas y vendas." },
-  "tela":           { "name": "Tela",              "type": "material",   "stack": 30, "desc": "Jirones de ropa de los infectados." },
-  "tablon":         { "name": "Tablón",            "type": "material",   "stack": 50, "desc": "Madera trabajada en el banco de carpintería." },
-  "bloque_piedra":  { "name": "Bloque de piedra",  "type": "material",   "stack": 50, "desc": "Piedra tallada en la mesa de cantería." },
-  "cuerda":         { "name": "Cuerda",            "type": "material",   "stack": 30, "desc": "Fibra trenzada." },
-  "piel":           { "name": "Piel",              "type": "material",   "stack": 30, "desc": "Piel de animal salvaje." },
-  "mineral_hierro": { "name": "Mineral de hierro", "type": "material",   "stack": 50, "desc": "Se funde en el horno." },
-  "lingote_hierro": { "name": "Lingote de hierro", "type": "material",   "stack": 50, "desc": "Metal para herramientas y estructuras de metal." },
-  "baya":           { "name": "Bayas",             "type": "consumable", "stack": 20, "food": 8, "water": 3, "desc": "Quitan un poco de hambre y sed." },
-  "carne_cruda":    { "name": "Carne cruda",       "type": "consumable", "stack": 20, "food": 6, "heal": -5, "desc": "Mejor cocinarla en la hoguera." },
-  "carne_asada":    { "name": "Carne asada",       "type": "consumable", "stack": 20, "food": 28, "desc": "Quita mucha hambre." },
-  "venda":          { "name": "Venda",             "type": "consumable", "stack": 10, "heal": 25, "desc": "Cura 25 de vida." },
-  "hacha_piedra":   { "name": "Hacha de piedra",   "type": "tool", "tool": "axe",     "damage": 14, "durability": 60,  "gather_mult": 2, "stack": 1, "desc": "Tala pinos más rápido." },
-  "pico_piedra":    { "name": "Pico de piedra",    "type": "tool", "tool": "pickaxe", "damage": 12, "durability": 60,  "gather_mult": 2, "stack": 1, "desc": "Pica rocas y vetas de hierro." },
-  "hacha_hierro":   { "name": "Hacha de hierro",   "type": "tool", "tool": "axe",     "damage": 22, "durability": 120, "gather_mult": 3, "stack": 1, "desc": "Tala mucho más rápido." },
-  "pico_hierro":    { "name": "Pico de hierro",    "type": "tool", "tool": "pickaxe", "damage": 18, "durability": 120, "gather_mult": 3, "stack": 1, "desc": "Pica mucho más rápido." },
-  "lanza":          { "name": "Lanza de madera",   "type": "weapon", "damage": 24, "durability": 40, "stack": 1, "desc": "Arma básica cuerpo a cuerpo." },
-  "garrote":        { "name": "Garrote",           "type": "weapon", "damage": 20, "durability": 70, "stack": 1, "desc": "Pesado y resistente." },
-  "machete":        { "name": "Machete",           "type": "weapon", "damage": 34, "durability": 90, "stack": 1, "desc": "Hoja de hierro afilada." }
+  "madera": {
+    "name": "Madera",
+    "type": "material",
+    "stack": 50,
+    "desc": "Troncos de pino. Base de casi todo."
+  },
+  "piedra": {
+    "name": "Piedra",
+    "type": "material",
+    "stack": 50,
+    "desc": "Piedra suelta para herramientas y estaciones."
+  },
+  "fibra": {
+    "name": "Fibra vegetal",
+    "type": "material",
+    "stack": 50,
+    "desc": "Hierba seca para cuerdas y vendas."
+  },
+  "tela": {
+    "name": "Tela",
+    "type": "material",
+    "stack": 30,
+    "desc": "Jirones de ropa de los infectados."
+  },
+  "tablon": {
+    "name": "Tablón",
+    "type": "material",
+    "stack": 50,
+    "desc": "Madera trabajada en el banco de carpintería."
+  },
+  "bloque_piedra": {
+    "name": "Bloque de piedra",
+    "type": "material",
+    "stack": 50,
+    "desc": "Piedra tallada en la mesa de cantería."
+  },
+  "cuerda": {
+    "name": "Cuerda",
+    "type": "material",
+    "stack": 30,
+    "desc": "Fibra trenzada."
+  },
+  "piel": {
+    "name": "Piel",
+    "type": "material",
+    "stack": 30,
+    "desc": "Piel de animal salvaje."
+  },
+  "mineral_hierro": {
+    "name": "Mineral de hierro",
+    "type": "material",
+    "stack": 50,
+    "desc": "Se funde en el horno."
+  },
+  "lingote_hierro": {
+    "name": "Lingote de hierro",
+    "type": "material",
+    "stack": 50,
+    "desc": "Metal para herramientas y estructuras de metal."
+  },
+  "baya": {
+    "name": "Bayas",
+    "type": "consumable",
+    "stack": 20,
+    "food": 8,
+    "water": 3,
+    "desc": "Quitan un poco de hambre y sed."
+  },
+  "carne_cruda": {
+    "name": "Carne cruda",
+    "type": "consumable",
+    "stack": 20,
+    "food": 6,
+    "heal": -5,
+    "desc": "Mejor cocinarla en la hoguera."
+  },
+  "carne_asada": {
+    "name": "Carne asada",
+    "type": "consumable",
+    "stack": 20,
+    "food": 28,
+    "desc": "Quita mucha hambre."
+  },
+  "venda": {
+    "name": "Venda",
+    "type": "consumable",
+    "stack": 10,
+    "heal": 25,
+    "desc": "Cura 25 de vida y el veneno.",
+    "cure_poison": true
+  },
+  "hacha_piedra": {
+    "name": "Hacha de piedra",
+    "type": "tool",
+    "tool": "axe",
+    "damage": 14,
+    "durability": 60,
+    "gather_mult": 2,
+    "stack": 1,
+    "desc": "Tala pinos más rápido."
+  },
+  "pico_piedra": {
+    "name": "Pico de piedra",
+    "type": "tool",
+    "tool": "pickaxe",
+    "damage": 12,
+    "durability": 60,
+    "gather_mult": 2,
+    "stack": 1,
+    "desc": "Pica rocas y vetas de hierro."
+  },
+  "hacha_hierro": {
+    "name": "Hacha de hierro",
+    "type": "tool",
+    "tool": "axe",
+    "damage": 22,
+    "durability": 120,
+    "gather_mult": 3,
+    "stack": 1,
+    "desc": "Tala mucho más rápido."
+  },
+  "pico_hierro": {
+    "name": "Pico de hierro",
+    "type": "tool",
+    "tool": "pickaxe",
+    "damage": 18,
+    "durability": 120,
+    "gather_mult": 3,
+    "stack": 1,
+    "desc": "Pica mucho más rápido."
+  },
+  "lanza": {
+    "name": "Lanza de madera",
+    "type": "weapon",
+    "damage": 24,
+    "durability": 40,
+    "stack": 1,
+    "desc": "Arma básica cuerpo a cuerpo."
+  },
+  "garrote": {
+    "name": "Garrote",
+    "type": "weapon",
+    "damage": 20,
+    "durability": 70,
+    "stack": 1,
+    "desc": "Pesado y resistente."
+  },
+  "machete": {
+    "name": "Machete",
+    "type": "weapon",
+    "damage": 34,
+    "durability": 90,
+    "stack": 1,
+    "desc": "Hoja de hierro afilada."
+  },
+  "seta": {
+    "name": "Seta",
+    "type": "consumable",
+    "stack": 20,
+    "food": 6,
+    "water": 1,
+    "desc": "Seta del bosque. Comestible."
+  },
+  "carbon": {
+    "name": "Carbón",
+    "type": "material",
+    "stack": 50,
+    "desc": "Combustible para el horno: funde más rápido."
+  },
+  "chatarra": {
+    "name": "Chatarra",
+    "type": "material",
+    "stack": 50,
+    "desc": "Restos metálicos. Se funden en el horno."
+  }
 }

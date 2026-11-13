@@ -1,17 +1,172 @@
 [
-  { "id": "hacha_piedra",   "result": "hacha_piedra",   "qty": 1, "station": "", "cost": { "madera": 5, "piedra": 3 } },
-  { "id": "pico_piedra",    "result": "pico_piedra",    "qty": 1, "station": "", "cost": { "madera": 5, "piedra": 5 } },
-  { "id": "lanza",          "result": "lanza",          "qty": 1, "station": "", "cost": { "madera": 8, "fibra": 2 } },
-  { "id": "cuerda",         "result": "cuerda",         "qty": 1, "station": "", "cost": { "fibra": 3 } },
-
-  { "id": "garrote",        "result": "garrote",        "qty": 1, "station": "banco_trabajo", "level": 1, "time": 5,  "cost": { "madera": 6, "cuerda": 1 } },
-  { "id": "hacha_hierro",   "result": "hacha_hierro",   "qty": 1, "station": "banco_trabajo", "level": 2, "time": 20, "cost": { "lingote_hierro": 3, "tablon": 2, "cuerda": 1 } },
-  { "id": "pico_hierro",    "result": "pico_hierro",    "qty": 1, "station": "banco_trabajo", "level": 2, "time": 20, "cost": { "lingote_hierro": 3, "tablon": 2, "cuerda": 1 } },
-  { "id": "machete",        "result": "machete",        "qty": 1, "station": "banco_trabajo", "level": 2, "time": 25, "cost": { "lingote_hierro": 4, "cuerda": 1 } },
-
-  { "id": "tablon",         "result": "tablon",         "qty": 1, "station": "carpinteria",  "level": 1, "time": 8,  "cost": { "madera": 3 } },
-  { "id": "bloque_piedra",  "result": "bloque_piedra",  "qty": 1, "station": "cantero",      "level": 1, "time": 8,  "cost": { "piedra": 3 } },
-  { "id": "carne_asada",    "result": "carne_asada",    "qty": 1, "station": "hoguera",      "level": 1, "time": 10, "cost": { "carne_cruda": 1 } },
-  { "id": "lingote_hierro", "result": "lingote_hierro", "qty": 1, "station": "horno",        "level": 1, "time": 20, "cost": { "mineral_hierro": 3, "madera": 2 } },
-  { "id": "venda",          "result": "venda",          "qty": 1, "station": "mesa_costura", "level": 1, "time": 5,  "cost": { "tela": 2, "fibra": 1 } }
+  {
+    "id": "hacha_piedra",
+    "result": "hacha_piedra",
+    "qty": 1,
+    "station": "",
+    "cost": {
+      "madera": 5,
+      "piedra": 3
+    }
+  },
+  {
+    "id": "pico_piedra",
+    "result": "pico_piedra",
+    "qty": 1,
+    "station": "",
+    "cost": {
+      "madera": 5,
+      "piedra": 5
+    }
+  },
+  {
+    "id": "lanza",
+    "result": "lanza",
+    "qty": 1,
+    "station": "",
+    "cost": {
+      "madera": 8,
+      "fibra": 2
+    }
+  },
+  {
+    "id": "cuerda",
+    "result": "cuerda",
+    "qty": 1,
+    "station": "",
+    "cost": {
+      "fibra": 3
+    }
+  },
+  {
+    "id": "garrote",
+    "result": "garrote",
+    "qty": 1,
+    "station": "banco_trabajo",
+    "level": 1,
+    "time": 5,
+    "cost": {
+      "madera": 6,
+      "cuerda": 1
+    }
+  },
+  {
+    "id": "hacha_hierro",
+    "result": "hacha_hierro",
+    "qty": 1,
+    "station": "banco_trabajo",
+    "level": 2,
+    "time": 20,
+    "cost": {
+      "lingote_hierro": 3,
+      "tablon": 2,
+      "cuerda": 1
+    }
+  },
+  {
+    "id": "pico_hierro",
+    "result": "pico_hierro",
+    "qty": 1,
+    "station": "banco_trabajo",
+    "level": 2,
+    "time": 20,
+    "cost": {
+      "lingote_hierro": 3,
+      "tablon": 2,
+      "cuerda": 1
+    }
+  },
+  {
+    "id": "machete",
+    "result": "machete",
+    "qty": 1,
+    "station": "banco_trabajo",
+    "level": 2,
+    "time": 25,
+    "cost": {
+      "lingote_hierro": 4,
+      "cuerda": 1
+    }
+  },
+  {
+    "id": "tablon",
+    "result": "tablon",
+    "qty": 1,
+    "station": "carpinteria",
+    "level": 1,
+    "time": 8,
+    "cost": {
+      "madera": 3
+    }
+  },
+  {
+    "id": "bloque_piedra",
+    "result": "bloque_piedra",
+    "qty": 1,
+    "station": "cantero",
+    "level": 1,
+    "time": 8,
+    "cost": {
+      "piedra": 3
+    }
+  },
+  {
+    "id": "carne_asada",
+    "result": "carne_asada",
+    "qty": 1,
+    "station": "hoguera",
+    "level": 1,
+    "time": 10,
+    "cost": {
+      "carne_cruda": 1
+    }
+  },
+  {
+    "id": "lingote_hierro",
+    "result": "lingote_hierro",
+    "qty": 1,
+    "station": "horno",
+    "level": 1,
+    "time": 20,
+    "cost": {
+      "mineral_hierro": 3,
+      "madera": 2
+    }
+  },
+  {
+    "id": "venda",
+    "result": "venda",
+    "qty": 1,
+    "station": "mesa_costura",
+    "level": 1,
+    "time": 5,
+    "cost": {
+      "tela": 2,
+      "fibra": 1
+    }
+  },
+  {
+    "id": "lingote_carbon",
+    "result": "lingote_hierro",
+    "qty": 2,
+    "station": "horno",
+    "level": 1,
+    "time": 25,
+    "cost": {
+      "mineral_hierro": 4,
+      "carbon": 1
+    }
+  },
+  {
+    "id": "lingote_chatarra",
+    "result": "lingote_hierro",
+    "qty": 1,
+    "station": "horno",
+    "level": 1,
+    "time": 15,
+    "cost": {
+      "chatarra": 4,
+      "madera": 1
+    }
+  }
 ]

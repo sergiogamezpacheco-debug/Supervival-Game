@@ -120,6 +120,8 @@ func _physics_process(delta: float) -> void:
 func _attack() -> void:
 	_attack_cd = stat("attack_interval", 1.2)
 	GS.damage(stat("attack_damage", 8))
+	if data.has("poison"):
+		GS.poison_for(stat("poison", 5.0))
 	if _player and _player.has_method("hurt_flash"):
 		_player.hurt_flash()
 	var tw := create_tween()

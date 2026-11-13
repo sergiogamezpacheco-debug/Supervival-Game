@@ -20,6 +20,7 @@ descarga `Supervival.apk` e instálalo (Android pedirá permitir "instalar apps 
 | Botón redondo (abajo derecha) | Acción contextual: Talar, Picar, Recoger, Atacar, Beber, Recuperar… Mantener para repetir |
 | Mochila | Inventario: usar, equipar o tirar objetos |
 | Fabricar | Recetas a mano (el resto, en las estaciones) |
+| Mapa | Viajar a otras zonas (cuesta comida y agua) |
 | Construir | Colocar cimientos, paredes, puertas, estaciones y cofres; mejorar o desmontar |
 
 ## Hoja de ruta
@@ -30,8 +31,9 @@ descarga `Supervival.apk` e instálalo (Android pedirá permitir "instalar apps 
 - [x] **Fase 2 – Construcción y base:** cuadrícula, cimientos/paredes/puertas (madera → piedra → metal),
       mejorar y desmontar, cofres, banco de trabajo por niveles, carpintería, cantería, hoguera, horno
       y mesa de costura con fabricación por tiempo real. Animales salvajes (conejo, jabalí, lobo).
-- [ ] **Fase 3 – Mapa global:** zonas por dificultad, viaje con coste de comida/agua, zonas temporales,
-      sigilo y ruido.
+- [~] **Fase 3 – Mapa global:** ✅ viaje entre zonas con coste de comida/agua, ✅ Bosque de Pino Negro,
+      ✅ Cantera de Peñas Rojas, contenedores saqueables, veneno. Pendiente: resto de zonas
+      (ver [docs/zonas.md](docs/zonas.md)), sigilo y ruido, mapa definitivo.
 - [ ] **Fase 4 – Combate y equipo:** armas a distancia, munición, armaduras, más enemigos, tablas de botín.
 - [ ] **Fase 5 – Contenido grande:** búnker, granja, vehículos, mascota, eventos.
 - [ ] **Fase 6 – Online (Firebase):** cuentas, nube, asaltos a otras bases, clanes, chat.

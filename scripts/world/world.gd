@@ -10,8 +10,11 @@ const BagScript := preload("res://scripts/world/bag.gd")
 const WellScript := preload("res://scripts/world/well.gd")
 const BaseScript := preload("res://scripts/world/base.gd")
 const HudScript := preload("res://scripts/ui/hud.gd")
+const ContainerScript := preload("res://scripts/world/container.gd")
 
-const SPAWN := Vector3(1, 0, 1)
+signal travelled(to_map: String)
+
+var SPAWN := Vector3(1, 0, 1)
 
 var map_id := "refugio"
 var map: Dictionary = {}
@@ -21,6 +24,7 @@ var camera: Camera3D
 var base: Node3D
 var rng := RandomNumberGenerator.new()
 var _placed: Array[Vector3] = []
+var _keepout: Array = []    # [Vector3 centro, radio] zonas sin recursos (edificios)
 var _respawns: Array = []   # [{ "c": criatura, "t": segundos }]
 var _death_timer := 0.0
 var _autosave := 0.0
@@ -39,7 +43,11 @@ var _build_ok := false
 
 func _ready() -> void:
 	randomize()
+	var world := GS.load_game()
+	map_id = GS.current_map
 	map = DB.maps.get(map_id, {})
+	var sp: Array = map.get("spawn", [1, 1])
+	SPAWN = Vector3(float(sp[0]), 0, float(sp[1]))
 	rng.seed = int(map.get("seed", 1337))
 	_half = float(map.get("size", 90)) / 2.0
 	_build_environment()
@@ -48,6 +56,8 @@ func _ready() -> void:
 	add_child(hud)
 	hud.build_selected.connect(_on_build_selected)
 	hud.build_action.connect(_on_build_action)
+	hud.travel_requested.connect(travel_to)
+	hud.set_location(map_id)
 
 	player = PlayerScript.new()
 	player.position = SPAWN
@@ -59,20 +69,16 @@ func _ready() -> void:
 		add_child(base)
 		base.drop_items.connect(func(pos: Vector3, items: Array): spawn_bag(pos, items, false))
 
-	var well := WellScript.new()
-	well.position = Vector3(-7, 0, -5)
-	well.add_to_group("obstacle")
-	add_child(well)
-	_placed.append(well.position)
-
-	_spawn_resources(base_half + 2.0)
+	_spawn_prefabs()
+	_spawn_resources(base_half + 2.0 if base_half > 0.0 else 5.0)
 	_spawn_creatures()
 
 	GS.died.connect(_on_player_died)
-	var world := GS.load_game()
 	if not world.is_empty():
 		_load_world(world)
+	camera.global_position = player.global_position + Vector3(0, 13.0, 8.5)
 	_update_camera(1.0)
+	GS.message.emit(str(map.get("name", "")))
 
 
 # ------------------------------------------------------------ construcción
@@ -101,7 +107,9 @@ func _build_environment() -> void:
 	var plane := PlaneMesh.new()
 	plane.size = Vector2(_half * 2.0 + 30.0, _half * 2.0 + 30.0)
 	ground.mesh = plane
-	ground.material_override = Builder.mat(Color("4f6b3a"))
+	var gcol := Color(str(map.get("ground", "4f6b3a")))
+	env.fog_density = float(map.get("fog", 0.012))
+	ground.material_override = Builder.mat(gcol)
 	add_child(ground)
 	for i in 40:
 		var patch := MeshInstance3D.new()
@@ -109,7 +117,7 @@ func _build_environment() -> void:
 		var s := rng.randf_range(2.0, 6.0)
 		pm.size = Vector2(s, s * rng.randf_range(0.6, 1.4))
 		patch.mesh = pm
-		patch.material_override = Builder.mat(Color("5d5a3a") if i % 2 == 0 else Color("445e33"))
+		patch.material_override = Builder.mat(gcol.lightened(0.08) if i % 2 == 0 else gcol.darkened(0.12))
 		patch.position = Vector3(rng.randf_range(-_half, _half), 0.01, rng.randf_range(-_half, _half))
 		patch.rotation.y = rng.randf_range(0, TAU)
 		add_child(patch)
@@ -123,10 +131,17 @@ func _build_environment() -> void:
 func _free_spot(min_dist: float, avoid_center: float, square := true) -> Vector3:
 	for attempt in 60:
 		var p := Vector3(rng.randf_range(-_half + 2, _half - 2), 0, rng.randf_range(-_half + 2, _half - 2))
-		var inside := maxf(absf(p.x), absf(p.z)) < avoid_center if square else p.length() < avoid_center
+		var rel := p - SPAWN
+		var inside := maxf(absf(rel.x), absf(rel.z)) < avoid_center if square else rel.length() < avoid_center
 		if inside:
 			continue
 		var ok := true
+		for k in _keepout:
+			if p.distance_to(k[0]) < float(k[1]):
+				ok = false
+				break
+		if not ok:
+			continue
 		for q in _placed:
 			if p.distance_to(q) < min_dist:
 				ok = false
@@ -137,6 +152,32 @@ func _free_spot(min_dist: float, avoid_center: float, square := true) -> Vector3
 	var fallback := Vector3(_half - 3, 0, rng.randf_range(-_half + 3, _half - 3))
 	_placed.append(fallback)
 	return fallback
+
+
+func _spawn_prefabs() -> void:
+	for pf in map.get("prefabs", []):
+		var pos_a: Array = pf.get("pos", [0, 0])
+		var pos := Vector3(float(pos_a[0]), 0, float(pos_a[1]))
+		var rot := int(pf.get("rot", 0))
+		var kind := str(pf.get("type", ""))
+		var node: Node3D
+		if kind == "pozo":
+			node = WellScript.new()
+			node.add_to_group("obstacle")
+		else:
+			node = Builder.prefab(kind)
+		node.position = pos
+		node.rotation_degrees.y = rot * 90.0
+		add_child(node)
+		_keepout.append([pos, 2.5 if kind == "pozo" else 6.5])
+		for c in pf.get("containers", []):
+			var off: Array = c.get("offset", [0, 0])
+			var local := Vector3(float(off[0]), 0, float(off[1])).rotated(Vector3.UP, deg_to_rad(rot * 90.0))
+			var box := ContainerScript.new()
+			box.setup(str(c["type"]), rng)
+			box.position = pos + local
+			box.rotation_degrees.y = rot * 90.0
+			add_child(box)
 
 
 func _spawn_resources(avoid: float) -> void:
@@ -198,6 +239,7 @@ func _process(delta: float) -> void:
 		var t := find_target()
 		player.target = t
 		hud.set_action("" if t == null else t.action_label())
+		hud.set_status("Envenenado" if GS.poison > 0.0 else "")
 
 	if build_mode != "":
 		_update_build()
@@ -396,6 +438,49 @@ func confirm_build() -> bool:
 	return done
 
 
+# ------------------------------------------------------------------- viajar
+
+func enemies_near(radius: float) -> bool:
+	for e in get_tree().get_nodes_in_group("enemy"):
+		if e.visible and e.hp > 0.0 and e.global_position.distance_to(player.global_position) < radius:
+			return true
+	return false
+
+
+## Viaja a otra zona. Devuelve "" si sale bien o el motivo si no.
+func travel_to(id: String) -> String:
+	var why := ""
+	if id == map_id:
+		why = "Ya estás aquí"
+	elif not DB.maps.has(id):
+		why = "Aún no se puede ir a ese lugar"
+	elif GS.dead:
+		why = "Estás muerto"
+	elif enemies_near(10.0):
+		why = "Hay enemigos cerca: aléjate antes de viajar"
+	if why != "":
+		GS.message.emit(why)
+		return why
+	var cost := DB.travel_cost(map_id, id)
+	if GS.food < float(cost["food"]) or GS.water < float(cost["water"]):
+		why = "No tienes comida o agua suficiente para el viaje"
+		GS.message.emit(why)
+		return why
+	if build_mode != "":
+		exit_build()
+	save()
+	GS.food -= float(cost["food"])
+	GS.water -= float(cost["water"])
+	var dest: Dictionary = GS.maps_state.get(id, {})
+	dest.erase("player")   # al llegar apareces en la entrada de la zona
+	GS.current_map = id
+	GS.save_game(dest)
+	travelled.emit(id)
+	if get_tree().current_scene == self:
+		get_tree().change_scene_to_file.call_deferred("res://scenes/main.tscn")
+	return ""
+
+
 # ------------------------------------------------------- muerte y botín
 
 func _on_player_died() -> void:
@@ -413,6 +498,17 @@ func _on_player_died() -> void:
 func _respawn_player() -> void:
 	hud.show_death(false)
 	GS.reset_stats()
+	if map_id != "refugio":
+		# Se reaparece siempre en el refugio. La mochila se queda en la zona.
+		save()
+		var dest: Dictionary = GS.maps_state.get("refugio", {})
+		dest.erase("player")
+		GS.current_map = "refugio"
+		GS.save_game(dest)
+		travelled.emit("refugio")
+		if get_tree().current_scene == self:
+			get_tree().change_scene_to_file.call_deferred("res://scenes/main.tscn")
+		return
 	player.global_position = SPAWN
 	camera.global_position = SPAWN + Vector3(0, 13.0, 8.5)
 

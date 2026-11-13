@@ -74,6 +74,33 @@ func _ready() -> void:
 			i += 1
 	await _wait(30)
 	await _shot("5_criaturas")
+	world.hud._toggle(world.hud._map_panel)
+	world.hud._select_map("cantera")
+	await _wait(10)
+	await _shot("6_mapa")
+	world.hud.close_panels()
+	for zone in ["bosque", "cantera"]:
+		for c in get_tree().get_nodes_in_group("creature"):
+			c.global_position = Vector3(500, 0, 500)
+			c.home = c.global_position
+		GS.food = 100.0
+		GS.water = 100.0
+		world.travel_to(zone)
+		world.queue_free()
+		await _wait(3)
+		world = load("res://scenes/main.tscn").instantiate()
+		add_child(world)
+		await _wait(5)
+		var pf: Array = DB.maps[zone]["prefabs"][0]["pos"]
+		world.player.global_position = Vector3(float(pf[0]) + 4.0, 0, float(pf[1]) + 6.0)
+		var n := 0
+		for c in get_tree().get_nodes_in_group("creature"):
+			if n < 4:
+				c.process_mode = Node.PROCESS_MODE_DISABLED
+				c.global_position = world.player.global_position + Vector3(-4 + n * 2.2, 0, 3)
+			n += 1
+		await _wait(30)
+		await _shot("7_" + zone)
 	DirAccess.remove_absolute(ProjectSettings.globalize_path(GS.save_path))
 	get_tree().quit()
 

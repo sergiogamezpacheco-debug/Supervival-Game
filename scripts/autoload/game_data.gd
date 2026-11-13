@@ -10,6 +10,8 @@ var structures: Dictionary = {}
 var stations: Dictionary = {}
 var creatures: Dictionary = {}
 var maps: Dictionary = {}
+var containers: Dictionary = {}
+var world_map: Dictionary = {}
 
 
 func _init() -> void:
@@ -25,6 +27,8 @@ func reload() -> void:
 	stations = _load_json("res://data/stations.json", {})
 	creatures = _load_json("res://data/creatures.json", {})
 	maps = _load_json("res://data/maps.json", {})
+	containers = _load_json("res://data/containers.json", {})
+	world_map = _load_json("res://data/world_map.json", {})
 
 
 func _load_json(path: String, fallback: Variant) -> Variant:
@@ -103,3 +107,15 @@ func recipe(id: String) -> Dictionary:
 		if str(r.get("id", "")) == id:
 			return r
 	return {}
+
+
+## Coste de viajar entre dos lugares del mapa del mundo: {"food", "water"}.
+func travel_cost(from_id: String, to_id: String) -> Dictionary:
+	var a: Array = world_map.get(from_id, {}).get("pos", [0.5, 0.5])
+	var b: Array = world_map.get(to_id, {}).get("pos", [0.5, 0.5])
+	var d := Vector2(float(a[0]), float(a[1])).distance_to(Vector2(float(b[0]), float(b[1])))
+	var mn := int(bal("travel_min_cost", 3))
+	return {
+		"food": maxi(mn, roundi(d * float(bal("travel_food_per_unit", 30)))),
+		"water": maxi(mn, roundi(d * float(bal("travel_water_per_unit", 40)))),
+	}

@@ -1,0 +1,99 @@
+{
+  "refugio": {
+    "name": "Refugio",
+    "pos": [
+      0.42,
+      0.55
+    ],
+    "level": "hogar",
+    "desc": "Tu base. Aquí construyes, fabricas y guardas tus cosas."
+  },
+  "bosque": {
+    "name": "Bosque de Pino Negro",
+    "pos": [
+      0.22,
+      0.38
+    ],
+    "level": "verde",
+    "desc": "Madera de sobra, setas, ciervos y lobos. Cabaña de leñador y aserradero en ruinas."
+  },
+  "cantera": {
+    "name": "Cantera de Peñas Rojas",
+    "pos": [
+      0.63,
+      0.33
+    ],
+    "level": "amarilla",
+    "desc": "Hierro, carbón y chatarra. Mineros infectados, acorazados y víboras."
+  },
+  "marisma": {
+    "name": "Marisma del Río Turbio",
+    "pos": [
+      0.27,
+      0.8
+    ],
+    "level": "amarilla",
+    "status": "proximamente",
+    "desc": "Pesca, arcilla y juncos. Ahogados que salen del agua."
+  },
+  "valdecruces": {
+    "name": "Valdecruces",
+    "pos": [
+      0.72,
+      0.62
+    ],
+    "level": "roja",
+    "status": "proximamente",
+    "desc": "Pueblo abandonado: farmacia, gasolinera y taller. Hordas y jaurías."
+  },
+  "sector9": {
+    "name": "Puesto militar Sector 9",
+    "pos": [
+      0.86,
+      0.18
+    ],
+    "level": "roja",
+    "status": "proximamente",
+    "desc": "Búnker, armería y el Bruto. Hace falta tarjeta de acceso."
+  },
+  "central": {
+    "name": "Central Nuclear de Sierra Albarda",
+    "pos": [
+      0.9,
+      0.86
+    ],
+    "level": "radiactiva",
+    "status": "proximamente",
+    "desc": "Origen de las mutaciones. Radiación y mutantes que solo caen en grupo."
+  },
+  "alcorin": {
+    "name": "Alcorín",
+    "pos": [
+      0.1,
+      0.6
+    ],
+    "level": "segura",
+    "status": "proximamente",
+    "desc": "Pueblo de supervivientes: granja y mercado. Mancomunidad del Valle."
+  },
+  "fuentecalma": {
+    "name": "Fuentecalma",
+    "pos": [
+      0.5,
+      0.88
+    ],
+    "level": "segura",
+    "status": "proximamente",
+    "desc": "Pueblo de supervivientes: médicos y taller. Mancomunidad del Valle."
+  },
+  "torreviga": {
+    "name": "Torreviga",
+    "pos": [
+      0.46,
+      0.1
+    ],
+    "level": "segura",
+    "status": "proximamente",
+    "desc": "Pueblo de supervivientes amurallado: milicia y armas. Mancomunidad del Valle."
+  }
+}

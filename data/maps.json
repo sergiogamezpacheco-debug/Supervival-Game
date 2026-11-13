@@ -4,12 +4,256 @@
     "size": 90,
     "seed": 1337,
     "base_half": 18,
-    "resources": { "pino": 60, "roca": 35, "veta_hierro": 8, "arbusto": 30, "hierba": 40 },
+    "resources": {
+      "pino": 60,
+      "roca": 35,
+      "veta_hierro": 8,
+      "arbusto": 30,
+      "hierba": 40
+    },
     "creatures": [
-      { "type": "infectado", "groups": 5, "size": [1, 2], "min_dist": 26 },
-      { "type": "conejo",    "groups": 5, "size": [1, 2], "min_dist": 20 },
-      { "type": "jabali",    "groups": 2, "size": [1, 1], "min_dist": 28 },
-      { "type": "lobo",      "groups": 1, "size": [2, 3], "min_dist": 34 }
+      {
+        "type": "infectado",
+        "groups": 5,
+        "size": [
+          1,
+          2
+        ],
+        "min_dist": 26
+      },
+      {
+        "type": "conejo",
+        "groups": 5,
+        "size": [
+          1,
+          2
+        ],
+        "min_dist": 20
+      },
+      {
+        "type": "jabali",
+        "groups": 2,
+        "size": [
+          1,
+          1
+        ],
+        "min_dist": 28
+      },
+      {
+        "type": "lobo",
+        "groups": 1,
+        "size": [
+          2,
+          3
+        ],
+        "min_dist": 34
+      }
+    ],
+    "spawn": [
+      1,
+      1
+    ],
+    "ground": "4f6b3a",
+    "prefabs": [
+      {
+        "type": "pozo",
+        "pos": [
+          -7,
+          -5
+        ]
+      }
+    ]
+  },
+  "bosque": {
+    "name": "Bosque de Pino Negro",
+    "size": 110,
+    "seed": 2024,
+    "spawn": [
+      0,
+      48
+    ],
+    "ground": "3d5a2e",
+    "fog": 0.02,
+    "resources": {
+      "pino": 110,
+      "roca": 15,
+      "arbusto": 30,
+      "hierba": 30,
+      "seta": 24
+    },
+    "prefabs": [
+      {
+        "type": "cabana",
+        "pos": [
+          -20,
+          -8
+        ],
+        "rot": 0,
+        "containers": [
+          {
+            "type": "cofre_viejo",
+            "offset": [
+              1.2,
+              -1.0
+            ]
+          }
+        ]
+      },
+      {
+        "type": "aserradero",
+        "pos": [
+          22,
+          -22
+        ],
+        "rot": 1,
+        "containers": [
+          {
+            "type": "caja_herramientas",
+            "offset": [
+              -2.5,
+              1.5
+            ]
+          }
+        ]
+      }
+    ],
+    "creatures": [
+      {
+        "type": "infectado",
+        "groups": 4,
+        "size": [
+          1,
+          1
+        ],
+        "min_dist": 18
+      },
+      {
+        "type": "ciervo",
+        "groups": 4,
+        "size": [
+          2,
+          3
+        ],
+        "min_dist": 16
+      },
+      {
+        "type": "conejo",
+        "groups": 4,
+        "size": [
+          1,
+          2
+        ],
+        "min_dist": 12
+      },
+      {
+        "type": "lobo",
+        "groups": 2,
+        "size": [
+          2,
+          3
+        ],
+        "min_dist": 30
+      }
+    ]
+  },
+  "cantera": {
+    "name": "Cantera de Peñas Rojas",
+    "size": 100,
+    "seed": 777,
+    "spawn": [
+      -44,
+      0
+    ],
+    "ground": "8a6248",
+    "fog": 0.014,
+    "resources": {
+      "roca": 50,
+      "veta_hierro": 20,
+      "veta_carbon": 15,
+      "chatarra": 10,
+      "hierba": 10
+    },
+    "prefabs": [
+      {
+        "type": "caseta",
+        "pos": [
+          10,
+          12
+        ],
+        "rot": 0,
+        "containers": [
+          {
+            "type": "taquilla",
+            "offset": [
+              1.0,
+              -1.0
+            ]
+          }
+        ]
+      },
+      {
+        "type": "excavadora",
+        "pos": [
+          -8,
+          -18
+        ],
+        "rot": 1
+      },
+      {
+        "type": "tunel",
+        "pos": [
+          30,
+          -30
+        ],
+        "rot": 0,
+        "containers": [
+          {
+            "type": "caja_herramientas",
+            "offset": [
+              0,
+              3.5
+            ]
+          }
+        ]
+      }
+    ],
+    "creatures": [
+      {
+        "type": "minero",
+        "groups": 4,
+        "size": [
+          2,
+          3
+        ],
+        "min_dist": 16
+      },
+      {
+        "type": "acorazado",
+        "groups": 2,
+        "size": [
+          1,
+          1
+        ],
+        "min_dist": 24
+      },
+      {
+        "type": "vibora",
+        "groups": 6,
+        "size": [
+          1,
+          1
+        ],
+        "min_dist": 10
+      },
+      {
+        "type": "jabali",
+        "groups": 2,
+        "size": [
+          1,
+          1
+        ],
+        "min_dist": 18
+      }
     ]
   }
 }

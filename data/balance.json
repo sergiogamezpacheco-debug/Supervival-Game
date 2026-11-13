@@ -13,5 +13,9 @@
   "well_water": 30,
   "autosave_seconds": 15,
   "grid_cell": 2.0,
-  "demolish_refund": 0.5
+  "demolish_refund": 0.5,
+  "poison_damage_per_second": 1.5,
+  "travel_food_per_unit": 30,
+  "travel_water_per_unit": 40,
+  "travel_min_cost": 3
 }

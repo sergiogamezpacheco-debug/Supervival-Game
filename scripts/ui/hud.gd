@@ -5,6 +5,16 @@ extends CanvasLayer
 
 signal build_selected(mode: String, id: String)   # mode: place | upgrade | demolish
 signal build_action(action: String)               # rotate | confirm | exit
+signal travel_requested(map_id: String)
+
+const LEVEL_COLORS := {
+	"hogar": Color("e8d36a"), "verde": Color("5fbf4a"), "amarilla": Color("e6b83a"),
+	"roja": Color("d9443c"), "radiactiva": Color("a35ee0"), "segura": Color("4aa3e0"),
+}
+const LEVEL_NAMES := {
+	"hogar": "Tu refugio", "verde": "Peligro bajo", "amarilla": "Peligro medio",
+	"roja": "Peligro alto", "radiactiva": "Radiación: solo en grupo", "segura": "Zona segura (supervivientes)",
+}
 
 const JoystickScript := preload("res://scripts/ui/joystick.gd")
 const TouchButtonScript := preload("res://scripts/ui/touch_button.gd")
@@ -42,6 +52,14 @@ var _chest_grid: GridContainer
 var _chest_bag_grid: GridContainer
 var station: Node3D = null       # estación o cofre abierto
 var _station_refresh := 0.0
+var location := "refugio"
+var _map_panel: PanelContainer
+var _map_area: Control
+var _map_info: Label
+var _map_travel: Button
+var _map_selected := ""
+var _status: Label
+var build_btn: Button
 
 
 func _ready() -> void:
@@ -61,6 +79,7 @@ func _ready() -> void:
 	_build_build_bar()
 	_build_station_panel()
 	_build_chest_panel()
+	_build_map_panel()
 	add_to_group("hud")
 
 	_msg = Label.new()
@@ -120,6 +139,12 @@ func _build_bars() -> void:
 		bar.add_child(lbl)
 		box.add_child(bar)
 		_bars[def[0]] = bar
+	_status = Label.new()
+	_status.add_theme_font_size_override("font_size", 20)
+	_status.add_theme_color_override("font_color", Color("8fe36a"))
+	_status.add_theme_color_override("font_outline_color", Color.BLACK)
+	_status.add_theme_constant_override("outline_size", 5)
+	box.add_child(_status)
 	_hand_label = Label.new()
 	_hand_label.add_theme_font_size_override("font_size", 20)
 	_hand_label.add_theme_color_override("font_outline_color", Color.BLACK)
@@ -174,9 +199,14 @@ func _build_controls() -> void:
 	var craft_btn := _big_button("Fabricar")
 	craft_btn.pressed.connect(func(): _toggle(_craft_panel))
 	side.add_child(craft_btn)
-	var build_btn := _big_button("Construir")
+	build_btn = _big_button("Construir")
 	build_btn.pressed.connect(func(): _toggle(_build_panel))
 	side.add_child(build_btn)
+	var map_btn := _big_button("Mapa")
+	map_btn.pressed.connect(func():
+		_toggle(_map_panel)
+		_refresh_map())
+	side.add_child(map_btn)
 
 
 func _big_button(t: String) -> Button:
@@ -204,14 +234,14 @@ func _toggle(panel: Control) -> void:
 
 
 func close_panels() -> void:
-	for p in [_inv_panel, _craft_panel, _build_panel, _station_panel, _chest_panel]:
+	for p in [_inv_panel, _craft_panel, _build_panel, _station_panel, _chest_panel, _map_panel]:
 		if p:
 			p.visible = false
 	station = null
 
 
 func any_panel_open() -> bool:
-	for p in [_inv_panel, _craft_panel, _build_panel, _station_panel, _chest_panel]:
+	for p in [_inv_panel, _craft_panel, _build_panel, _station_panel, _chest_panel, _map_panel]:
 		if p and p.visible:
 			return true
 	return false
@@ -716,3 +746,125 @@ func _refresh_chest() -> void:
 		var b := _slot_button(GS.slots[i])
 		b.pressed.connect(func(): station.bag_to_chest(i))
 		_chest_bag_grid.add_child(b)
+
+
+# ------------------------------------------------------------------ estado
+
+func set_status(t: String) -> void:
+	if _status.text != t:
+		_status.text = t
+
+
+# ------------------------------------------------------------------- mapa
+# Versión funcional: el diseño definitivo se elegirá entre las 3 propuestas.
+
+func set_location(id: String) -> void:
+	location = id
+	# Solo se construye en el refugio.
+	if build_btn:
+		build_btn.visible = DB.maps.get(id, {}).get("base_half", 0) > 0
+
+
+func _build_map_panel() -> void:
+	var parts := _panel("Mapa del Valle", Vector2(600, 330))
+	_map_panel = parts[0]
+	var v: VBoxContainer = parts[1]
+	var h := HBoxContainer.new()
+	h.add_theme_constant_override("separation", 16)
+	v.add_child(h)
+	_map_area = Control.new()
+	_map_area.custom_minimum_size = Vector2(760, 540)
+	_map_area.draw.connect(_draw_map)
+	h.add_child(_map_area)
+	var side := VBoxContainer.new()
+	side.custom_minimum_size = Vector2(380, 0)
+	side.add_theme_constant_override("separation", 12)
+	h.add_child(side)
+	_map_info = Label.new()
+	_map_info.autowrap_mode = TextServer.AUTOWRAP_WORD
+	_map_info.custom_minimum_size = Vector2(380, 400)
+	_map_info.add_theme_font_size_override("font_size", 20)
+	side.add_child(_map_info)
+	_map_travel = Button.new()
+	_map_travel.text = "Viajar"
+	_map_travel.custom_minimum_size = Vector2(200, 64)
+	_map_travel.pressed.connect(func():
+		if _map_selected != "":
+			travel_requested.emit(_map_selected))
+	side.add_child(_map_travel)
+
+
+func _draw_map() -> void:
+	var sz := _map_area.size
+	_map_area.draw_rect(Rect2(Vector2.ZERO, sz), Color("2a3326"))
+	# río y caminos de adorno
+	var river := PackedVector2Array()
+	for i in 21:
+		var t := float(i) / 20.0
+		river.append(Vector2(t * sz.x, sz.y * (0.72 + 0.08 * sin(t * 7.0))))
+	_map_area.draw_polyline(river, Color("3b6c8f"), 10.0, true)
+	var home: Array = DB.world_map.get("refugio", {}).get("pos", [0.5, 0.5])
+	var hp := Vector2(float(home[0]), float(home[1])) * sz
+	for id in DB.world_map:
+		var p: Array = DB.world_map[id]["pos"]
+		_map_area.draw_dashed_line(hp, Vector2(float(p[0]), float(p[1])) * sz, Color(0.8, 0.75, 0.6, 0.25), 2.0, 8.0)
+
+
+func _refresh_map() -> void:
+	if _map_area == null:
+		return
+	for c in _map_area.get_children():
+		c.queue_free()
+	_map_area.queue_redraw()
+	for id in DB.world_map:
+		var d: Dictionary = DB.world_map[id]
+		var p: Array = d["pos"]
+		var b := Button.new()
+		var playable := DB.maps.has(id)
+		b.text = ("● " if id == location else "") + str(d["name"])
+		b.add_theme_font_size_override("font_size", 15)
+		var col: Color = LEVEL_COLORS.get(str(d.get("level", "verde")), Color.WHITE)
+		var st := StyleBoxFlat.new()
+		st.bg_color = col.darkened(0.45) if playable else Color(0.2, 0.2, 0.2, 0.85)
+		st.border_color = col
+		st.set_border_width_all(3 if id == _map_selected else 1)
+		st.set_corner_radius_all(8)
+		st.set_content_margin_all(6)
+		b.add_theme_stylebox_override("normal", st)
+		b.add_theme_stylebox_override("hover", st)
+		b.add_theme_stylebox_override("pressed", st)
+		if not playable:
+			b.modulate = Color(1, 1, 1, 0.6)
+		var area := _map_area.custom_minimum_size
+		var est_w := b.text.length() * 8.5 + 24.0
+		var bp := Vector2(float(p[0]), float(p[1])) * area - Vector2(est_w / 2.0, 18)
+		b.position = Vector2(clampf(bp.x, 4.0, area.x - est_w - 4.0), clampf(bp.y, 4.0, area.y - 44.0))
+		var mid := str(id)
+		b.pressed.connect(func(): _select_map(mid))
+		_map_area.add_child(b)
+	if _map_selected == "":
+		_select_map(location)
+	else:
+		_update_map_info()
+
+
+func _select_map(id: String) -> void:
+	_map_selected = id
+	_refresh_map()
+
+
+func _update_map_info() -> void:
+	var d: Dictionary = DB.world_map.get(_map_selected, {})
+	var lvl := str(d.get("level", ""))
+	var txt := "%s\n%s\n\n%s" % [d.get("name", ""), LEVEL_NAMES.get(lvl, ""), d.get("desc", "")]
+	var can := false
+	if _map_selected == location:
+		txt += "\n\nEstás aquí."
+	elif not DB.maps.has(_map_selected):
+		txt += "\n\nPróximamente."
+	else:
+		var cost := DB.travel_cost(location, _map_selected)
+		txt += "\n\nViaje: comida -%d, agua -%d" % [int(cost["food"]), int(cost["water"])]
+		can = true
+	_map_info.text = txt
+	_map_travel.disabled = not can

@@ -15,6 +15,9 @@ var food := 100.0
 var water := 100.0
 var dead := false
 var time_offset := 0.0         # solo para tests: adelanta el reloj
+var poison := 0.0              # segundos de veneno que quedan
+var current_map := "refugio"   # zona en la que está el jugador
+var maps_state: Dictionary = {} # estado guardado de cada zona (refugio, bolsas…)
 
 var _food_timer := 0.0
 var _water_timer := 0.0
@@ -30,6 +33,8 @@ func _ready() -> void:
 
 
 func new_game() -> void:
+	current_map = "refugio"
+	maps_state = {}
 	slots.clear()
 	slots.resize(int(DB.bal("inventory_slots", 20)))
 	hand = null
@@ -42,6 +47,7 @@ func reset_stats() -> void:
 	food = float(DB.bal("max_food", 100))
 	water = float(DB.bal("max_water", 100))
 	dead = false
+	poison = 0.0
 	_food_timer = 0.0
 	_water_timer = 0.0
 	stats_changed.emit()
@@ -65,6 +71,11 @@ func tick(delta: float) -> void:
 		_water_timer -= water_step
 		water = maxf(water - 1.0, 0.0)
 		changed = true
+	if poison > 0.0:
+		poison = maxf(poison - delta, 0.0)
+		damage(float(DB.bal("poison_damage_per_second", 1.5)) * delta)
+		if dead:
+			return
 	if food <= 0.0 or water <= 0.0:
 		damage(float(DB.bal("starving_damage_per_second", 1.0)) * delta)
 	elif changed:
@@ -79,6 +90,15 @@ func damage(amount: float) -> void:
 	if health <= 0.0:
 		dead = true
 		died.emit()
+
+
+func poison_for(seconds: float) -> void:
+	if dead:
+		return
+	if poison <= 0.0:
+		message.emit("¡Te han envenenado! Una venda lo cura")
+	poison = maxf(poison, seconds)
+	stats_changed.emit()
 
 
 func heal(amount: float) -> void:
@@ -230,6 +250,9 @@ func use_slot(i: int) -> void:
 					heal(h)
 				else:
 					damage(-h)
+			if bool(data.get("cure_poison", false)) and poison > 0.0:
+				poison = 0.0
+				message.emit("Veneno curado")
 			s["qty"] = int(s["qty"]) - 1
 			if int(s["qty"]) <= 0:
 				slots[i] = null
@@ -349,9 +372,12 @@ func from_dict(d: Dictionary) -> void:
 	stats_changed.emit()
 
 
+## Guarda la partida. "world" es el estado de la zona actual.
 func save_game(world: Dictionary) -> void:
+	maps_state[current_map] = world
 	var d := to_dict()
-	d["world"] = world
+	d["maps"] = maps_state
+	d["current_map"] = current_map
 	var f := FileAccess.open(save_path, FileAccess.WRITE)
 	if f == null:
 		push_error("No se pudo guardar en %s" % save_path)
@@ -370,4 +396,10 @@ func load_game() -> Dictionary:
 	if typeof(parsed) != TYPE_DICTIONARY:
 		return {}
 	from_dict(parsed)
-	return parsed.get("world", {})
+	maps_state = parsed.get("maps", {})
+	if maps_state.is_empty() and parsed.has("world"):
+		maps_state = {"refugio": parsed["world"]}   # partidas de la versión 0.1.1
+	current_map = str(parsed.get("current_map", "refugio"))
+	if not DB.maps.has(current_map):
+		current_map = "refugio"
+	return maps_state.get(current_map, {})
