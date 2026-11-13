@@ -1,0 +1,6 @@
+[
+  { "id": "hacha_piedra", "result": "hacha_piedra", "qty": 1, "cost": { "madera": 5, "piedra": 3 } },
+  { "id": "pico_piedra",  "result": "pico_piedra",  "qty": 1, "cost": { "madera": 5, "piedra": 5 } },
+  { "id": "lanza",        "result": "lanza",        "qty": 1, "cost": { "madera": 8, "fibra": 2 } },
+  { "id": "venda",        "result": "venda",        "qty": 1, "cost": { "tela": 2, "fibra": 1 } }
+]

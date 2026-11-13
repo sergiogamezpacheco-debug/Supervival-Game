@@ -1,0 +1,11 @@
+{
+  "madera":       { "name": "Madera",        "type": "material",   "stack": 50, "desc": "Troncos de pino. Base de casi todo." },
+  "piedra":       { "name": "Piedra",        "type": "material",   "stack": 50, "desc": "Piedra suelta para herramientas." },
+  "fibra":        { "name": "Fibra vegetal", "type": "material",   "stack": 50, "desc": "Hierba seca para cuerdas y vendas." },
+  "tela":         { "name": "Tela",          "type": "material",   "stack": 30, "desc": "Jirones de ropa de los infectados." },
+  "baya":         { "name": "Bayas",         "type": "consumable", "stack": 20, "food": 8, "water": 3, "desc": "Quitan un poco de hambre y sed." },
+  "venda":        { "name": "Venda",         "type": "consumable", "stack": 10, "heal": 25, "desc": "Cura 25 de vida." },
+  "hacha_piedra": { "name": "Hacha de piedra", "type": "tool", "tool": "axe",     "damage": 14, "durability": 60, "gather_mult": 2, "stack": 1, "desc": "Tala pinos más rápido." },
+  "pico_piedra":  { "name": "Pico de piedra",  "type": "tool", "tool": "pickaxe", "damage": 12, "durability": 60, "gather_mult": 2, "stack": 1, "desc": "Pica rocas más rápido." },
+  "lanza":        { "name": "Lanza de madera", "type": "weapon", "damage": 24, "durability": 40, "stack": 1, "desc": "Arma básica cuerpo a cuerpo." }
+}
