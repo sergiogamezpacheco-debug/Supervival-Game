@@ -17,6 +17,8 @@
   `get_tree().root.get_final_transform() * posicion_en_canvas`.
 - Capturas para revisar la interfaz (la máquina tiene Xvfb + llvmpipe, ~5 fps):
   `xvfb-run -s "-screen 0 1280x720x24" godot --audio-driver Dummy --rendering-driver opengl3 res://tools/screens.tscn -- /tmp/screens`
+- Ropa: objetos `type: wear` en `data/items.json` (`slot`, `model` = clave de `CharacterModel.CLOTH`).
+  `GS.testing = true` en tests y herramientas para no abrir la pantalla de creación de personaje.
 - Mapas en `data/maps.json`; criaturas genéricas en `scripts/world/creature.gd` (aggressive/neutral/passive).
 - Construcción: `scripts/world/base.gd` (cuadrícula 2 m; claves "i,j" casillas, "i,j,d" bordes).
 - Hoja de ruta y estado: `README.md`.

@@ -325,7 +325,14 @@ func _build_head(head: Node3D, skin: Color) -> void:
 	var hc: Color = HAIR_COLORS[clampi(int(look["hair_color"]), 0, 4)]
 	var rings := _head_rings()
 	if not male:
-		rings = grow(rings, 0.96, 0.97)
+		# cara más fina: mandíbula y barbilla más estrechas
+		var soft: Array = []
+		for r in grow(rings, 0.96, 0.97):
+			var n: Array = r.duplicate()
+			if float(n[0]) < -0.02:
+				n[1] = float(n[1]) * lerpf(1.0, 0.84, clampf((-0.02 - float(n[0])) / 0.08, 0.0, 1.0))
+			soft.append(n)
+		rings = soft
 	_p(head, loft(rings, 10), skin)
 	# cuello
 	_p(head, loft([[-0.2, 0.052, 0.052, 0.0, 0.01], [-0.09, 0.046, 0.048, 0.0, 0.012]], 8), skin)
@@ -360,7 +367,13 @@ func _build_head(head: Node3D, skin: Color) -> void:
 		_p(head, box(Vector3(hgt * 1.1, hgt, 0.007)), ec.darkened(0.35), Vector3(x + side * 0.002, 0.02, fz - 0.002), Vector3(0, 0, tilt))
 		if es == 4:
 			_p(head, box(Vector3(w + 0.004, 0.006, 0.008)), skin.darkened(0.15), Vector3(x, 0.026, fz - 0.002))
-		_p(head, box(Vector3(0.03, 0.007, 0.01)), hc.darkened(0.15), Vector3(x + side * 0.003, 0.038, fz - 0.002), Vector3(0, 0, side * (-0.1 if es != 4 else 0.15)))
+		if male:
+			_p(head, box(Vector3(0.03, 0.007, 0.01)), hc.darkened(0.15), Vector3(x + side * 0.003, 0.038, fz - 0.002), Vector3(0, 0, side * (-0.1 if es != 4 else 0.15)))
+		else:
+			# pestañas (línea oscura con la punta hacia fuera) y ceja fina arqueada
+			_p(head, box(Vector3(w + 0.006, 0.0035, 0.008)), Color("1c1411"), Vector3(x + side * 0.001, 0.02 + hgt * 0.5 + 0.001, fz - 0.003), Vector3(0, 0, tilt - side * 0.12))
+			_p(head, box(Vector3(0.012, 0.003, 0.008)), Color("1c1411"), Vector3(x + side * 0.016, 0.023 + hgt * 0.5, fz - 0.002), Vector3(0, 0, side * 0.5))
+			_p(head, box(Vector3(0.028, 0.0045, 0.009)), hc.darkened(0.2), Vector3(x + side * 0.004, 0.039, fz - 0.002), Vector3(0, 0, side * -0.22))
 	# Nariz: cuña facetada
 	var nl := 0.05
 	var nw := 0.016
@@ -382,6 +395,8 @@ func _build_head(head: Node3D, skin: Color) -> void:
 	_p(head, loft([[0.0, nw * 0.4, 0.004], [-nl * 0.6, nw * 0.7, np * 0.5, 0.0, -np * 0.45], [-nl, nw, np * 0.5, 0.0, -np * 0.5]], 4, true, 1.0, PI / 4.0), skin.darkened(0.04), Vector3(0, 0.03, fz + 0.005))
 	# Boca
 	var lip := skin.darkened(0.32).lerp(Color("8a4b45"), 0.35)
+	if not male:
+		lip = skin.darkened(0.2).lerp(Color("a8524e"), 0.55)
 	var my := -0.052
 	var mz := -0.103
 	match int(look["mouth"]):
@@ -399,7 +414,19 @@ func _build_head(head: Node3D, skin: Color) -> void:
 			_p(head, box(Vector3(0.036, 0.005, 0.006)), lip.darkened(0.2), Vector3(0, my, mz))
 			for side in [-1, 1]:
 				_p(head, box(Vector3(0.01, 0.005, 0.006)), lip.darkened(0.2), Vector3(side * 0.021, my - 0.003, mz), Vector3(0, 0, side * -0.5))
+	if not male and int(look["mouth"]) != 2:
+		_p(head, box(Vector3(0.024, 0.0055, 0.007)), lip.lightened(0.08), Vector3(0, my - 0.0065, mz + 0.001))
 	_build_hair(head, rings, hc, male)
+
+
+## Pelo de mujer: flequillo ladeado y mechones a los lados de la cara.
+func _frame_face(head: Node3D, hc: Color, lock_len: float, bangs := true) -> void:
+	if bangs:
+		_p(head, loft([[0.0, 0.075, 0.016], [0.03, 0.082, 0.02, 0.0, 0.004]], 7, false, 0.5, PI), hc.darkened(0.04), Vector3(0.0, 0.052, -0.084), Vector3(0.12, 0, 0.18))
+	if lock_len <= 0.0:
+		return
+	for side in [-1, 1]:
+		_p(head, loft([[0.0, 0.022, 0.03], [-lock_len * 0.5, 0.02, 0.026, side * 0.004, -0.004], [-lock_len, 0.012, 0.016, side * 0.008, 0.0]], 5), hc, Vector3(side * 0.083, 0.06, -0.05), Vector3(0.1, 0, side * 0.05))
 
 
 ## Mechones: pirámides que salen del casquete (pelo despeinado).
@@ -453,22 +480,25 @@ func _build_hair(head: Node3D, rings: Array, hc: Color, male: bool) -> void:
 		match style:
 			0:
 				cap.call(1.06, 0.04)
-				_spikes(head, hc, 20, 0.9, 51, 0.06)
+				_spikes(head, hc, 14, 0.9, 51, 0.045)
+				_frame_face(head, hc, 0.07)
 			1:
 				cap.call(1.05, 0.04)
-				_spikes(head, hc, 12, 0.7, 61, 0.05)
+				_spikes(head, hc, 6, 0.4, 61, 0.035)
+				_frame_face(head, hc, 0.12)
 				_p(head, loft([[0.0, 0.03, 0.03], [-0.07, 0.032, 0.03], [-0.16, 0.018, 0.018], [-0.2, 0.006, 0.006]], 6), hc, Vector3(0, 0.07, 0.115), Vector3(-0.35, 0, 0))
 			2:
 				cap.call(1.07, 0.04)
-				_spikes(head, hc, 12, 0.7, 61, 0.05)
+				_spikes(head, hc, 6, 0.4, 61, 0.035)
+				_frame_face(head, hc, 0.2)
 				_p(head, loft([[0.07, 0.1, 0.085, 0.0, 0.025], [-0.05, 0.105, 0.095, 0.0, 0.03], [-0.2, 0.11, 0.085, 0.0, 0.045], [-0.27, 0.095, 0.06, 0.0, 0.055]], 10, true, 0.7, -0.35 * PI), hc)
 			3:
 				cap.call(1.04, 0.04)
-				_spikes(head, hc, 12, 0.7, 61, 0.05)
+				_frame_face(head, hc, 0.1)
 				_p(head, loft([[0.0, 0.04, 0.04], [0.03, 0.05, 0.05], [0.07, 0.03, 0.03]], 7), hc, Vector3(0, 0.1, 0.085), Vector3(0.6, 0, 0))
 			4:
 				cap.call(1.05, 0.04)
-				_spikes(head, hc, 12, 0.7, 61, 0.05)
+				_frame_face(head, hc, 0.0)
 				for side in [-1, 1]:
 					_p(head, loft([[0.0, 0.016, 0.016], [-0.06, 0.02, 0.018], [-0.12, 0.016, 0.016], [-0.18, 0.019, 0.017], [-0.24, 0.012, 0.012]], 5), hc, Vector3(side * 0.07, -0.02, -0.02), Vector3(-0.1, 0, side * 0.08))
 

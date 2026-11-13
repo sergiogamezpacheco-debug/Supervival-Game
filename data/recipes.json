@@ -168,5 +168,120 @@
       "chatarra": 4,
       "madera": 1
     }
+  },
+  {
+    "id": "camiseta",
+    "result": "camiseta",
+    "qty": 1,
+    "station": "mesa_costura",
+    "level": 1,
+    "time": 20,
+    "cost": {
+      "tela": 3,
+      "fibra": 2
+    }
+  },
+  {
+    "id": "pantalon_tela",
+    "result": "pantalon_tela",
+    "qty": 1,
+    "station": "mesa_costura",
+    "level": 1,
+    "time": 20,
+    "cost": {
+      "tela": 4,
+      "fibra": 2
+    }
+  },
+  {
+    "id": "gorra",
+    "result": "gorra",
+    "qty": 1,
+    "station": "mesa_costura",
+    "level": 1,
+    "time": 15,
+    "cost": {
+      "tela": 2,
+      "fibra": 1
+    }
+  },
+  {
+    "id": "guantes",
+    "result": "guantes",
+    "qty": 1,
+    "station": "mesa_costura",
+    "level": 1,
+    "time": 20,
+    "cost": {
+      "piel": 1,
+      "tela": 1,
+      "cuerda": 1
+    }
+  },
+  {
+    "id": "mochila",
+    "result": "mochila",
+    "qty": 1,
+    "station": "mesa_costura",
+    "level": 1,
+    "time": 40,
+    "cost": {
+      "tela": 6,
+      "cuerda": 3,
+      "piel": 3
+    }
+  },
+  {
+    "id": "chaqueta_piel",
+    "result": "chaqueta_piel",
+    "qty": 1,
+    "station": "mesa_costura",
+    "level": 2,
+    "time": 45,
+    "cost": {
+      "piel": 6,
+      "cuerda": 2,
+      "tela": 2
+    }
+  },
+  {
+    "id": "pantalon_cargo",
+    "result": "pantalon_cargo",
+    "qty": 1,
+    "station": "mesa_costura",
+    "level": 2,
+    "time": 40,
+    "cost": {
+      "tela": 6,
+      "cuerda": 2,
+      "piel": 2
+    }
+  },
+  {
+    "id": "botas",
+    "result": "botas",
+    "qty": 1,
+    "station": "mesa_costura",
+    "level": 2,
+    "time": 40,
+    "cost": {
+      "piel": 4,
+      "cuerda": 2,
+      "tablon": 1
+    }
+  },
+  {
+    "id": "chaleco",
+    "result": "chaleco",
+    "qty": 1,
+    "station": "mesa_costura",
+    "level": 2,
+    "time": 60,
+    "cost": {
+      "tela": 6,
+      "chatarra": 6,
+      "cuerda": 3,
+      "lingote_hierro": 1
+    }
   }
 ]

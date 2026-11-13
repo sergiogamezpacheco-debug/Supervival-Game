@@ -11,6 +11,7 @@ const WellScript := preload("res://scripts/world/well.gd")
 const BaseScript := preload("res://scripts/world/base.gd")
 const HudScript := preload("res://scripts/ui/hud.gd")
 const ContainerScript := preload("res://scripts/world/container.gd")
+const CreatorScript := preload("res://scripts/ui/character_creator.gd")
 
 signal travelled(to_map: String)
 
@@ -39,6 +40,7 @@ var _ghost_key := ""
 var _build_cell := Vector2i.ZERO
 var _build_side := 0
 var _build_ok := false
+var creator: CanvasLayer = null
 
 
 func _ready() -> void:
@@ -79,6 +81,21 @@ func _ready() -> void:
 	camera.global_position = player.global_position + Vector3(0, 13.0, 8.5)
 	_update_camera(1.0)
 	GS.message.emit(str(map.get("name", "")))
+	if not GS.created and not GS.testing:
+		open_creator()
+
+
+## Primer arranque: pantalla de creación del superviviente (el juego espera).
+func open_creator() -> void:
+	creator = CreatorScript.new()
+	add_child(creator)
+	get_tree().paused = true
+	creator.finished.connect(func():
+		get_tree().paused = false
+		creator.queue_free()
+		creator = null
+		save()
+		GS.message.emit("Bienvenido, %s" % GS.player_name))
 
 
 # ------------------------------------------------------------ construcción

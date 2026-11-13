@@ -11,6 +11,7 @@ const SIZES := {
 	"horno": Vector3(1.4, 1.4, 1.2),
 	"mesa_costura": Vector3(1.4, 1.0, 0.8),
 	"cofre": Vector3(1.2, 0.8, 0.7),
+	"gimnasio": Vector3(2.2, 1.9, 1.0),
 }
 
 var id := ""
@@ -42,6 +43,10 @@ func setup(p_id: String, p_level: int, p_key: String, p_rot: int) -> void:
 
 func is_chest() -> bool:
 	return id == "cofre"
+
+
+func is_gym() -> bool:
+	return id == "gimnasio"
 
 
 func display_name() -> String:
@@ -86,6 +91,8 @@ func can_interact() -> bool:
 func action_label() -> String:
 	if is_chest():
 		return "Abrir"
+	if is_gym():
+		return "Entrenar"
 	if is_done():
 		return "Recoger"
 	return "Usar"

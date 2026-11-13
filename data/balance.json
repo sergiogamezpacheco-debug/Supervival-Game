@@ -17,5 +17,19 @@
   "poison_damage_per_second": 1.5,
   "travel_food_per_unit": 30,
   "travel_water_per_unit": 40,
-  "travel_min_cost": 3
+  "travel_min_cost": 3,
+  "max_armor": 60,
+  "stamina_base": 100,
+  "stamina_per_resistencia": 60,
+  "stamina_drain": 14.0,
+  "stamina_regen": 18.0,
+  "stamina_regen_delay": 0.8,
+  "run_mult": 1.5,
+  "run_threshold": 0.85,
+  "strength_damage_bonus": 0.4,
+  "fitness_hit_gain": 0.0006,
+  "fitness_run_gain": 0.00025,
+  "train_food": 8,
+  "train_water": 10,
+  "train_seconds": 3.0
 }

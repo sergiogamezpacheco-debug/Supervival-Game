@@ -11,6 +11,7 @@ func _ready() -> void:
 		out = args[0]
 	DirAccess.make_dir_recursive_absolute(out)
 	GS.save_path = "user://screens_save.json"
+	GS.testing = true
 	DirAccess.remove_absolute(ProjectSettings.globalize_path(GS.save_path))
 	get_window().size = Vector2i(1280, 720)
 	GS.new_game()

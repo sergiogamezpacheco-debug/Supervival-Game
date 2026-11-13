@@ -173,5 +173,116 @@
     "type": "material",
     "stack": 50,
     "desc": "Restos metálicos. Se funden en el horno."
+  },
+  "gorra": {
+    "name": "Gorra",
+    "type": "wear",
+    "stack": 1,
+    "slot": "cabeza",
+    "model": "gorra",
+    "armor": 2,
+    "durability": 80,
+    "desc": "Protege del sol. Poca defensa."
+  },
+  "casco_obra": {
+    "name": "Casco de obra",
+    "type": "wear",
+    "stack": 1,
+    "slot": "cabeza",
+    "model": "casco_obra",
+    "armor": 8,
+    "durability": 160,
+    "desc": "Casco amarillo de la cantera. Aguanta golpes."
+  },
+  "camiseta": {
+    "name": "Camiseta",
+    "type": "wear",
+    "stack": 1,
+    "slot": "torso",
+    "model": "camiseta",
+    "armor": 2,
+    "durability": 80,
+    "desc": "Mejor que ir a pecho descubierto."
+  },
+  "chaqueta_piel": {
+    "name": "Chaqueta de piel",
+    "type": "wear",
+    "stack": 1,
+    "slot": "torso",
+    "model": "chaqueta_piel",
+    "armor": 8,
+    "durability": 150,
+    "desc": "Piel curtida y cosida a mano."
+  },
+  "chaleco": {
+    "name": "Chaleco táctico",
+    "type": "wear",
+    "stack": 1,
+    "slot": "torso",
+    "model": "chaleco",
+    "armor": 15,
+    "durability": 220,
+    "desc": "Placas de chatarra y bolsillos. La mejor defensa del torso."
+  },
+  "pantalon_tela": {
+    "name": "Pantalón de tela",
+    "type": "wear",
+    "stack": 1,
+    "slot": "piernas",
+    "model": "pantalon_tela",
+    "armor": 2,
+    "durability": 80,
+    "desc": "Pantalón sencillo."
+  },
+  "pantalon_cargo": {
+    "name": "Pantalón cargo",
+    "type": "wear",
+    "stack": 1,
+    "slot": "piernas",
+    "model": "pantalon_cargo",
+    "armor": 5,
+    "durability": 150,
+    "desc": "Reforzado en rodillas, con bolsillos laterales."
+  },
+  "zapatillas": {
+    "name": "Zapatillas",
+    "type": "wear",
+    "stack": 1,
+    "slot": "pies",
+    "model": "zapatillas",
+    "armor": 1,
+    "durability": 90,
+    "speed": 0.06,
+    "desc": "Ligeras: corres un poco más rápido."
+  },
+  "botas": {
+    "name": "Botas de piel",
+    "type": "wear",
+    "stack": 1,
+    "slot": "pies",
+    "model": "botas",
+    "armor": 4,
+    "durability": 160,
+    "desc": "Resistentes y con caña alta."
+  },
+  "guantes": {
+    "name": "Guantes de trabajo",
+    "type": "wear",
+    "stack": 1,
+    "slot": "manos",
+    "model": "guantes",
+    "armor": 2,
+    "durability": 110,
+    "gather": 1,
+    "desc": "Protegen las manos: +1 al recolectar."
+  },
+  "mochila": {
+    "name": "Mochila de lona",
+    "type": "wear",
+    "stack": 1,
+    "slot": "espalda",
+    "model": "mochila",
+    "bag_slots": 8,
+    "desc": "Lleva 8 objetos más. Con saco de dormir."
   }
 }

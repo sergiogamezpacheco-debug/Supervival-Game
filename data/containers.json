@@ -54,6 +54,38 @@
           3
         ],
         "weight": 3
+      },
+      {
+        "id": "camiseta",
+        "qty": [
+          1,
+          1
+        ],
+        "weight": 1
+      },
+      {
+        "id": "pantalon_tela",
+        "qty": [
+          1,
+          1
+        ],
+        "weight": 1
+      },
+      {
+        "id": "gorra",
+        "qty": [
+          1,
+          1
+        ],
+        "weight": 1
+      },
+      {
+        "id": "zapatillas",
+        "qty": [
+          1,
+          1
+        ],
+        "weight": 1
       }
     ]
   },
@@ -99,6 +131,22 @@
       },
       {
         "id": "lingote_hierro",
+        "qty": [
+          1,
+          1
+        ],
+        "weight": 1
+      },
+      {
+        "id": "casco_obra",
+        "qty": [
+          1,
+          1
+        ],
+        "weight": 1
+      },
+      {
+        "id": "guantes",
         "qty": [
           1,
           1
@@ -157,6 +205,30 @@
       },
       {
         "id": "machete",
+        "qty": [
+          1,
+          1
+        ],
+        "weight": 1
+      },
+      {
+        "id": "casco_obra",
+        "qty": [
+          1,
+          1
+        ],
+        "weight": 2
+      },
+      {
+        "id": "botas",
+        "qty": [
+          1,
+          1
+        ],
+        "weight": 1
+      },
+      {
+        "id": "pantalon_cargo",
         "qty": [
           1,
           1

@@ -14,6 +14,10 @@ var _walk_phase := 0.0
 var _walk_amount := 0.0
 var _swing_t := -1.0
 var _hand_item := ""
+var running := false
+var training := 0.0               # segundos de entrenamiento en el gimnasio (animación)
+var _exhausted := false
+var _rest := 0.0
 
 
 func _ready() -> void:
@@ -30,6 +34,7 @@ func _ready() -> void:
 	add_child(_visual)
 	_hand = _visual.hand
 	GS.inventory_changed.connect(_refresh_hand)
+	GS.look_changed.connect(refresh_look)
 	_refresh_hand()
 
 
@@ -43,7 +48,13 @@ func _physics_process(delta: float) -> void:
 		float(Input.is_key_pressed(KEY_S)) - float(Input.is_key_pressed(KEY_W)))
 	if kb != Vector2.ZERO:
 		dir = kb.normalized()
-	var speed := float(DB.bal("player_speed", 4.5))
+	if training > 0.0:
+		dir = Vector2.ZERO
+		training = maxf(training - delta, 0.0)
+	_update_stamina(dir, delta)
+	var speed := float(DB.bal("player_speed", 4.5)) * GS.speed_factor()
+	if running:
+		speed *= float(DB.bal("run_mult", 1.5))
 	velocity = Vector3(dir.x, 0.0, dir.y) * speed
 	move_and_slide()
 	position.y = floor_y
@@ -54,8 +65,10 @@ func _physics_process(delta: float) -> void:
 	var moving := dir.length() > 0.1
 	_walk_amount = move_toward(_walk_amount, 1.0 if moving else 0.0, delta * 6.0)
 	if moving:
-		_walk_phase += delta * 9.0 * dir.length()
+		_walk_phase += delta * 9.0 * dir.length() * (1.35 if running else 1.0)
 	_visual.animate_walk(_walk_phase, _walk_amount)
+	if training > 0.0:
+		_visual.animate_swing(fmod(training, 0.75) / 0.75)
 	if _swing_t >= 0.0:
 		_swing_t += delta / 0.3
 		if _swing_t >= 1.0:
@@ -68,8 +81,35 @@ func _physics_process(delta: float) -> void:
 	if acting and target != null and is_instance_valid(target) and _action_cd <= 0.0:
 		_face(target.global_position - global_position)
 		target.interact(self)
+		if target.is_in_group("resource") or target.is_in_group("creature"):
+			GS.exercise("fuerza", float(DB.bal("fitness_hit_gain", 0.0006)))
 		_swing()
 		_action_cd = float(DB.bal("action_interval", 0.6))
+
+
+## Correr: joystick a fondo (o Shift). Gasta aguante; la resistencia lo alarga
+## y correr con la mochila cargada es lo que más la entrena.
+func _update_stamina(dir: Vector2, delta: float) -> void:
+	var wants := dir.length() >= float(DB.bal("run_threshold", 0.85)) or (dir.length() > 0.1 and Input.is_key_pressed(KEY_SHIFT))
+	var mx := GS.max_stamina()
+	if GS.stamina <= 0.0:
+		_exhausted = true
+	elif _exhausted and GS.stamina >= mx * 0.25:
+		_exhausted = false
+	running = wants and not _exhausted
+	if running:
+		GS.stamina = maxf(GS.stamina - GS.stamina_drain() * delta, 0.0)
+		GS.exercise("resistencia", float(DB.bal("fitness_run_gain", 0.00025)) * delta * (0.4 + GS.load_ratio()))
+		_rest = 0.0
+	else:
+		_rest += delta
+		if _rest >= float(DB.bal("stamina_regen_delay", 0.8)):
+			GS.stamina = minf(GS.stamina + float(DB.bal("stamina_regen", 18.0)) * (1.0 + float(GS.physique["resistencia"]) * 0.5) * delta, mx)
+
+
+## Animación de entrenar en el gimnasio.
+func start_training(seconds: float) -> void:
+	training = seconds
 
 
 ## Dirección hacia la que mira el jugador.

@@ -60,6 +60,11 @@ var _map_travel: Button
 var _map_selected := ""
 var _status: Label
 var build_btn: Button
+var _equip_box: VBoxContainer
+var _equip_stats: Label
+var _gym_panel: PanelContainer
+var _gym_info: Label
+var _gym_rows: VBoxContainer
 
 
 func _ready() -> void:
@@ -80,6 +85,7 @@ func _ready() -> void:
 	_build_station_panel()
 	_build_chest_panel()
 	_build_map_panel()
+	_build_gym_panel()
 	add_to_group("hud")
 
 	_msg = Label.new()
@@ -120,7 +126,7 @@ func _build_bars() -> void:
 	box.position = Vector2(20, 16)
 	box.add_theme_constant_override("separation", 6)
 	_root.add_child(box)
-	for def in [["health", "Vida", Color("d9443c")], ["food", "Comida", Color("e09a3a")], ["water", "Agua", Color("3a8fe0")]]:
+	for def in [["health", "Vida", Color("d9443c")], ["food", "Comida", Color("e09a3a")], ["water", "Agua", Color("3a8fe0")], ["stamina", "Aguante", Color("b5c43a")]]:
 		var bar := ProgressBar.new()
 		bar.custom_minimum_size = Vector2(260, 26)
 		bar.show_percentage = false
@@ -162,6 +168,13 @@ func _refresh_stats() -> void:
 	hb.value = GS.health
 	fb.value = GS.food
 	wb.value = GS.water
+	_refresh_stamina()
+
+
+func _refresh_stamina() -> void:
+	var sb: ProgressBar = _bars["stamina"]
+	sb.max_value = GS.max_stamina()
+	sb.value = GS.stamina
 
 
 # --------------------------------------------------------------- controles
@@ -234,14 +247,14 @@ func _toggle(panel: Control) -> void:
 
 
 func close_panels() -> void:
-	for p in [_inv_panel, _craft_panel, _build_panel, _station_panel, _chest_panel, _map_panel]:
+	for p in [_inv_panel, _craft_panel, _build_panel, _station_panel, _chest_panel, _map_panel, _gym_panel]:
 		if p:
 			p.visible = false
 	station = null
 
 
 func any_panel_open() -> bool:
-	for p in [_inv_panel, _craft_panel, _build_panel, _station_panel, _chest_panel, _map_panel]:
+	for p in [_inv_panel, _craft_panel, _build_panel, _station_panel, _chest_panel, _map_panel, _gym_panel]:
 		if p and p.visible:
 			return true
 	return false
@@ -258,6 +271,12 @@ func show_death(v: bool) -> void:
 
 
 func _process(delta: float) -> void:
+	_refresh_stamina()
+	if _gym_panel and _gym_panel.visible:
+		_station_refresh -= delta
+		if _station_refresh <= 0.0:
+			_station_refresh = 0.5
+			_refresh_gym()
 	if _station_panel and _station_panel.visible:
 		_station_refresh -= delta
 		if _station_refresh <= 0.0:
@@ -300,7 +319,7 @@ func _panel(title: String, half := Vector2(390, 280)) -> Array:
 	close.text = "  X  "
 	close.pressed.connect(func():
 		panel.visible = false
-		if panel == _station_panel or panel == _chest_panel:
+		if panel == _station_panel or panel == _chest_panel or panel == _gym_panel:
 			station = null)
 	head.add_child(close)
 	v.add_child(head)
@@ -309,17 +328,43 @@ func _panel(title: String, half := Vector2(390, 280)) -> Array:
 
 
 func _build_inventory() -> void:
-	var parts := _panel("Mochila")
+	var parts := _panel("Mochila", Vector2(610, 320))
 	_inv_panel = parts[0]
-	var v: VBoxContainer = parts[1]
+	var outer: VBoxContainer = parts[1]
+	var h := HBoxContainer.new()
+	h.add_theme_constant_override("separation", 16)
+	outer.add_child(h)
+	# Equipo: lo que lleva puesto el superviviente. Tocar una prenda la quita.
+	var eq := VBoxContainer.new()
+	eq.custom_minimum_size = Vector2(250, 0)
+	eq.add_theme_constant_override("separation", 6)
+	h.add_child(eq)
+	var et := Label.new()
+	et.text = "Equipo"
+	et.add_theme_font_size_override("font_size", 20)
+	eq.add_child(et)
+	_equip_box = VBoxContainer.new()
+	_equip_box.add_theme_constant_override("separation", 6)
+	eq.add_child(_equip_box)
+	_equip_stats = Label.new()
+	_equip_stats.add_theme_font_size_override("font_size", 17)
+	_equip_stats.add_theme_color_override("font_color", Color("d8cfae"))
+	eq.add_child(_equip_stats)
+	var v := VBoxContainer.new()
+	v.add_theme_constant_override("separation", 10)
+	h.add_child(v)
+	var scroll := ScrollContainer.new()
+	scroll.custom_minimum_size = Vector2(900, 330)
+	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	v.add_child(scroll)
 	_inv_grid = GridContainer.new()
-	_inv_grid.columns = 5
+	_inv_grid.columns = 6
 	_inv_grid.add_theme_constant_override("h_separation", 8)
 	_inv_grid.add_theme_constant_override("v_separation", 8)
-	v.add_child(_inv_grid)
+	scroll.add_child(_inv_grid)
 	_inv_detail = Label.new()
 	_inv_detail.autowrap_mode = TextServer.AUTOWRAP_WORD
-	_inv_detail.custom_minimum_size = Vector2(700, 56)
+	_inv_detail.custom_minimum_size = Vector2(880, 56)
 	_inv_detail.add_theme_font_size_override("font_size", 20)
 	v.add_child(_inv_detail)
 	_inv_buttons = HBoxContainer.new()
@@ -361,6 +406,7 @@ func _refresh_inventory() -> void:
 			b.modulate = Color(1.0, 0.85, 0.4)
 		b.pressed.connect(_select.bind(i))
 		_inv_grid.add_child(b)
+	_refresh_equipment()
 	_refresh_detail()
 	_refresh_crafting()
 	_refresh_build_menu()
@@ -368,6 +414,32 @@ func _refresh_inventory() -> void:
 		_refresh_chest()
 	if _station_panel and _station_panel.visible:
 		_refresh_station()
+
+
+func _refresh_equipment() -> void:
+	for c in _equip_box.get_children():
+		c.queue_free()
+	for k in GS.WEAR_SLOTS:
+		var b := Button.new()
+		b.custom_minimum_size = Vector2(250, 46)
+		b.add_theme_font_size_override("font_size", 16)
+		b.alignment = HORIZONTAL_ALIGNMENT_LEFT
+		b.clip_text = true
+		var it = GS.worn[k]
+		if it == null:
+			b.text = "%s: —" % GS.WEAR_NAMES[k]
+			b.modulate = Color(1, 1, 1, 0.55)
+		else:
+			var dur := ""
+			if it.has("dur"):
+				dur = " %d%%" % roundi(100.0 * float(it["dur"]) / maxf(float(DB.item(str(it["id"])).get("durability", 1)), 1.0))
+			b.text = "%s: %s%s" % [GS.WEAR_NAMES[k], DB.item_name(str(it["id"])), dur]
+			var slot: String = k
+			b.pressed.connect(func(): GS.take_off(slot))
+		_equip_box.add_child(b)
+	_equip_stats.text = "Defensa %d%%\nFuerza %d%%  ·  Resistencia %d%%\nCarga %d/%d" % [
+		roundi(GS.armor()), roundi(float(GS.physique["fuerza"]) * 100.0), roundi(float(GS.physique["resistencia"]) * 100.0),
+		GS.slots.size() - GS.free_slots(), GS.slots.size()]
 
 
 func _select(i: int) -> void:
@@ -401,6 +473,22 @@ func _refresh_detail() -> void:
 			b2.text = "Equipar"
 			b2.pressed.connect(func(): GS.equip_slot(idx))
 			_inv_buttons.add_child(b2)
+		"wear":
+			var b3 := Button.new()
+			b3.text = "Ponerse"
+			b3.pressed.connect(func():
+				GS.wear_slot(idx)
+				_selected = -1
+				_refresh_inventory())
+			_inv_buttons.add_child(b3)
+			var extra := PackedStringArray()
+			if data.has("armor"):
+				extra.append("Defensa +%d%%" % int(data["armor"]))
+			if data.has("bag_slots"):
+				extra.append("+%d huecos" % int(data["bag_slots"]))
+			if s.has("dur"):
+				extra.append("Estado %d/%d" % [int(s["dur"]), int(data.get("durability", 0))])
+			_inv_detail.text += "  (%s)" % ", ".join(extra)
 	var drop := Button.new()
 	drop.text = "Tirar"
 	drop.pressed.connect(func():
@@ -588,7 +676,10 @@ func set_build_info(visible_bar: bool, mode: String, text: String, ok: bool) -> 
 func open_station(s: Node3D) -> void:
 	close_panels()
 	station = s
-	if s.is_chest():
+	if s.is_gym():
+		_gym_panel.visible = true
+		_refresh_gym()
+	elif s.is_chest():
 		_chest_panel.visible = true
 		_refresh_chest()
 	else:
@@ -645,6 +736,11 @@ func _refresh_station() -> void:
 		lbl.add_theme_font_size_override("font_size", 19)
 		var unlocked: bool = station.recipe_unlocked(r)
 		var head := "%s  (%ds)" % [DB.item_name(str(r["result"])), int(r.get("time", 0))]
+		var rd := DB.item(str(r["result"]))
+		if rd.has("armor"):
+			head += "  · Defensa +%d%%" % int(rd["armor"])
+		if rd.has("bag_slots"):
+			head += "  · +%d huecos" % int(rd["bag_slots"])
 		if not unlocked:
 			head += "  — requiere nivel %d" % int(r.get("level", 1))
 		lbl.text = "%s\n   %s" % [head, DB.cost_text(r.get("cost", {}))]
@@ -683,6 +779,84 @@ func _refresh_station_job() -> void:
 		_station_job.text = "Fabricando %s — %d:%02d" % [nm, t / 60, t % 60]
 		_station_collect.disabled = true
 	_station_bar.value = station.progress()
+
+
+# ---------------------------------------------------------------- gimnasio
+
+func _build_gym_panel() -> void:
+	var parts := _panel("Gimnasio")
+	_gym_panel = parts[0]
+	var v: VBoxContainer = parts[1]
+	_gym_info = Label.new()
+	_gym_info.autowrap_mode = TextServer.AUTOWRAP_WORD
+	_gym_info.custom_minimum_size = Vector2(720, 0)
+	_gym_info.add_theme_font_size_override("font_size", 19)
+	v.add_child(_gym_info)
+	_gym_rows = VBoxContainer.new()
+	_gym_rows.add_theme_constant_override("separation", 14)
+	v.add_child(_gym_rows)
+
+
+func _refresh_gym() -> void:
+	if station == null or not is_instance_valid(station) or not station.is_gym():
+		return
+	var title := (_gym_panel.get_child(0).get_child(0) as HBoxContainer).get_child(0) as Label
+	title.text = station.display_name()
+	var lv := DB.station_level("gimnasio", station.level)
+	_gym_info.text = "Cada sesión cuesta %d de comida y %d de agua. Fuera del gimnasio también mejoras: golpear y talar da fuerza; correr con la mochila cargada da resistencia." % [int(DB.bal("train_food", 8)), int(DB.bal("train_water", 10))]
+	for c in _gym_rows.get_children():
+		c.queue_free()
+	for def in [["fuerza", "Fuerza", "Pesas: más daño y cargas más sin ir lento."], ["resistencia", "Resistencia", "Saco de boxeo: más aguante y lo recuperas antes."]]:
+		var row := HBoxContainer.new()
+		var lbl := Label.new()
+		lbl.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		lbl.add_theme_font_size_override("font_size", 20)
+		var val := float(GS.physique[def[0]])
+		lbl.text = "%s  %d%%\n   %s" % [def[1], roundi(val * 100.0), def[2]]
+		row.add_child(lbl)
+		var bar := ProgressBar.new()
+		bar.custom_minimum_size = Vector2(160, 22)
+		bar.max_value = 1.0
+		bar.value = val
+		bar.show_percentage = false
+		var fill := StyleBoxFlat.new()
+		fill.bg_color = Color("e8b84a")
+		fill.set_corner_radius_all(6)
+		var bgs := StyleBoxFlat.new()
+		bgs.bg_color = Color(0, 0, 0, 0.45)
+		bgs.set_corner_radius_all(6)
+		bar.add_theme_stylebox_override("fill", fill)
+		bar.add_theme_stylebox_override("background", bgs)
+		bar.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+		row.add_child(bar)
+		var b := Button.new()
+		b.custom_minimum_size = Vector2(190, 60)
+		var wait := float(GS.train_ready.get(def[0], 0.0)) - GS.now()
+		if wait > 0.0:
+			b.text = "Descanso %ds" % ceili(wait)
+			b.disabled = true
+		else:
+			b.text = "Entrenar +%d%%" % roundi(float(lv.get("gain", 0.03)) * (1.0 - val * 0.5) * 100.0)
+			b.disabled = val >= 1.0
+		var stat: String = def[0]
+		b.pressed.connect(func(): train(stat))
+		row.add_child(b)
+		_gym_rows.add_child(row)
+
+
+## Entrena en el gimnasio abierto. Devuelve "" si se pudo.
+func train(stat: String) -> String:
+	if station == null or not is_instance_valid(station) or not station.is_gym():
+		return "No hay gimnasio"
+	var why := GS.train(stat, station.level)
+	if why != "":
+		show_message(why)
+		return why
+	close_panels()
+	var p := get_tree().get_first_node_in_group("player")
+	if p:
+		p.start_training(float(DB.bal("train_seconds", 3.0)))
+	return ""
 
 
 # ------------------------------------------------------------------- cofre

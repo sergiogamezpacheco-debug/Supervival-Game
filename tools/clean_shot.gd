@@ -8,6 +8,7 @@ func _ready() -> void:
 	if args.size() > 0:
 		out = args[0]
 	GS.save_path = "user://clean_save.json"
+	GS.testing = true
 	DirAccess.remove_absolute(ProjectSettings.globalize_path(GS.save_path))
 	get_window().size = Vector2i(1280, 720)
 	GS.new_game()

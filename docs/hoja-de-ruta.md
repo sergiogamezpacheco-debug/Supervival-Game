@@ -10,7 +10,7 @@
 
 ---
 
-## 1. Dónde estamos (v0.1.3)
+## 1. Dónde estamos (v0.1.4)
 
 | Hecho | Estado |
 |---|---|
@@ -20,8 +20,11 @@
 | Estaciones con tiempo real (banco, carpintería, cantería, hoguera, horno, costura) y cofres | ✅ |
 | Criaturas: infectado, minero, acorazado, víbora, lobo, jabalí, ciervo, conejo | ✅ |
 | Viaje entre zonas (coste de comida y agua): Refugio, Bosque, Cantera | ✅ |
+| Superviviente low poly realista: creación de personaje (hombre/mujer, 5 opciones de pelo, ojos, nariz, boca, piel y colores) | ✅ |
+| Ropa equipable (11 prendas, defensa y desgaste) cosida en la mesa de costura o encontrada; mochila con +8 huecos | ✅ |
+| Físico que evoluciona (fuerza y resistencia), aguante para correr y gimnasio | ✅ |
 | Diseños: mapa antiguo, HUD y tienda · Documentos: zonas y tienda | ✅ |
-| 240 tests y APK automático | ✅ |
+| 368 tests y APK automático | ✅ |
 
 ---
 
@@ -50,7 +53,7 @@
 ### Fase 1 — Pulir el núcleo · ~2–3 semanas
 Objetivo: que la **primera hora** enganche.
 - HUD definitivo (diseño aprobado) y mapa antiguo dentro del juego.
-- Modelo propio del fantasma con animaciones (Mixamo) y los primeros modelos 3D buenos (árboles, rocas, infectado).
+- ✅ Superviviente propio (sin fantasma), creación de personaje, ropa y gimnasio. Pendiente: modelos 3D buenos de árboles, rocas e infectado.
 - **Día y noche** (de noche hay más infectados y menos visión) y tiempo atmosférico básico.
 - **Sigilo y ruido**: agachado haces golpes críticos y correr atrae a los infectados.
 - Combate con más sensación: golpe, retroceso, esquivar y barra de vida del enemigo.

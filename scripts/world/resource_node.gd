@@ -50,6 +50,7 @@ func interact(_player: Node3D) -> void:
 	if has_tool:
 		amount *= int(GS.hand_data().get("gather_mult", 1))
 		GS.wear_hand()
+	amount += int(GS.wear_bonus("gather"))
 	var yield_id := str(data["yield"])
 	var left := GS.add_item(yield_id, amount)
 	if left == amount:

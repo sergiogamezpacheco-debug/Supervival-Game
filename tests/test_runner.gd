@@ -18,6 +18,7 @@ func check(cond: bool, what: String) -> void:
 
 func _ready() -> void:
 	GS.save_path = "user://test_save.json"
+	GS.testing = true
 	DirAccess.remove_absolute(ProjectSettings.globalize_path(GS.save_path))
 	print("== Datos")
 	test_data()
@@ -37,6 +38,10 @@ func _ready() -> void:
 	await test_travel()
 	print("== Personaje")
 	await test_character()
+	print("== Ropa, físico y gimnasio")
+	await test_survivor()
+	print("== Creación de personaje")
+	await test_creator()
 	print("\nResultado: %d OK, %d fallos" % [passed, failures])
 	DirAccess.remove_absolute(ProjectSettings.globalize_path(GS.save_path))
 	get_tree().quit(1 if failures > 0 else 0)
@@ -570,14 +575,193 @@ func test_character() -> void:
 	bare.queue_free()
 	GS.look["sex"] = "f"
 	GS.look["hair"] = 3
-	GS.outfit["torso"] = "camiseta"
+	GS.add_item("camiseta", 1)
+	GS.wear_slot(0)
+	GS.created = true
 	GS.save_game({})
 	GS.new_game()
+	check(not GS.created and GS.outfit["torso"] == "", "partida nueva: sin crear y en ropa interior")
 	GS.load_game()
 	check(GS.look["sex"] == "f" and int(GS.look["hair"]) == 3 and GS.outfit["torso"] == "camiseta", "el aspecto y la ropa se guardan")
+	check(GS.created and GS.worn["torso"] != null and GS.worn["torso"].has("dur"), "la prenda puesta se guarda con su estado")
 	DirAccess.remove_absolute(ProjectSettings.globalize_path(GS.save_path))
 	GS.new_game()
 	await _frames(2)
+
+
+func test_survivor() -> void:
+	DirAccess.remove_absolute(ProjectSettings.globalize_path(GS.save_path))
+	GS.new_game()
+	# Ropa
+	for id in GS.WEAR_SLOTS:
+		check(GS.outfit[id] == "", "empieza sin ropa en %s" % id)
+	for id in DB.items:
+		var it := DB.item(id)
+		if str(it.get("type", "")) == "wear":
+			check(GS.WEAR_SLOTS.has(str(it.get("slot", ""))), "la prenda %s va en una ranura válida" % id)
+			check(CharacterModel.CLOTH.has(str(it.get("model", ""))), "la prenda %s tiene modelo 3D" % id)
+	GS.add_item("camiseta", 1)
+	GS.add_item("chaleco", 1)
+	check(GS.wear_slot(0) and GS.outfit["torso"] == "camiseta" and GS.slots[0] == null, "ponerse la camiseta")
+	var i_vest := -1
+	for i in GS.slots.size():
+		if GS.slots[i] != null and GS.slots[i]["id"] == "chaleco":
+			i_vest = i
+	check(GS.wear_slot(i_vest) and GS.outfit["torso"] == "chaleco" and GS.count("camiseta") == 1, "cambiar de prenda devuelve la anterior a la mochila")
+	check(is_equal_approx(GS.armor(), 15.0), "el chaleco da defensa (%d%%)" % GS.armor())
+	var dur0 := int(GS.worn["torso"]["dur"])
+	GS.hit(20.0)
+	check(is_equal_approx(GS.health, 83.0), "la defensa reduce el daño (vida %.1f)" % GS.health)
+	check(int(GS.worn["torso"]["dur"]) == dur0 - 1, "los golpes desgastan la ropa")
+	GS.worn["torso"]["dur"] = 1
+	GS.hit(1.0)
+	check(GS.worn["torso"] == null and GS.outfit["torso"] == "", "la prenda se rompe al gastarse")
+	# Mochila: más huecos
+	var base_n := GS.slots.size()
+	GS.add_item("mochila", 1)
+	var i_bag := -1
+	for i in GS.slots.size():
+		if GS.slots[i] != null and GS.slots[i]["id"] == "mochila":
+			i_bag = i
+	check(GS.wear_slot(i_bag) and GS.slots.size() == base_n + 8, "la mochila da 8 huecos más")
+	GS.slots[GS.slots.size() - 1] = GS.make_item("piedra", 5)
+	check(not GS.take_off("espalda") and GS.worn["espalda"] != null, "no deja quitarse la mochila con cosas en los huecos extra")
+	GS.slots[GS.slots.size() - 1] = null
+	check(GS.take_off("espalda") and GS.slots.size() == base_n and GS.count("mochila") == 1, "quitarse la mochila la guarda")
+	# Al morir se pierde también la ropa
+	GS.add_item("botas", 1)
+	for i in GS.slots.size():
+		if GS.slots[i] != null and GS.slots[i]["id"] == "botas":
+			GS.wear_slot(i)
+	var lost := GS.take_all_items()
+	var lost_boots := false
+	for it in lost:
+		if it["id"] == "botas":
+			lost_boots = true
+	check(lost_boots and GS.outfit["pies"] == "", "al morir la ropa va a la bolsa y vuelves en ropa interior")
+
+	# Mesa de costura
+	check(DB.recipe("chaqueta_piel").get("station", "") == "mesa_costura" and int(DB.recipe("chaqueta_piel")["level"]) == 2, "la chaqueta de piel pide mesa de costura nivel 2")
+	var sew_n := 0
+	for r in DB.recipes_for("mesa_costura"):
+		if str(DB.item(str(r["result"])).get("type", "")) == "wear":
+			sew_n += 1
+	check(sew_n >= 8, "la mesa de costura cose ropa (%d prendas)" % sew_n)
+
+	# Físico
+	GS.new_game()
+	var d0 := GS.hand_damage()
+	GS.physique["fuerza"] = 1.0
+	check(is_equal_approx(GS.hand_damage(), d0 * 1.4), "la fuerza aumenta el daño")
+	GS.physique["fuerza"] = 0.0
+	var drain_empty := GS.stamina_drain()
+	for i in GS.slots.size():
+		GS.slots[i] = GS.make_item("piedra", 1)
+	check(GS.stamina_drain() > drain_empty * 1.6, "correr con la mochila llena cansa más")
+	check(GS.speed_factor() < 1.0, "la mochila llena frena")
+	var drain_full := GS.stamina_drain()
+	GS.physique["resistencia"] = 1.0
+	check(GS.stamina_drain() < drain_full * 0.6 and GS.max_stamina() > 150.0, "la resistencia da más aguante")
+	GS.new_game()
+	GS.exercise("fuerza", 0.1)
+	check(float(GS.physique["fuerza"]) > 0.09, "el ejercicio sube la fuerza")
+	GS.physique["fuerza"] = 0.0
+
+	# Gimnasio y carrera en el mundo
+	var world := await _new_world()
+	var player: Node3D = world.player
+	GS.add_item("madera", 20)
+	GS.add_item("piedra", 12)
+	GS.add_item("cuerda", 4)
+	var gym: Node3D = world.base.place("gimnasio", Vector2i(-5, -5), 0, 0, player.global_position)
+	check(gym != null and gym.is_gym() and gym.action_label() == "Entrenar", "se construye el gimnasio")
+	world.hud.open_station(gym)
+	await _frames(2)
+	check(world.hud._gym_panel.visible, "se abre el panel del gimnasio")
+	var food0 := GS.food
+	check(world.hud.train("fuerza") == "", "entrenar fuerza")
+	check(float(GS.physique["fuerza"]) >= 0.029 and GS.food < food0, "entrenar sube la fuerza y gasta comida")
+	check(player.training > 0.0, "el superviviente hace el ejercicio")
+	check(GS.train("fuerza", 1) != "", "hay que descansar entre sesiones")
+	GS.time_offset += 100.0
+	check(GS.train("fuerza", 1) == "", "tras descansar se puede volver a entrenar")
+	GS.food = 2.0
+	GS.time_offset += 100.0
+	check(GS.train("resistencia", 1) != "", "sin comida no se puede entrenar")
+	GS.food = 100.0
+	await _frames(int(DB.bal("train_seconds", 3.0) * 60.0) + 10)
+	player.global_position = Vector3(0, 0, 4)
+	var st0 := GS.stamina
+	var res0 := float(GS.physique["resistencia"])
+	world.hud.joystick.value = Vector2(1, 0)
+	await _frames(40)
+	check(player.running and GS.stamina < st0, "con el joystick a fondo corre y gasta aguante")
+	check(float(GS.physique["resistencia"]) > res0, "correr entrena la resistencia")
+	world.hud.joystick.value = Vector2(0.5, 0)
+	await _frames(5)
+	check(not player.running, "con el joystick a medias anda")
+	GS.stamina = 0.0
+	world.hud.joystick.value = Vector2(1, 0)
+	await _frames(3)
+	check(not player.running, "agotado no puede correr")
+	world.hud.joystick.value = Vector2.ZERO
+	await _frames(60)
+	check(GS.stamina > 0.0, "el aguante se recupera descansando")
+	# La ropa se ve en el modelo del jugador
+	var meshes0 := _count_meshes(player._visual)
+	GS.add_item("chaqueta_piel", 1)
+	for i in GS.slots.size():
+		if GS.slots[i] != null and GS.slots[i]["id"] == "chaqueta_piel":
+			GS.wear_slot(i)
+	await _frames(2)
+	check(_count_meshes(player._visual) > meshes0 + 3, "la chaqueta aparece en el superviviente")
+	world.queue_free()
+	await _frames(2)
+	DirAccess.remove_absolute(ProjectSettings.globalize_path(GS.save_path))
+	GS.new_game()
+
+
+func test_creator() -> void:
+	DirAccess.remove_absolute(ProjectSettings.globalize_path(GS.save_path))
+	GS.new_game()
+	GS.testing = false
+	var world := await _new_world()
+	check(world.creator != null and get_tree().paused, "el primer arranque abre la creación de personaje y pausa el juego")
+	var cr: CanvasLayer = world.creator
+	cr.set_sex("f")
+	cr.select_cat("pelo")
+	cr.pick(3)
+	cr.select_cat("nariz")
+	cr.pick(2)
+	await _frames(2)
+	check(cr._tiles.get_child_count() >= 5, "se muestran las 5 opciones")
+	check(cr.model != null and str(cr.model.look["sex"]) == "f" and int(cr.model.look["hair"]) == 3, "la vista previa cambia al elegir")
+	cr.name_edit.text = "Lucía"
+	# Pulsar «Empezar» con un toque real
+	var b: Button = cr.start_button
+	var center: Vector2 = get_tree().root.get_final_transform() * (b.get_global_transform_with_canvas() * (b.size / 2.0))
+	for pressed in [true, false]:
+		var ev := InputEventMouseButton.new()
+		ev.button_index = MOUSE_BUTTON_LEFT
+		ev.position = center
+		ev.global_position = center
+		ev.pressed = pressed
+		Input.parse_input_event(ev)
+		await _frames(2)
+	check(GS.created and str(GS.look["sex"]) == "f" and int(GS.look["nose"]) == 2 and GS.player_name == "Lucía", "«Empezar» guarda el personaje")
+	check(not get_tree().paused and world.creator == null, "el juego arranca tras crear el personaje")
+	check(str(world.player._visual.look["sex"]) == "f", "el jugador tiene el aspecto elegido")
+	world.queue_free()
+	await _frames(2)
+	GS.load_game()
+	check(GS.created and GS.player_name == "Lucía", "el personaje creado queda guardado")
+	world = await _new_world()
+	check(world.creator == null, "la segunda vez no vuelve a pedir crear personaje")
+	world.queue_free()
+	await _frames(2)
+	GS.testing = true
+	DirAccess.remove_absolute(ProjectSettings.globalize_path(GS.save_path))
+	GS.new_game()
 
 
 func _count_meshes(n: Node) -> int:

@@ -425,6 +425,26 @@ static func station_mesh(kind: String, level: int) -> Node3D:
 				root.add_child(part(box(Vector3(0.08, 0.85, 0.08)), wood.darkened(0.3), p))
 			root.add_child(part(cyl(0.1, 0.1, 0.2), Color("c0392b"), Vector3(0.4, 1.0, 0)))
 			root.add_child(part(box(Vector3(0.6, 0.03, 0.5)), Color("d9cfb4"), Vector3(-0.25, 0.92, 0)))
+		"gimnasio":
+			# Pórtico con saco de boxeo a un lado y banco con barra al otro
+			for x in [-1.05, -0.15]:
+				root.add_child(part(box(Vector3(0.1, 1.9, 0.1)), wood.darkened(0.25), Vector3(x, 0.95, 0.35)))
+			root.add_child(part(box(Vector3(1.0, 0.1, 0.1)), wood.darkened(0.25), Vector3(-0.6, 1.9, 0.35)))
+			root.add_child(part(cyl(0.015, 0.015, 0.4), Color("3a3a3a"), Vector3(-0.6, 1.65, 0.35)))
+			root.add_child(part(cyl(0.2, 0.2, 0.8), Color("7a5a36") if level <= 1 else Color("8a2f25"), Vector3(-0.6, 1.05, 0.35)))
+			root.add_child(part(box(Vector3(0.35, 0.1, 1.1)), Color("5b4a3a") if level <= 1 else Color("2f2f33"), Vector3(0.6, 0.45, -0.05)))
+			for z in [-0.45, 0.35]:
+				root.add_child(part(box(Vector3(0.08, 0.4, 0.08)), wood.darkened(0.3), Vector3(0.6, 0.2, z)))
+			for x in [0.3, 0.9]:
+				root.add_child(part(box(Vector3(0.05, 0.9, 0.05)), Color("6a6f73"), Vector3(x, 0.45, 0.45)))
+			var bar := part(cyl(0.02, 0.02, 1.4), Color("9aa0a4"), Vector3(0.6, 0.9, 0.45))
+			bar.rotation_degrees.z = 90
+			root.add_child(bar)
+			var plate_c := stone.darkened(0.2) if level <= 1 else Color("2b2b2e")
+			for x in [0.0, 1.2]:
+				var pl := part(cyl(0.2, 0.2, 0.08), plate_c, Vector3(x, 0.9, 0.45))
+				pl.rotation_degrees.z = 90
+				root.add_child(pl)
 		"cofre":
 			var c := wood if level <= 1 else Color("6b4a2a")
 			root.add_child(part(box(Vector3(1.2, 0.6, 0.7)), c, Vector3(0, 0.3, 0)))
