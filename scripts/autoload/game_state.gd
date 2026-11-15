@@ -295,7 +295,10 @@ func equip_slot(i: int) -> void:
 	if s == null:
 		return
 	var t := str(DB.item(str(s["id"])).get("type", ""))
-	if t != "tool" and t != "weapon":
+	if t == "tool":
+		message.emit("Las herramientas se usan solas desde el inventario")
+		return
+	if t != "weapon":
 		return
 	slots[i] = hand  # intercambia con lo que llevabas en la mano
 	hand = s
@@ -328,6 +331,41 @@ func hand_data() -> Dictionary:
 
 func hand_tool() -> String:
 	return str(hand_data().get("tool", ""))
+
+
+## La mejor herramienta del inventario para un trabajo ("axe", "pickaxe"):
+## la que más recoge y, a igualdad, la más gastada (para no dejarla a medias).
+## Devuelve la casilla o -1.
+func best_tool(kind: String) -> int:
+	var best := -1
+	var best_mult := 0
+	var best_dur := 1 << 30
+	for i in slots.size():
+		var s = slots[i]
+		if s == null:
+			continue
+		var d := DB.item(str(s["id"]))
+		if str(d.get("type", "")) != "tool" or str(d.get("tool", "")) != kind:
+			continue
+		var m := int(d.get("gather_mult", 1))
+		var dur := int(s.get("dur", 0))
+		if m > best_mult or (m == best_mult and dur < best_dur):
+			best = i
+			best_mult = m
+			best_dur = dur
+	return best
+
+
+## Gasta 1 de durabilidad del objeto de una casilla. Se rompe al llegar a 0.
+func wear_slot_item(i: int) -> void:
+	var s = slots[i]
+	if s == null or not s.has("dur"):
+		return
+	s["dur"] = int(s["dur"]) - 1
+	if int(s["dur"]) <= 0:
+		message.emit("¡Se rompió %s!" % DB.item_name(str(s["id"])))
+		slots[i] = null
+	inventory_changed.emit()
 
 
 func hand_damage() -> float:
@@ -734,6 +772,12 @@ func from_dict(d: Dictionary) -> void:
 				it["dur"] = int(it["dur"])
 			worn[k] = it
 	created = bool(d.get("created", false))
+	# Antes las herramientas iban en la mano; ahora solo las armas.
+	if hand != null and str(DB.item(str(hand["id"])).get("type", "")) == "tool":
+		var t = hand
+		hand = null
+		if add_stack(t) > 0:
+			pending_drop.append(t)
 	player_name = str(d.get("name", player_name))
 	for k in d.get("train_ready", {}):
 		train_ready[k] = float(d["train_ready"][k])

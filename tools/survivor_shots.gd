@@ -62,7 +62,8 @@ func _ready() -> void:
 				break
 	for it in [["madera", 34], ["piedra", 12], ["tela", 6], ["carne_asada", 3], ["venda", 2], ["camiseta", 1], ["casco_obra", 1]]:
 		GS.add_item(it[0], it[1])
-	GS.hand = GS.make_item("hacha_piedra")
+	GS.hand = GS.make_item("lanza")
+	GS.add_item("hacha_piedra", 1)
 	GS.physique["fuerza"] = 0.32
 	GS.physique["resistencia"] = 0.45
 	GS.inventory_changed.emit()

@@ -498,7 +498,7 @@ func _refresh_detail() -> void:
 		match str(data.get("type", "")):
 			"consumable":
 				acts.append(["Usar", func(): GS.use_slot(i)])
-			"tool", "weapon":
+			"weapon":
 				acts.append(["Equipar", func(): GS.equip_slot(i)])
 			"wear":
 				acts.append(["Ponerse", func(): GS.wear_slot(i)])

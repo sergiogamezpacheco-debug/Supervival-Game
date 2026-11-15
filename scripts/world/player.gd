@@ -56,6 +56,7 @@ func _physics_process(delta: float) -> void:
 		dir = Vector2.ZERO
 		training = maxf(training - delta, 0.0)
 	_update_stamina(dir, delta)
+	_refresh_hand()
 	_noise_pulse = maxf(_noise_pulse - delta * 9.0, 0.0)
 	shake = maxf(shake - delta, 0.0)
 	var speed := float(DB.bal("player_speed", 4.5)) * GS.speed_factor()
@@ -177,8 +178,30 @@ func _swing() -> void:
 	_swing_t = 0.0
 
 
+## Qué usa el botón de acción ahora mismo:
+## {"icon": id de objeto o icono de interfaz, "item": objeto (para su estado) o null}.
+## Junto a un pino o una roca, el hacha o el pico del inventario; con un cofre o
+## una estación, la mano; si no, el arma equipada o el puño.
+func action_info() -> Dictionary:
+	var t := target
+	if t != null and is_instance_valid(t) and t.is_in_group("resource"):
+		var need := str(t.data.get("tool", ""))
+		if need != "":
+			var i := GS.best_tool(need)
+			if i >= 0:
+				return {"icon": str(GS.slots[i]["id"]), "item": GS.slots[i], "ui": false}
+	elif t != null and is_instance_valid(t) and not t.is_in_group("creature"):
+		return {"icon": "mano", "item": null, "ui": true}
+	if GS.hand != null:
+		return {"icon": str(GS.hand["id"]), "item": GS.hand, "ui": false}
+	return {"icon": "puno", "item": null, "ui": true}
+
+
 func _refresh_hand() -> void:
-	var id := "" if GS.hand == null else str(GS.hand["id"])
+	var info := action_info()
+	var id := str(info["icon"])
+	if info["ui"]:   # sin herramienta que usar: se ve el arma equipada (o nada)
+		id = "" if GS.hand == null else str(GS.hand["id"])
 	if id == _hand_item:
 		return
 	_hand_item = id

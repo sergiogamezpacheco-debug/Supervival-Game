@@ -272,7 +272,7 @@ func _process(delta: float) -> void:
 			player.floor_y = base.floor_height(player.global_position)
 		var t := find_target()
 		player.target = t
-		hud.set_action("" if t == null else t.action_label())
+		hud.set_action("" if t == null else t.action_label(), player.action_info())
 		hud.set_status("Envenenado" if GS.poison > 0.0 else "")
 
 	if build_mode != "":

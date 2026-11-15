@@ -207,7 +207,7 @@ func revive() -> void:
 ## Número de daño que sube y se desvanece (dorado y más grande si es crítico).
 func _show_damage(dmg: float, crit: bool) -> void:
 	var l := Label3D.new()
-	l.text = ("¡%d!" if crit else "%d") % roundi(dmg)
+	l.text = "%d" % roundi(dmg)
 	l.billboard = BaseMaterial3D.BILLBOARD_ENABLED
 	l.no_depth_test = true
 	l.font_size = 72 if crit else 52
@@ -223,8 +223,6 @@ func _show_damage(dmg: float, crit: bool) -> void:
 	tw.tween_property(l, "modulate:a", 0.0, 0.7).set_delay(0.25)
 	tw.tween_property(l, "outline_modulate:a", 0.0, 0.7).set_delay(0.25)
 	tw.chain().tween_callback(l.queue_free)
-	if crit:
-		GS.message.emit("¡Golpe por sorpresa! x%d" % int(DB.bal("sneak_mult", 3.0)))
 
 
 ## Destello blanco breve sobre todo el cuerpo.

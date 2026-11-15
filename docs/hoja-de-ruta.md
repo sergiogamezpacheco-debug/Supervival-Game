@@ -27,7 +27,8 @@
 | Día y noche de 24 min (infectados nocturnos, linterna), lluvia, sigilo (agacharse, ruido, golpe por sorpresa x3) | ✅ |
 | Reparar herramientas (banco) y ropa (costura); barra de vida, números de daño y destello al golpear | ✅ |
 | Diseños: mapa antiguo, HUD y tienda · Documentos: zonas y tienda | ✅ |
-| 440 tests y APK automático | ✅ |
+| HUD con iconos: barras con porcentaje, botones redondos y acción con borde de estado | ✅ |
+| 461 tests y APK automático | ✅ |
 
 ---
 

@@ -41,15 +41,15 @@ func interact(_player: Node3D) -> void:
 	if depleted:
 		return
 	var needed := str(data.get("tool", ""))
-	var has_tool := needed != "" and GS.hand_tool() == needed
+	var tool_slot := GS.best_tool(needed) if needed != "" else -1
+	var has_tool := tool_slot >= 0
 	if needed != "" and not has_tool and not bool(data.get("hand_ok", true)):
 		GS.message.emit("Necesitas: %s" % ("hacha" if needed == "axe" else "pico"))
 		return
 	var amount_range: Array = data.get("amount", [1, 1])
 	var amount := randi_range(int(amount_range[0]), int(amount_range[1]))
 	if has_tool:
-		amount *= int(GS.hand_data().get("gather_mult", 1))
-		GS.wear_hand()
+		amount *= int(DB.item(str(GS.slots[tool_slot]["id"])).get("gather_mult", 1))
 	amount += int(GS.wear_bonus("gather"))
 	var yield_id := str(data["yield"])
 	var left := GS.add_item(yield_id, amount)
@@ -57,6 +57,8 @@ func interact(_player: Node3D) -> void:
 		GS.message.emit("Inventario lleno")
 		return
 	GS.message.emit("+%d %s" % [amount - left, DB.item_name(yield_id)])
+	if has_tool:
+		GS.wear_slot_item(tool_slot)
 	_punch()
 	hits_left -= 1
 	if hits_left <= 0:

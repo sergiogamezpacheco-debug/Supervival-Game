@@ -24,7 +24,8 @@ func _ready() -> void:
 			if GS.slots[i] != null and GS.slots[i]["id"] == it[0]:
 				GS.wear_slot(i)
 				break
-	GS.hand = GS.make_item("hacha_piedra")
+	GS.hand = GS.make_item("lanza")
+	GS.add_item("hacha_piedra", 1)
 	var world: Node3D = load("res://scenes/main.tscn").instantiate()
 	add_child(world)
 	await _wait(10)
@@ -35,6 +36,24 @@ func _ready() -> void:
 	p.global_position = Vector3(2, 0, 3)
 	world.camera.global_position = p.global_position + Vector3(0, 13.0, 8.5)
 
+	# HUD: junto a un pino con el hacha a medio gastar
+	for r in get_tree().get_nodes_in_group("resource"):
+		if r.kind == "pino":
+			p.global_position = r.global_position + Vector3(1.2, 0, 0.4)
+			break
+	for i in GS.slots.size():
+		if GS.slots[i] != null and GS.slots[i]["id"] == "hacha_piedra":
+			GS.slots[i]["dur"] = 26
+	GS.food = 72.0
+	GS.water = 58.0
+	GS.stats_changed.emit()
+	world.camera.global_position = p.global_position + Vector3(0, 13.0, 8.5)
+	await _wait(10)
+	await _shot("hud_talar")
+	p.global_position = Vector3(2, 0, 3)
+	world.camera.global_position = p.global_position + Vector3(0, 13.0, 8.5)
+	await _wait(10)
+	await _shot("hud_arma")
 	for h in [[19.9, "atardecer"], [23.0, "noche"]]:
 		GS.forced_hour = h[0]
 		world.daynight.update(0.0, true)

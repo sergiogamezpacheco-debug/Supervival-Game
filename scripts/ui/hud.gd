@@ -25,7 +25,7 @@ var action_button: Control
 var _bars: Dictionary = {}
 var _msg: Label
 var _msg_timer := 0.0
-var _hand_label: Label
+var _pcts: Dictionary = {}
 var _death: Label
 var _inv_panel: Control
 var inv_btn: Button
@@ -62,6 +62,9 @@ var _map_travel: Button
 var _map_selected := ""
 var _status: Label
 var build_btn: Button
+var craft_btn: Button
+var map_btn: Button
+var action_icon := ""          # icono que muestra ahora el botón de acción
 var _gym_panel: PanelContainer
 var _gym_info: Label
 var _gym_rows: VBoxContainer
@@ -129,9 +132,17 @@ func _build_bars() -> void:
 	box.position = Vector2(20, 16)
 	box.add_theme_constant_override("separation", 6)
 	_root.add_child(box)
-	for def in [["health", "Vida", Color("d9443c")], ["food", "Comida", Color("e09a3a")], ["water", "Agua", Color("3a8fe0")], ["stamina", "Aguante", Color("b5c43a")]]:
+	for def in [["health", "vida", Color("d9443c")], ["food", "comida", Color("e09a3a")], ["water", "agua", Color("3a8fe0")], ["stamina", "energia", Color("d6c22e")]]:
+		var row := HBoxContainer.new()
+		row.add_theme_constant_override("separation", 8)
+		var ic := TextureRect.new()
+		ic.texture = DB.ui_icon(def[1])
+		ic.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+		ic.custom_minimum_size = Vector2(30, 30)
+		row.add_child(ic)
 		var bar := ProgressBar.new()
-		bar.custom_minimum_size = Vector2(260, 26)
+		bar.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+		bar.custom_minimum_size = Vector2(210, 22)
 		bar.show_percentage = false
 		var fill := StyleBoxFlat.new()
 		fill.bg_color = def[2]
@@ -141,24 +152,22 @@ func _build_bars() -> void:
 		bg.set_corner_radius_all(6)
 		bar.add_theme_stylebox_override("fill", fill)
 		bar.add_theme_stylebox_override("background", bg)
-		var lbl := Label.new()
-		lbl.text = def[1]
-		lbl.add_theme_font_size_override("font_size", 18)
-		lbl.position = Vector2(8, 0)
-		bar.add_child(lbl)
-		box.add_child(bar)
+		row.add_child(bar)
+		var pct := Label.new()
+		pct.custom_minimum_size = Vector2(44, 0)
+		pct.add_theme_font_size_override("font_size", 19)
+		pct.add_theme_color_override("font_outline_color", Color.BLACK)
+		pct.add_theme_constant_override("outline_size", 5)
+		row.add_child(pct)
+		box.add_child(row)
 		_bars[def[0]] = bar
+		_pcts[def[0]] = pct
 	_status = Label.new()
 	_status.add_theme_font_size_override("font_size", 20)
 	_status.add_theme_color_override("font_color", Color("8fe36a"))
 	_status.add_theme_color_override("font_outline_color", Color.BLACK)
 	_status.add_theme_constant_override("outline_size", 5)
 	box.add_child(_status)
-	_hand_label = Label.new()
-	_hand_label.add_theme_font_size_override("font_size", 20)
-	_hand_label.add_theme_color_override("font_outline_color", Color.BLACK)
-	_hand_label.add_theme_constant_override("outline_size", 5)
-	box.add_child(_hand_label)
 
 
 func _refresh_stats() -> void:
@@ -171,6 +180,8 @@ func _refresh_stats() -> void:
 	hb.value = GS.health
 	fb.value = GS.food
 	wb.value = GS.water
+	for k in ["health", "food", "water"]:
+		_pcts[k].text = "%d" % roundi(100.0 * _bars[k].value / maxf(_bars[k].max_value, 1.0))
 	_refresh_stamina()
 
 
@@ -178,6 +189,7 @@ func _refresh_stamina() -> void:
 	var sb: ProgressBar = _bars["stamina"]
 	sb.max_value = GS.max_stamina()
 	sb.value = GS.stamina
+	_pcts["stamina"].text = "%d" % roundi(100.0 * GS.stamina / maxf(GS.max_stamina(), 1.0))
 
 
 # --------------------------------------------------------------- controles
@@ -213,6 +225,7 @@ func _build_controls() -> void:
 	crouch_button.offset_bottom = -30
 	crouch_button.base_color = Color(0.45, 0.5, 0.4)
 	crouch_button.set_text("Agachar")
+	crouch_button.set_icon(DB.ui_icon("agachar"))
 	crouch_button.pressed_changed.connect(func(on: bool):
 		if on:
 			toggle_crouch())
@@ -257,38 +270,63 @@ func _build_controls() -> void:
 	side.anchor_right = 1.0
 	side.offset_left = -200
 	side.offset_right = -20
-	side.offset_top = 20
+	side.offset_top = 14
 	side.add_theme_constant_override("separation", 10)
 	_root.add_child(side)
 	inv_btn = _make_inv_button()
 	side.add_child(inv_btn)
-	var craft_btn := _big_button("Fabricar")
+	craft_btn = _big_button("fabricar", "Fabricar")
 	craft_btn.pressed.connect(func(): _toggle(_craft_panel))
 	side.add_child(craft_btn)
-	build_btn = _big_button("Construir")
+	build_btn = _big_button("construir", "Construir")
 	build_btn.pressed.connect(func(): _toggle(_build_panel))
 	side.add_child(build_btn)
-	var map_btn := _big_button("Mapa")
+	map_btn = _big_button("mapa", "Mapa")
 	map_btn.pressed.connect(func():
 		_toggle(_map_panel)
 		_refresh_map())
 	side.add_child(map_btn)
 
 
-func _big_button(t: String) -> Button:
+## Botón redondo del lateral con un icono (sin texto).
+func _big_button(icon_name: String, tip: String) -> Button:
 	var b := Button.new()
-	b.text = t
-	b.custom_minimum_size = Vector2(180, 64)
+	b.tooltip_text = tip
+	b.custom_minimum_size = Vector2(84, 84)
+	b.size_flags_horizontal = Control.SIZE_SHRINK_END
+	b.icon = DB.ui_icon(icon_name)   # lo dibuja el propio botón, centrado
+	var empty := StyleBoxEmpty.new()
+	for st in ["normal", "hover", "pressed", "focus"]:
+		b.add_theme_stylebox_override(st, empty)
+	b.add_theme_constant_override("icon_max_width", 1)
+	b.add_theme_color_override("icon_normal_color", Color(1, 1, 1, 0))
+	b.add_theme_color_override("icon_hover_color", Color(1, 1, 1, 0))
+	b.add_theme_color_override("icon_pressed_color", Color(1, 1, 1, 0))
+	b.add_theme_color_override("icon_focus_color", Color(1, 1, 1, 0))
+	b.draw.connect(func():
+		var c := b.size / 2.0
+		var r := minf(c.x, c.y) - 2.0
+		b.draw_circle(c, r, Color(0.055, 0.07, 0.047, 0.92 if b.button_pressed or b.is_pressed() else 0.78))
+		b.draw_arc(c, r - 1.0, 0.0, TAU, 48, Color(0.91, 0.86, 0.72, 0.3), 2.0, true)
+		var sz := r * 1.3
+		b.draw_texture_rect(b.icon, Rect2(c - Vector2(sz, sz) / 2.0, Vector2(sz, sz)), false))
 	return b
 
 
-func set_action(label: String) -> void:
-	if label == "":
-		action_button.set_text("Acción")
-		action_button.set_enabled(false)
-	else:
-		action_button.set_text(label)
-		action_button.set_enabled(true)
+## Botón de acción: icono de lo que se va a usar y borde con su estado.
+## info viene de player.action_info().
+func set_action(label: String, info: Dictionary = {}) -> void:
+	action_button.set_text(label if label != "" else "Acción")
+	action_button.set_enabled(label != "")
+	if info.is_empty():
+		return
+	action_icon = str(info["icon"])
+	action_button.set_icon(DB.ui_icon(action_icon) if info["ui"] else DB.item_icon(action_icon))
+	var it = info["item"]
+	var ring := -1.0
+	if it != null and it.has("dur"):
+		ring = float(it["dur"]) / maxf(float(DB.item(str(it["id"])).get("durability", 1)), 1.0)
+	action_button.set_ring(ring)
 
 
 func _toggle(panel: Control) -> void:
@@ -390,15 +428,6 @@ func _build_inventory() -> void:
 
 
 func _refresh_inventory() -> void:
-	# Mano
-	if GS.hand == null:
-		_hand_label.text = "Mano: puños"
-	else:
-		var h: Dictionary = GS.hand
-		var dur := ""
-		if h.has("dur"):
-			dur = " (%d/%d)" % [int(h["dur"]), int(DB.item(str(h["id"])).get("durability", 0))]
-		_hand_label.text = "Mano: %s%s" % [DB.item_name(str(h["id"])), dur]
 	if inv_btn:
 		inv_btn.queue_redraw()
 	if _inv_panel == null:
@@ -426,6 +455,7 @@ func toggle_crouch() -> void:
 	p.set_crouch(not p.crouching)
 	crouch_button.base_color = Color(0.42, 0.62, 0.3) if p.crouching else Color(0.45, 0.5, 0.4)
 	crouch_button.set_text("De pie" if p.crouching else "Agachar")
+	crouch_button.set_icon(DB.ui_icon("de_pie" if p.crouching else "agachar"))
 	crouch_button.queue_redraw()
 
 

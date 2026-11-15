@@ -124,13 +124,27 @@ func test_crafting() -> void:
 		if GS.slots[i] != null and GS.slots[i]["id"] == "hacha_piedra":
 			idx = i
 	GS.equip_slot(idx)
-	check(GS.hand != null and GS.hand_tool() == "axe", "equipa el hacha")
+	check(GS.hand == null and GS.best_tool("axe") == idx, "el hacha no se equipa como arma: se usa desde el inventario")
+	var d0 := int(GS.slots[idx]["dur"])
+	GS.wear_slot_item(idx)
+	check(int(GS.slots[idx]["dur"]) == d0 - 1, "usar la herramienta la gasta")
+	GS.slots[idx]["dur"] = 1
+	GS.wear_slot_item(idx)
+	check(GS.slots[idx] == null and GS.best_tool("axe") == -1, "la herramienta se rompe a 0")
+	GS.add_item("hacha_piedra", 1)
+	GS.add_item("hacha_hierro", 1)
+	check(GS.slots[GS.best_tool("axe")]["id"] == "hacha_hierro", "se usa la mejor hacha del inventario")
+	for i in GS.slots.size():
+		GS.slots[i] = null
+	GS.add_item("lanza", 1)
+	GS.equip_slot(0)
+	check(GS.hand != null and GS.hand["id"] == "lanza" and GS.hand_damage() > float(DB.bal("fist_damage", 6)), "la lanza sí se equipa y pega más que el puño")
 	var dur := int(GS.hand["dur"])
 	GS.wear_hand()
 	check(int(GS.hand["dur"]) == dur - 1, "el uso gasta durabilidad")
 	GS.hand["dur"] = 1
 	GS.wear_hand()
-	check(GS.hand == null, "la herramienta se rompe a 0")
+	check(GS.hand == null, "el arma se rompe a 0")
 	GS.add_item("baya", 2)
 	GS.food = 50.0
 	for i in GS.slots.size():
@@ -193,6 +207,7 @@ func test_world() -> void:
 	world.hud.action_button.held = false
 	player.action_held = false
 	check(GS.count("madera") > 0, "talar da madera (%d)" % GS.count("madera"))
+	await test_action_hud(world, player, tree)
 
 	# Botón táctil: un toque dentro del botón de acción lo marca como pulsado.
 	var btn: Control = world.hud.action_button
@@ -912,7 +927,7 @@ func test_night_stealth() -> void:
 	z2.queue_free()
 
 	# Reparar
-	GS.hand = GS.make_item("hacha_piedra")
+	GS.hand = GS.make_item("lanza")
 	GS.hand["dur"] = 5
 	GS.add_item("chaleco", 1)
 	for i in GS.slots.size():
@@ -925,20 +940,20 @@ func test_night_stealth() -> void:
 			GS.slots[i]["dur"] = 40
 	var tools: Array = GS.damaged_items("banco_trabajo")
 	var cloth: Array = GS.damaged_items("mesa_costura")
-	check(tools.size() == 1 and tools[0]["where"] == "hand", "el banco repara la herramienta de la mano")
+	check(tools.size() == 1 and tools[0]["where"] == "hand", "el banco repara el arma de la mano")
 	check(cloth.size() == 2, "la mesa de costura repara la ropa puesta y la guardada (%d)" % cloth.size())
 	var cost: Dictionary = GS.repair_cost(GS.hand)
 	check(not cost.is_empty() and GS.repair(tools[0]) != "", "sin materiales no se repara (%s)" % DB.cost_text(cost))
 	for k in cost:
 		GS.add_item(str(k), int(cost[k]))
-	check(GS.repair(tools[0]) == "" and int(GS.hand["dur"]) == int(DB.item("hacha_piedra")["durability"]), "reparar deja la herramienta como nueva")
+	check(GS.repair(tools[0]) == "" and int(GS.hand["dur"]) == int(DB.item("lanza")["durability"]), "reparar deja el arma como nueva")
 	var helmet_ref: Dictionary = {}
 	for r in cloth:
 		if r["item"]["id"] == "casco_obra":
 			helmet_ref = r
 	check(not GS.repair_cost(helmet_ref["item"]).is_empty(), "lo que solo se encuentra también tiene coste de reparación")
 	GS.hand["dur"] = 3
-	for k in {"madera": 15, "piedra": 10}:
+	for k in {"madera": 15, "piedra": 10, "fibra": 10}:
 		GS.add_item(k, 15)
 	var bench: Node3D = world.base.place("banco_trabajo", Vector2i(-4, -4), 0, 0, player.global_position)
 	world.hud.open_station(bench)
@@ -954,6 +969,60 @@ func test_night_stealth() -> void:
 	await _frames(2)
 	DirAccess.remove_absolute(ProjectSettings.globalize_path(GS.save_path))
 	GS.new_game()
+
+
+## Botón de acción con icono y borde de estado; barras con icono y porcentaje.
+func test_action_hud(world: Node3D, player: Node3D, tree: Node3D) -> void:
+	var hud: CanvasLayer = world.hud
+	var keep: Array = GS.slots.duplicate()
+	var keep_hand = GS.hand
+	for i in GS.slots.size():
+		GS.slots[i] = null
+	GS.hand = null
+	tree._respawn_timer = 0.0      # por si se agotó al talarlo
+	await _frames(3)
+	tree.hits_left = 50
+	await _frames(3)
+	check(hud.action_icon == "puno" and hud.action_button.ring < 0.0, "junto al pino sin hacha: puño y sin borde")
+	GS.add_item("hacha_piedra", 1)
+	GS.add_item("lanza", 1)
+	GS.equip_slot(1)
+	await _frames(3)
+	check(hud.action_icon == "hacha_piedra" and is_equal_approx(hud.action_button.ring, 1.0), "junto al pino con hacha en el inventario: icono del hacha, borde al 100 %")
+	var hits0: int = tree.hits_left
+	var lance0 := int(GS.hand["dur"])
+	var wood0 := GS.count("madera")
+	tree.interact(player)
+	check(int(GS.slots[0]["dur"]) == 59 and int(GS.hand["dur"]) == lance0 and GS.count("madera") > wood0, "talar gasta el hacha, no el arma")
+	GS.slots[0]["dur"] = 24
+	await _frames(3)
+	check(hud.action_button.ring < 0.5 and hud.action_button.ring_color(hud.action_button.ring) == Color("f2c230"), "por debajo del 50 % el borde es amarillo")
+	check(hud.action_button.ring_color(0.2) == Color("e0463c") and hud.action_button.ring_color(0.8) == Color("6fd24a"), "rojo por debajo del 25 % y verde por encima del 50 %")
+	check(player._hand_item == "hacha_piedra", "el superviviente saca el hacha para talar")
+	var pos: Vector3 = player.global_position
+	player.global_position = Vector3(0.5, 0, 9.5)
+	await _frames(3)
+	if world.find_target() == null:
+		check(hud.action_icon == "lanza" and hud.action_button.ring > 0.9, "lejos de todo: icono del arma equipada con su borde")
+		check(player._hand_item == "lanza", "y lleva la lanza en la mano")
+	GS.unequip()
+	await _frames(3)
+	if world.find_target() == null:
+		check(hud.action_icon == "puno", "sin arma: puño")
+	check(hud.action_button.icon != null and hud.crouch_button.icon == DB.ui_icon("agachar"), "acción y agachar son iconos")
+	check(hud.craft_btn.text == "" and hud.craft_btn.icon == DB.ui_icon("fabricar") and hud.map_btn.icon == DB.ui_icon("mapa") and hud.build_btn.icon == DB.ui_icon("construir"), "fabricar, construir y mapa son iconos")
+	check(hud.build_btn.visible, "en el refugio se ve el botón de construir")
+	GS.food = 50.0
+	GS.stats_changed.emit()
+	check(hud._pcts["food"].text == "50" and hud._pcts.has("stamina"), "las barras muestran el porcentaje")
+	for r in DB.recipes_for(""):
+		check(int(r.get("level", 0)) <= 1 and r["cost"].size() <= 2, "a mano solo lo básico: %s" % r["id"])
+	player.global_position = pos
+	for i in GS.slots.size():
+		GS.slots[i] = keep[i]
+	GS.hand = keep_hand
+	GS.inventory_changed.emit()
+	await _frames(2)
 
 
 func test_creator() -> void:

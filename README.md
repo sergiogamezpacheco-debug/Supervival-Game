@@ -17,7 +17,8 @@ descarga `Supervival.apk` e instálalo (Android pedirá permitir "instalar apps 
 | Control | Qué hace |
 |---|---|
 | Joystick (mitad izquierda) | Moverse. A fondo: **correr** (gasta aguante y hace ruido) |
-| Agachar | Lento y silencioso; por la espalda y sin que te vean, el golpe hace x3 |
+| Botón de acción (icono) | Usa lo que toque: junto a un árbol o roca, el hacha o pico del inventario; si no, el arma equipada o el puño. El borde marca su estado (verde, amarillo <50 %, rojo <25 %) |
+| Botón de agachar (icono) | Lento y silencioso; por la espalda y sin que te vean, el golpe hace x3 |
 | Botón redondo (abajo derecha) | Acción contextual: Talar, Picar, Recoger, Atacar, Beber, Recuperar… Mantener para repetir |
 | Botón de mochila (anillo = carga) | **Inventario**: el superviviente con sus 7 huecos de equipo y las casillas (8 bolsillos + 8 por nivel de mochila); toca un objeto para usarlo, equiparlo, ponértelo o tirarlo |
 | Fabricar | Recetas a mano (el resto, en las estaciones) |
