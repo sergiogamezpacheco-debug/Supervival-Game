@@ -32,6 +32,7 @@ var stamina := 100.0           # aguante para correr
 var train_ready: Dictionary = {} # ejercicio -> hora (unix) en que se puede volver a entrenar
 var testing := false           # los tests no muestran la pantalla de creación
 var pending_drop: Array = []
+var invulnerable := 0.0         # segundos sin recibir golpes (esquivando)
 var forced_hour := -1.0        # >= 0: hora fija (tests y capturas)
 var forced_rain := -1          # -1 según el reloj, 0 seco, 1 lloviendo   # objetos de partidas antiguas que ya no caben (se dejan en una bolsa)
 
@@ -82,6 +83,7 @@ func reset_stats() -> void:
 # ---------------------------------------------------------------- stats
 
 func tick(delta: float) -> void:
+	invulnerable = maxf(invulnerable - delta, 0.0)
 	if dead:
 		return
 	_food_timer += delta
@@ -249,6 +251,7 @@ func craft(recipe_id: String) -> bool:
 	if free_slots() == 0 and count(result) == 0:
 		message.emit("Inventario lleno")
 		return false
+	SFX.play("fabricar", -4.0)
 	var cost: Dictionary = r["cost"]
 	for id in cost:
 		remove_item(str(id), int(cost[id]))
@@ -266,6 +269,7 @@ func use_slot(i: int) -> void:
 	var data := DB.item(str(s["id"]))
 	match str(data.get("type", "")):
 		"consumable":
+			SFX.play("beber" if data.has("water") and not data.has("food") else "comer")
 			if data.has("food"):
 				eat(float(data["food"]))
 			if data.has("water"):
@@ -528,7 +532,7 @@ func wear_bonus(key: String) -> float:
 
 ## Golpe de un enemigo: la ropa reduce el daño y se desgasta.
 func hit(amount: float) -> void:
-	if dead:
+	if dead or invulnerable > 0.0:
 		return
 	var reduced := amount * (1.0 - armor() / 100.0)
 	var broke := false

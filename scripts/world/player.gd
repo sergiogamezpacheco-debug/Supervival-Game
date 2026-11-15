@@ -18,6 +18,10 @@ var running := false
 var crouching := false            # agachado: lento, silencioso y con golpe crítico por sorpresa
 var shake := 0.0                  # sacudida de cámara al recibir un golpe (la lee el mundo)
 var _crouch_amount := 0.0
+var dodging := 0.0                # segundos que quedan de esquiva
+var _dodge_dir := Vector3.ZERO
+var _dodge_cd := 0.0
+var _step_phase := 0.0
 var _noise_pulse := 0.0           # ruido puntual (golpear, talar) que se apaga en un segundo
 var training := 0.0               # segundos de entrenamiento en el gimnasio (animación)
 var _exhausted := false
@@ -65,6 +69,13 @@ func _physics_process(delta: float) -> void:
 	if crouching:
 		speed *= float(DB.bal("crouch_speed", 0.55))
 	velocity = Vector3(dir.x, 0.0, dir.y) * speed
+	_dodge_cd = maxf(_dodge_cd - delta, 0.0)
+	if dodging > 0.0:
+		dodging = maxf(dodging - delta, 0.0)
+		velocity = _dodge_dir * float(DB.bal("player_speed", 4.5)) * float(DB.bal("dodge_speed", 3.2))
+		_visual.rotation.x = -0.5 * sin(PI * dodging / float(DB.bal("dodge_time", 0.32)))
+	else:
+		_visual.rotation.x = 0.0
 	move_and_slide()
 	position.y = floor_y
 	if dir.length() > 0.1:
@@ -73,6 +84,9 @@ func _physics_process(delta: float) -> void:
 	# Animación de andar y golpe
 	var moving := dir.length() > 0.1
 	_walk_amount = move_toward(_walk_amount, 1.0 if moving else 0.0, delta * 6.0)
+	if moving and floori(_walk_phase / PI) != floori(_step_phase / PI) and not crouching:
+		SFX.play("paso", -14.0 if not running else -9.0, 0.15)
+	_step_phase = _walk_phase
 	if moving:
 		_walk_phase += delta * 9.0 * dir.length() * (1.35 if running else 1.0)
 	_visual.animate_walk(_walk_phase, _walk_amount)
@@ -117,6 +131,29 @@ func _update_stamina(dir: Vector2, delta: float) -> void:
 		_rest += delta
 		if _rest >= float(DB.bal("stamina_regen_delay", 0.8)):
 			GS.stamina = minf(GS.stamina + float(DB.bal("stamina_regen", 18.0)) * (1.0 + float(GS.physique["resistencia"]) * 0.5) * delta, mx)
+
+
+## Esquivar: un salto rápido hacia donde te mueves (o hacia donde miras) durante
+## el que no recibes golpes. Gasta energía.
+func dodge() -> bool:
+	var cost := float(DB.bal("dodge_cost", 22))
+	if GS.dead or dodging > 0.0 or _dodge_cd > 0.0 or training > 0.0:
+		return false
+	if GS.stamina < cost:
+		GS.message.emit("Sin energía para esquivar")
+		SFX.play("error", -6.0)
+		return false
+	GS.stamina -= cost
+	_rest = 0.0
+	var d := Vector3(move_input.x, 0.0, move_input.y)
+	_dodge_dir = d.normalized() if d.length() > 0.2 else facing()
+	dodging = float(DB.bal("dodge_time", 0.32))
+	_dodge_cd = float(DB.bal("dodge_cooldown", 0.9))
+	GS.invulnerable = dodging + 0.08
+	set_crouch(false)
+	make_noise(float(DB.bal("noise_walk", 7.0)))
+	SFX.play("esquivar")
+	return true
 
 
 # ------------------------------------------------------------ sigilo
@@ -225,8 +262,8 @@ func refresh_look() -> void:
 
 func hurt_flash() -> void:
 	shake = 0.25
-	if OS.has_feature("mobile"):
-		Input.vibrate_handheld(60)
+	SFX.vibrate(60)
+	SFX.play("dano")
 	var tw := create_tween()
 	_visual.scale = Vector3(1.15, 0.85, 1.15)
 	tw.tween_property(_visual, "scale", Vector3.ONE, 0.2)

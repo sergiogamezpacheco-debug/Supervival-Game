@@ -36,6 +36,16 @@ func _ready() -> void:
 	p.global_position = Vector3(2, 0, 3)
 	world.camera.global_position = p.global_position + Vector3(0, 13.0, 8.5)
 
+	world.hud.settings_btn.pressed.emit()
+	await _wait(6)
+	await _shot("ajustes")
+	world.hud.close_panels()
+	world.hud.map_btn.pressed.emit()
+	world.hud._select_map("cantera")
+	await _wait(8)
+	await _shot("mapa")
+	world.hud.close_panels()
+	await _wait(3)
 	# HUD: junto a un pino con el hacha a medio gastar
 	for r in get_tree().get_nodes_in_group("resource"):
 		if r.kind == "pino":
@@ -54,6 +64,9 @@ func _ready() -> void:
 	world.camera.global_position = p.global_position + Vector3(0, 13.0, 8.5)
 	await _wait(10)
 	await _shot("hud_arma")
+	if out.ends_with("_solo_mapa"):
+		get_tree().quit()
+		return
 	for h in [[19.9, "atardecer"], [23.0, "noche"]]:
 		GS.forced_hour = h[0]
 		world.daynight.update(0.0, true)

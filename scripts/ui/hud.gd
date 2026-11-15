@@ -6,6 +6,8 @@ extends CanvasLayer
 signal build_selected(mode: String, id: String)   # mode: place | upgrade | demolish
 signal build_action(action: String)               # rotate | confirm | exit
 signal travel_requested(map_id: String)
+signal edit_look_requested
+signal new_game_requested
 
 const LEVEL_COLORS := {
 	"hogar": Color("e8d36a"), "verde": Color("5fbf4a"), "amarilla": Color("e6b83a"),
@@ -30,6 +32,11 @@ var _death: Label
 var _inv_panel: Control
 var inv_btn: Button
 var crouch_button: Control
+var dodge_button: Control
+var settings_btn: Button
+var _settings_panel: PanelContainer
+var _newgame_btn: Button
+var settings_controls: Dictionary = {}
 var _clock_icon: TextureRect
 var _clock_label: Label
 var _rain_icon: TextureRect
@@ -55,8 +62,13 @@ var _chest_bag_grid: GridContainer
 var station: Node3D = null       # estación o cofre abierto
 var _station_refresh := 0.0
 var location := "refugio"
-var _map_panel: PanelContainer
-var _map_area: Control
+var _map_panel: Control
+var _map_area: TextureRect
+var _map_route: Control
+var _map_marks: Control
+var _map_name: Label
+var _map_level: Label
+var map_buttons: Dictionary = {}
 var _map_info: Label
 var _map_travel: Button
 var _map_selected := ""
@@ -116,6 +128,7 @@ func _ready() -> void:
 	_root.add_child(_death)
 
 	# El inventario ocupa toda la pantalla: va encima de todo (salvo los avisos).
+	_root.move_child(_map_panel, -1)
 	_root.move_child(_inv_panel, -1)
 	_root.move_child(_msg, -1)
 	GS.stats_changed.connect(_refresh_stats)
@@ -231,6 +244,37 @@ func _build_controls() -> void:
 			toggle_crouch())
 	_root.add_child(crouch_button)
 
+	# Esquivar: salto rápido sin recibir golpes (gasta energía)
+	dodge_button = TouchButtonScript.new()
+	dodge_button.anchor_left = 1.0
+	dodge_button.anchor_right = 1.0
+	dodge_button.anchor_top = 1.0
+	dodge_button.anchor_bottom = 1.0
+	dodge_button.offset_left = -310
+	dodge_button.offset_right = -210
+	dodge_button.offset_top = -262
+	dodge_button.offset_bottom = -162
+	dodge_button.set_icon(DB.ui_icon("esquivar"))
+	dodge_button.pressed_changed.connect(func(on: bool):
+		if on:
+			var p := get_tree().get_first_node_in_group("player")
+			if p:
+				p.dodge())
+	_root.add_child(dodge_button)
+
+	# Ajustes
+	settings_btn = _big_button("ajustes", "Ajustes")
+	settings_btn.custom_minimum_size = Vector2(56, 56)
+	settings_btn.anchor_left = 0.5
+	settings_btn.anchor_right = 0.5
+	settings_btn.offset_left = 108
+	settings_btn.offset_right = 164
+	settings_btn.offset_top = 6
+	settings_btn.offset_bottom = 62
+	settings_btn.pressed.connect(func(): _toggle(_settings_panel))
+	_root.add_child(settings_btn)
+	_build_settings()
+
 	# Reloj: sol o luna, hora y lluvia
 	var clock := PanelContainer.new()
 	clock.anchor_left = 0.5
@@ -338,14 +382,14 @@ func _toggle(panel: Control) -> void:
 
 
 func close_panels() -> void:
-	for p in [_inv_panel, _craft_panel, _build_panel, _station_panel, _chest_panel, _map_panel, _gym_panel]:
+	for p in [_inv_panel, _craft_panel, _build_panel, _station_panel, _chest_panel, _map_panel, _gym_panel, _settings_panel]:
 		if p:
 			p.visible = false
 	station = null
 
 
 func any_panel_open() -> bool:
-	for p in [_inv_panel, _craft_panel, _build_panel, _station_panel, _chest_panel, _map_panel, _gym_panel]:
+	for p in [_inv_panel, _craft_panel, _build_panel, _station_panel, _chest_panel, _map_panel, _gym_panel, _settings_panel]:
 		if p and p.visible:
 			return true
 	return false
@@ -364,9 +408,11 @@ func show_death(v: bool) -> void:
 func _process(delta: float) -> void:
 	_refresh_stamina()
 	var inv_open := _inv_panel != null and _inv_panel.visible
+	inv_open = inv_open or (_map_panel != null and _map_panel.visible)
 	joystick.visible = not inv_open
 	action_button.visible = not inv_open
 	crouch_button.visible = not inv_open
+	dodge_button.visible = not inv_open
 	if _gym_panel and _gym_panel.visible:
 		_station_refresh -= delta
 		if _station_refresh <= 0.0:
@@ -440,6 +486,64 @@ func _refresh_inventory() -> void:
 		_refresh_chest()
 	if _station_panel and _station_panel.visible:
 		_refresh_station()
+
+
+# ---------------------------------------------------------------- ajustes
+
+func _build_settings() -> void:
+	var parts := _panel("Ajustes", Vector2(330, 250))
+	_settings_panel = parts[0]
+	var v: VBoxContainer = parts[1]
+	for d in [["music", "Música"], ["sfx", "Efectos"]]:
+		var row := HBoxContainer.new()
+		row.add_theme_constant_override("separation", 14)
+		var l := Label.new()
+		l.text = d[1]
+		l.custom_minimum_size = Vector2(130, 0)
+		row.add_child(l)
+		var sl := HSlider.new()
+		sl.min_value = 0.0
+		sl.max_value = 1.0
+		sl.step = 0.05
+		sl.value = float(SFX.settings[d[0]])
+		sl.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		sl.custom_minimum_size = Vector2(0, 44)
+		var key: String = d[0]
+		sl.value_changed.connect(func(val: float): SFX.set_setting(key, val))
+		row.add_child(sl)
+		v.add_child(row)
+		settings_controls[key] = sl
+	var vib := CheckButton.new()
+	vib.text = "Vibración al recibir golpes"
+	vib.button_pressed = bool(SFX.settings["vibration"])
+	vib.toggled.connect(func(on: bool): SFX.set_setting("vibration", on))
+	v.add_child(vib)
+	settings_controls["vibration"] = vib
+	var look := Button.new()
+	look.text = "Cambiar aspecto del superviviente"
+	look.custom_minimum_size = Vector2(0, 56)
+	look.pressed.connect(func():
+		close_panels()
+		edit_look_requested.emit())
+	v.add_child(look)
+	_newgame_btn = Button.new()
+	_newgame_btn.text = "Empezar partida nueva"
+	_newgame_btn.custom_minimum_size = Vector2(0, 56)
+	_newgame_btn.add_theme_color_override("font_color", Color("ff8a80"))
+	_newgame_btn.pressed.connect(func():
+		# Dos toques: el primero avisa
+		if _newgame_btn.text.begins_with("¿Seguro"):
+			new_game_requested.emit()
+		else:
+			_newgame_btn.text = "¿Seguro? Se borra todo. Toca otra vez")
+	v.add_child(_newgame_btn)
+	_settings_panel.visibility_changed.connect(func():
+		_newgame_btn.text = "Empezar partida nueva")
+	var ver := Label.new()
+	ver.text = "Supervival · Lost Anarchy Games"
+	ver.modulate = Color(1, 1, 1, 0.5)
+	ver.add_theme_font_size_override("font_size", 15)
+	v.add_child(ver)
 
 
 func set_clock(text: String, night: bool, rain: bool) -> void:
@@ -1022,87 +1126,208 @@ func set_location(id: String) -> void:
 		build_btn.visible = DB.maps.get(id, {}).get("base_half", 0) > 0
 
 
+const MAP_INK := Color("2b2418")
+const MAP_COLORS := {
+	"hogar": Color("a87c12"), "verde": Color("3f7d3a"), "amarilla": Color("b86a0c"),
+	"roja": Color("b3261e"), "radiactiva": Color("6b3fa0"), "segura": Color("1f5f99"),
+}
+const MAP_SIZE := Vector2(962, 680)     # el papel (990x700) ajustado a la pantalla
+
+
+## Mapa del Valle: papel antiguo a pantalla completa con un marcador por zona.
 func _build_map_panel() -> void:
-	var parts := _panel("Mapa del Valle", Vector2(600, 330))
-	_map_panel = parts[0]
-	var v: VBoxContainer = parts[1]
-	var h := HBoxContainer.new()
-	h.add_theme_constant_override("separation", 16)
-	v.add_child(h)
-	_map_area = Control.new()
-	_map_area.custom_minimum_size = Vector2(760, 540)
-	_map_area.draw.connect(_draw_map)
-	h.add_child(_map_area)
-	var side := VBoxContainer.new()
-	side.custom_minimum_size = Vector2(380, 0)
-	side.add_theme_constant_override("separation", 12)
-	h.add_child(side)
+	_map_panel = Control.new()
+	_map_panel.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	_map_panel.mouse_filter = Control.MOUSE_FILTER_STOP
+	_map_panel.visible = false
+	_root.add_child(_map_panel)
+	var bg := ColorRect.new()   # mesa de madera oscura
+	bg.color = Color("2b1d13")
+	bg.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	bg.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_map_panel.add_child(bg)
+	_map_area = TextureRect.new()
+	_map_area.texture = load("res://assets/ui/mapa_valle.png")
+	_map_area.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	_map_area.position = Vector2(14, 20)
+	_map_area.size = MAP_SIZE
+	_map_area.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_map_panel.add_child(_map_area)
+	_map_route = Control.new()
+	_map_route.size = MAP_SIZE
+	_map_route.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_map_route.draw.connect(_draw_map)
+	_map_area.add_child(_map_route)
+	_map_marks = Control.new()
+	_map_marks.size = MAP_SIZE
+	_map_marks.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_map_area.add_child(_map_marks)
+
+	# Ficha de la zona: una hoja de cuaderno a la derecha
+	var note := PanelContainer.new()
+	note.position = Vector2(992, 84)
+	note.size = Vector2(272, 616)
+	var ns := StyleBoxFlat.new()
+	ns.bg_color = Color("e6d3a6")
+	ns.border_color = Color("8a6f43")
+	ns.set_border_width_all(2)
+	ns.set_corner_radius_all(6)
+	ns.set_content_margin_all(16)
+	ns.shadow_color = Color(0, 0, 0, 0.5)
+	ns.shadow_size = 8
+	note.add_theme_stylebox_override("panel", ns)
+	_map_panel.add_child(note)
+	var v := VBoxContainer.new()
+	v.add_theme_constant_override("separation", 8)
+	note.add_child(v)
+	_map_name = Label.new()
+	_map_name.autowrap_mode = TextServer.AUTOWRAP_WORD
+	_map_name.add_theme_font_size_override("font_size", 26)
+	_map_name.add_theme_color_override("font_color", MAP_INK)
+	v.add_child(_map_name)
+	_map_level = Label.new()
+	_map_level.add_theme_font_size_override("font_size", 18)
+	v.add_child(_map_level)
 	_map_info = Label.new()
 	_map_info.autowrap_mode = TextServer.AUTOWRAP_WORD
-	_map_info.custom_minimum_size = Vector2(380, 400)
-	_map_info.add_theme_font_size_override("font_size", 20)
-	side.add_child(_map_info)
+	_map_info.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	_map_info.add_theme_font_size_override("font_size", 19)
+	_map_info.add_theme_color_override("font_color", Color("3d3222"))
+	v.add_child(_map_info)
 	_map_travel = Button.new()
 	_map_travel.text = "Viajar"
-	_map_travel.custom_minimum_size = Vector2(200, 64)
+	_map_travel.custom_minimum_size = Vector2(0, 62)
+	_map_travel.add_theme_font_size_override("font_size", 24)
+	for st in [["normal", Color("7a1d14")], ["hover", Color("8c2419")], ["pressed", Color("5e150e")], ["disabled", Color(0.35, 0.3, 0.24, 0.5)]]:
+		var bs := StyleBoxFlat.new()
+		bs.bg_color = st[1]
+		bs.set_corner_radius_all(8)
+		_map_travel.add_theme_stylebox_override(st[0], bs)
+	_map_travel.add_theme_color_override("font_color", Color("f1e2bc"))
 	_map_travel.pressed.connect(func():
 		if _map_selected != "":
 			travel_requested.emit(_map_selected))
-	side.add_child(_map_travel)
+	v.add_child(_map_travel)
+	var close := Button.new()
+	close.text = "X"
+	close.position = Vector2(1208, 16)
+	close.size = Vector2(56, 52)
+	close.pressed.connect(func(): _map_panel.visible = false)
+	_map_panel.add_child(close)
 
 
+func _map_pos(id: String) -> Vector2:
+	var p: Array = DB.world_map[id]["pos"]
+	return (Vector2(40.0, 30.0) + Vector2(float(p[0]) * 900.0, float(p[1]) * 620.0)) * (MAP_SIZE.x / 990.0)
+
+
+## Ruta a lápiz rojo desde donde estás hasta la zona elegida.
 func _draw_map() -> void:
-	var sz := _map_area.size
-	_map_area.draw_rect(Rect2(Vector2.ZERO, sz), Color("2a3326"))
-	# río y caminos de adorno
-	var river := PackedVector2Array()
-	for i in 21:
-		var t := float(i) / 20.0
-		river.append(Vector2(t * sz.x, sz.y * (0.72 + 0.08 * sin(t * 7.0))))
-	_map_area.draw_polyline(river, Color("3b6c8f"), 10.0, true)
-	var home: Array = DB.world_map.get("refugio", {}).get("pos", [0.5, 0.5])
-	var hp := Vector2(float(home[0]), float(home[1])) * sz
-	for id in DB.world_map:
-		var p: Array = DB.world_map[id]["pos"]
-		_map_area.draw_dashed_line(hp, Vector2(float(p[0]), float(p[1])) * sz, Color(0.8, 0.75, 0.6, 0.25), 2.0, 8.0)
+	if _map_selected == "" or _map_selected == location or not DB.world_map.has(location):
+		return
+	var a := _map_pos(location)
+	var b := _map_pos(_map_selected)
+	var mid := (a + b) / 2.0 + (b - a).orthogonal().normalized() * 26.0
+	var pts := PackedVector2Array()
+	for k in 25:
+		var t := float(k) / 24.0
+		pts.append(a.lerp(mid, t).lerp(mid.lerp(b, t), t))
+	for k in range(0, pts.size() - 1, 2):
+		_map_route.draw_line(pts[k], pts[k + 1], Color("8c1c12"), 3.5, true)
 
 
 func _refresh_map() -> void:
 	if _map_area == null:
 		return
-	for c in _map_area.get_children():
+	for c in _map_marks.get_children():
 		c.queue_free()
-	_map_area.queue_redraw()
+	map_buttons = {}
+	_map_route.queue_redraw()
 	for id in DB.world_map:
 		var d: Dictionary = DB.world_map[id]
-		var p: Array = d["pos"]
-		var b := Button.new()
 		var playable := DB.maps.has(id)
-		b.text = ("● " if id == location else "") + str(d["name"])
-		b.add_theme_font_size_override("font_size", 15)
-		var col: Color = LEVEL_COLORS.get(str(d.get("level", "verde")), Color.WHITE)
-		var st := StyleBoxFlat.new()
-		st.bg_color = col.darkened(0.45) if playable else Color(0.2, 0.2, 0.2, 0.85)
-		st.border_color = col
-		st.set_border_width_all(3 if id == _map_selected else 1)
-		st.set_corner_radius_all(8)
-		st.set_content_margin_all(6)
-		b.add_theme_stylebox_override("normal", st)
-		b.add_theme_stylebox_override("hover", st)
-		b.add_theme_stylebox_override("pressed", st)
-		if not playable:
-			b.modulate = Color(1, 1, 1, 0.6)
-		var area := _map_area.custom_minimum_size
-		var est_w := b.text.length() * 8.5 + 24.0
-		var bp := Vector2(float(p[0]), float(p[1])) * area - Vector2(est_w / 2.0, 18)
-		b.position = Vector2(clampf(bp.x, 4.0, area.x - est_w - 4.0), clampf(bp.y, 4.0, area.y - 44.0))
+		var here: bool = id == location
+		var picked: bool = id == _map_selected
+		var col: Color = MAP_COLORS.get(str(d.get("level", "verde")), MAP_INK)
+		var r := 30.0 if picked else 25.0
+		var b := Button.new()
+		b.size = Vector2(r, r) * 2.0
+		b.position = _map_pos(id) - Vector2(r, r)
+		b.tooltip_text = str(d["name"])
+		var sb := StyleBoxFlat.new()
+		sb.bg_color = Color("ead9b0") if playable else Color("d2c39c")
+		sb.border_color = Color("7a1d14") if picked else col
+		sb.set_border_width_all(5 if picked else 3)
+		sb.set_corner_radius_all(int(r))
+		sb.shadow_color = Color(0, 0, 0, 0.4)
+		sb.shadow_size = 4
+		for st in ["normal", "hover", "pressed", "focus"]:
+			b.add_theme_stylebox_override(st, sb)
+		var ic := TextureRect.new()
+		ic.texture = _map_icon(id)
+		ic.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+		ic.size = Vector2(r, r) * 1.36
+		ic.position = Vector2(r, r) * 0.32
+		ic.modulate = Color(1, 1, 1, 1.0 if playable else 0.6)
+		ic.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		b.add_child(ic)
+		if not playable:   # zona aún sin explorar
+			var q := Label.new()
+			q.text = "?"
+			q.position = Vector2(r * 2.0 - 18.0, -8.0)
+			q.size = Vector2(22, 22)
+			q.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+			q.add_theme_font_size_override("font_size", 16)
+			q.add_theme_color_override("font_color", MAP_INK)
+			var qs := StyleBoxFlat.new()
+			qs.bg_color = Color("e9dcb8")
+			qs.border_color = MAP_INK
+			qs.set_border_width_all(2)
+			qs.set_corner_radius_all(11)
+			q.add_theme_stylebox_override("normal", qs)
+			q.mouse_filter = Control.MOUSE_FILTER_IGNORE
+			b.add_child(q)
+		var name_l := Label.new()
+		name_l.text = str(d["name"])
+		name_l.add_theme_font_size_override("font_size", 16 if picked else 14)
+		name_l.add_theme_color_override("font_color", MAP_INK)
+		name_l.add_theme_color_override("font_outline_color", Color("e6d3a6"))
+		name_l.add_theme_constant_override("outline_size", 6)
+		name_l.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		name_l.size = Vector2(220, 20)
+		name_l.position = Vector2(clampf(r - 110.0, -b.position.x + 4.0, MAP_SIZE.x - b.position.x - 224.0), r * 2.0 + 1.0)
+		name_l.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		b.add_child(name_l)
+		if here:   # «tú»: marca roja encima
+			var me := Label.new()
+			me.text = "Estás aquí"
+			me.add_theme_font_size_override("font_size", 15)
+			me.add_theme_color_override("font_color", Color("f1e2bc"))
+			var ms := StyleBoxFlat.new()
+			ms.bg_color = Color("8c1c12")
+			ms.set_corner_radius_all(8)
+			ms.content_margin_left = 8
+			ms.content_margin_right = 8
+			me.add_theme_stylebox_override("normal", ms)
+			me.position = Vector2(r - 42.0, -26.0)
+			me.mouse_filter = Control.MOUSE_FILTER_IGNORE
+			b.add_child(me)
 		var mid := str(id)
 		b.pressed.connect(func(): _select_map(mid))
-		_map_area.add_child(b)
+		_map_marks.add_child(b)
+		map_buttons[id] = b
 	if _map_selected == "":
 		_select_map(location)
 	else:
 		_update_map_info()
+
+
+var _map_icons: Dictionary = {}
+func _map_icon(id: String) -> Texture2D:
+	if not _map_icons.has(id):
+		var path := "res://assets/icons/map/%s.svg" % id
+		_map_icons[id] = load(path) if ResourceLoader.exists(path) else null
+	return _map_icons[id]
 
 
 func _select_map(id: String) -> void:
@@ -1113,12 +1338,15 @@ func _select_map(id: String) -> void:
 func _update_map_info() -> void:
 	var d: Dictionary = DB.world_map.get(_map_selected, {})
 	var lvl := str(d.get("level", ""))
-	var txt := "%s\n%s\n\n%s" % [d.get("name", ""), LEVEL_NAMES.get(lvl, ""), d.get("desc", "")]
+	_map_name.text = str(d.get("name", ""))
+	_map_level.text = str(LEVEL_NAMES.get(lvl, ""))
+	_map_level.add_theme_color_override("font_color", MAP_COLORS.get(lvl, MAP_INK))
+	var txt := str(d.get("desc", ""))
 	var can := false
 	if _map_selected == location:
 		txt += "\n\nEstás aquí."
 	elif not DB.maps.has(_map_selected):
-		txt += "\n\nPróximamente."
+		txt += "\n\nAún no sabes llegar: te falta un trozo del mapa."
 	else:
 		var cost := DB.travel_cost(location, _map_selected)
 		txt += "\n\nViaje: comida -%d, agua -%d" % [int(cost["food"]), int(cost["water"])]

@@ -81,6 +81,7 @@ func interact(by: Node3D) -> void:
 	aware = true
 	_lost = 0.0
 	_show_damage(dmg, sneak)
+	SFX.play("golpe")
 	_flash()
 	_bar_time = 4.0
 	var tw := create_tween()
@@ -119,6 +120,8 @@ func _physics_process(delta: float) -> void:
 		heard = _player.noise_radius()
 	if not aware and dist < INF and ((dist < see and _in_front(to_player, dist)) or dist < heard):
 		aware = true
+		if behavior() == "aggressive":
+			SFX.play("grunido", -8.0, 0.2)
 	if aware:
 		if dist > sight * float(DB.bal("lose_interest", 1.7)) and provoked <= 0.0:
 			_lost += delta

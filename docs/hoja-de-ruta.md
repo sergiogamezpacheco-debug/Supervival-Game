@@ -28,7 +28,8 @@
 | Reparar herramientas (banco) y ropa (costura); barra de vida, números de daño y destello al golpear | ✅ |
 | Diseños: mapa antiguo, HUD y tienda · Documentos: zonas y tienda | ✅ |
 | HUD con iconos: barras con porcentaje, botones redondos y acción con borde de estado | ✅ |
-| 461 tests y APK automático | ✅ |
+| Mapa del Valle en papel antiguo dentro del juego, esquivar, sonido (efectos, ambiente, música) y ajustes | ✅ |
+| 512 tests y APK automático | ✅ |
 
 ---
 
@@ -60,7 +61,7 @@ Objetivo: que la **primera hora** enganche.
 - ✅ Superviviente propio (sin fantasma), creación de personaje, ropa y gimnasio. Pendiente: modelos 3D buenos de árboles, rocas e infectado.
 - ✅ **Día y noche** (de noche hay más infectados) y lluvia.
 - ✅ **Sigilo y ruido**: agachado haces golpes críticos y correr atrae a los infectados.
-- Combate con más sensación: ✅ golpe, retroceso y barra de vida del enemigo; pendiente esquivar.
+- Combate con más sensación: ✅ golpe, retroceso y barra de vida del enemigo; ✅ esquivar.
 - ✅ **Reparar** herramientas y armas en el banco de trabajo (y ropa en la costura).
 - Sonido y música (efectos libres y una pista por zona).
 - Ajustes: volumen, calidad gráfica, vibración e idioma (es/en).

@@ -27,6 +27,8 @@
   `physics_frame` antes de comprobar un toque: si no, el evento aún no se ha procesado.
 - Herramientas (`type: tool`) no se equipan: se usan desde el inventario (`GS.best_tool`); en la
   mano solo van armas. Iconos de interfaz en `assets/icons/ui/` (`DB.ui_icon`).
+- Sonido: autoload `SFX` (`SFX.play("golpe")`, ajustes en `SFX.settings`); WAV en `assets/audio/`.
+  En tests, `world._process` copia el joystick a `player.move_input`: usar `process_frame` o fijarlo a mano.
 - Mapas en `data/maps.json`; criaturas genéricas en `scripts/world/creature.gd` (aggressive/neutral/passive).
 - Construcción: `scripts/world/base.gd` (cuadrícula 2 m; claves "i,j" casillas, "i,j,d" bordes).
 - Hoja de ruta y estado: `README.md`.

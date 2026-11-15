@@ -49,5 +49,9 @@
   "rain_sight": 0.75,
   "sneak_mult": 3.0,
   "lose_interest": 1.7,
-  "repair_fraction": 0.4
+  "repair_fraction": 0.4,
+  "dodge_cost": 22,
+  "dodge_time": 0.32,
+  "dodge_speed": 3.2,
+  "dodge_cooldown": 0.9
 }

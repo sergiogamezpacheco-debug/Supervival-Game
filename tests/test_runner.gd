@@ -19,6 +19,7 @@ func check(cond: bool, what: String) -> void:
 func _ready() -> void:
 	GS.save_path = "user://test_save.json"
 	GS.testing = true
+	SFX.settings_path = "user://test_settings.json"
 	GS.forced_hour = 12.0
 	GS.forced_rain = 0
 	DirAccess.remove_absolute(ProjectSettings.globalize_path(GS.save_path))
@@ -46,6 +47,8 @@ func _ready() -> void:
 	await test_inventory_screen()
 	print("== Día, noche, sigilo y reparar")
 	await test_night_stealth()
+	print("== Esquivar, sonido y ajustes")
+	await test_dodge_audio()
 	print("== Creación de personaje")
 	await test_creator()
 	print("\nResultado: %d OK, %d fallos" % [passed, failures])
@@ -463,6 +466,22 @@ func test_travel() -> void:
 	check(world.travel_to("marisma") != "", "no se puede ir a zonas que aún no existen")
 	var z: Node3D = get_tree().get_nodes_in_group("enemy")[0]
 	z.global_position = world.player.global_position + Vector3(3, 0, 0)
+	# Mapa antiguo
+	var hud: CanvasLayer = world.hud
+	hud.map_btn.pressed.emit()
+	await _frames(2)
+	check(hud._map_panel.visible and hud.map_buttons.size() == DB.world_map.size(), "el mapa muestra un marcador por zona (%d)" % hud.map_buttons.size())
+	check(hud._map_area.texture != null, "el mapa usa el papel antiguo")
+	for id in DB.world_map:
+		check(hud._map_icon(id) != null, "icono de mapa para %s" % id)
+	check(hud._map_selected == "refugio" and hud._map_travel.disabled, "empieza marcando dónde estás")
+	hud.map_buttons["bosque"].pressed.emit()
+	await _frames(2)
+	check(hud._map_selected == "bosque" and not hud._map_travel.disabled and hud._map_name.text.contains("Bosque"), "tocar una zona abierta permite viajar")
+	hud.map_buttons["central"].pressed.emit()
+	await _frames(2)
+	check(hud._map_travel.disabled, "a una zona sin explorar no se puede viajar")
+	hud.close_panels()
 	check(world.travel_to("bosque") != "", "no se puede viajar con enemigos cerca")
 	_creatures_away()
 	var cost := DB.travel_cost("refugio", "bosque")
@@ -793,6 +812,8 @@ func test_inventory_screen() -> void:
 	await _frames(3)
 	var inv: Control = hud._inv_panel
 	check(inv.visible and inv.tiles.size() == 32, "el botón de la mochila abre el inventario con 32 casillas")
+	for k in 3:
+		await get_tree().process_frame
 	check(not hud.joystick.visible, "con el inventario abierto se oculta el joystick")
 	var locked := 0
 	for t in inv.tiles:
@@ -1023,6 +1044,77 @@ func test_action_hud(world: Node3D, player: Node3D, tree: Node3D) -> void:
 	GS.hand = keep_hand
 	GS.inventory_changed.emit()
 	await _frames(2)
+
+
+func test_dodge_audio() -> void:
+	DirAccess.remove_absolute(ProjectSettings.globalize_path(GS.save_path))
+	GS.new_game()
+	var world := await _new_world()
+	var player: Node3D = world.player
+	var hud: CanvasLayer = world.hud
+	for c in get_tree().get_nodes_in_group("creature"):
+		c.process_mode = Node.PROCESS_MODE_DISABLED
+	# Esquivar
+	player.global_position = Vector3(-6, 0, 13)
+	await _frames(3)
+	var st0 := GS.stamina
+	var x0: float = player.global_position.x
+	hud.joystick.value = Vector2(1, 0)
+	player.move_input = Vector2(1, 0)
+	check(player.dodge(), "esquivar con energía")
+	check(GS.stamina < st0 and GS.invulnerable > 0.0, "esquivar gasta energía y te hace intocable un instante")
+	var hp0 := GS.health
+	GS.hit(30.0)
+	check(is_equal_approx(GS.health, hp0), "durante la esquiva no recibes golpes")
+	check(not player.dodge(), "no se puede encadenar otra esquiva al momento")
+	await _frames(30)
+	hud.joystick.value = Vector2.ZERO
+	check(player.global_position.x - x0 > 3.0, "la esquiva te desplaza rápido (%.1f m)" % (player.global_position.x - x0))
+	check(GS.invulnerable <= 0.0, "tras la esquiva vuelves a ser vulnerable")
+	GS.hit(10.0)
+	check(GS.health < hp0, "y los golpes vuelven a doler")
+	await _frames(40)
+	GS.stamina = 5.0
+	check(not player.dodge(), "sin energía no se esquiva")
+	check(hud.dodge_button.icon == DB.ui_icon("esquivar"), "hay botón de esquivar con icono")
+	# Sonido
+	for id in ["golpe", "talar", "picar", "recoger", "dano", "romper", "esquivar", "clic", "fabricar", "error", "comer", "beber", "paso", "grunido", "muerte", "viento", "grillos", "lluvia", "musica"]:
+		check(SFX._stream(id) != null, "existe el sonido %s" % id)
+	check(SFX.played.has("esquivar") and SFX.played.has("dano"), "esquivar y recibir daño suenan")
+	SFX.played.clear()
+	for r in get_tree().get_nodes_in_group("resource"):
+		if r.kind == "pino":
+			r.interact(player)
+			break
+	check(SFX.played.has("talar"), "talar suena")
+	hud.settings_btn.pressed.emit()
+	await _frames(2)
+	check(SFX.played.has("clic") and hud._settings_panel.visible, "los botones hacen clic y se abren los ajustes")
+	# Ajustes
+	hud.settings_controls["music"].value = 0.0
+	hud.settings_controls["sfx"].value = 0.5
+	check(AudioServer.is_bus_mute(AudioServer.get_bus_index("Musica")), "música a 0 la silencia")
+	check(absf(AudioServer.get_bus_volume_db(AudioServer.get_bus_index("Efectos")) - linear_to_db(0.5)) < 0.1, "el volumen de efectos se aplica")
+	hud.settings_controls["vibration"].button_pressed = false
+	SFX.settings = {"music": 0.6, "sfx": 0.8, "vibration": true}
+	SFX.load_settings()
+	check(is_equal_approx(float(SFX.settings["sfx"]), 0.5) and SFX.settings["vibration"] == false, "los ajustes se guardan")
+	SFX.set_setting("music", 0.6)
+	SFX.set_setting("sfx", 0.8)
+	SFX.set_setting("vibration", true)
+	for i in GS.slots.size():
+		GS.slots[i] = null
+	GS.add_item("madera", 7)
+	GS.created = true
+	hud._newgame_btn.pressed.emit()
+	check(GS.count("madera") == 7 and hud._newgame_btn.text.begins_with("¿Seguro"), "partida nueva pide confirmación (%d, %s)" % [GS.count("madera"), hud._newgame_btn.text])
+	hud._newgame_btn.pressed.emit()
+	check(GS.count("madera") == 0 and not GS.created, "al confirmar se borra la partida")
+	world.queue_free()
+	await _frames(2)
+	DirAccess.remove_absolute(ProjectSettings.globalize_path(SFX.settings_path))
+	DirAccess.remove_absolute(ProjectSettings.globalize_path(GS.save_path))
+	GS.new_game()
 
 
 func test_creator() -> void:

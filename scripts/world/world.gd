@@ -66,6 +66,8 @@ func _ready() -> void:
 	hud.build_selected.connect(_on_build_selected)
 	hud.build_action.connect(_on_build_action)
 	hud.travel_requested.connect(travel_to)
+	hud.edit_look_requested.connect(open_creator)
+	hud.new_game_requested.connect(new_game)
 	hud.set_location(map_id)
 
 	player = PlayerScript.new()
@@ -111,6 +113,15 @@ func open_creator() -> void:
 		creator = null
 		save()
 		GS.message.emit("Bienvenido, %s" % GS.player_name))
+
+
+## Borra la partida y empieza de cero (ajustes).
+func new_game() -> void:
+	DirAccess.remove_absolute(ProjectSettings.globalize_path(GS.save_path))
+	GS.new_game()
+	get_tree().paused = false
+	if get_tree().current_scene == self:
+		get_tree().reload_current_scene()
 
 
 # ------------------------------------------------------------ construcción

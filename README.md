@@ -18,6 +18,8 @@ descarga `Supervival.apk` e instálalo (Android pedirá permitir "instalar apps 
 |---|---|
 | Joystick (mitad izquierda) | Moverse. A fondo: **correr** (gasta aguante y hace ruido) |
 | Botón de acción (icono) | Usa lo que toque: junto a un árbol o roca, el hacha o pico del inventario; si no, el arma equipada o el puño. El borde marca su estado (verde, amarillo <50 %, rojo <25 %) |
+| Botón de esquivar | Salto rápido hacia donde te mueves: no recibes golpes un instante, gasta energía |
+| Engranaje (arriba) | Ajustes: música, efectos, vibración, cambiar aspecto, partida nueva |
 | Botón de agachar (icono) | Lento y silencioso; por la espalda y sin que te vean, el golpe hace x3 |
 | Botón redondo (abajo derecha) | Acción contextual: Talar, Picar, Recoger, Atacar, Beber, Recuperar… Mantener para repetir |
 | Botón de mochila (anillo = carga) | **Inventario**: el superviviente con sus 7 huecos de equipo y las casillas (8 bolsillos + 8 por nivel de mochila); toca un objeto para usarlo, equiparlo, ponértelo o tirarlo |
@@ -62,6 +64,8 @@ Plan completo por fases (offline primero, online preparado): **[docs/hoja-de-rut
 - `tools/screens.tscn` — genera capturas de pantalla para revisar la interfaz sin móvil.
 - `tools/survivor_shots.tscn` — capturas de la creación de personaje, el inventario y el gimnasio.
 - `tools/night_shots.tscn` — capturas de atardecer, noche, lluvia, sigilo y reparar.
+- `assets/audio/` — sonidos sintetizados con `tools/sonidos/generar.py` (numpy).
+- `assets/ui/mapa_valle.png` — papel del mapa (sale del diseño MapaAntiguo).
 - `assets/icons/` — iconos SVG de objetos y huecos; se generan con `tools/iconos/generar.py`.
 
 ## Mapas

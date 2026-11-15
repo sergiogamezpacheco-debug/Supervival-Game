@@ -101,5 +101,24 @@ def mano():
     return outlined(hand, det)
 
 
-UI = {"vida": vida(), "comida": comida(), "agua": agua(), "energia": energia(), "fabricar": fabricar(),
+def ajustes():
+    import math
+    teeth = ""
+    for k in range(8):
+        a = k * math.pi / 4
+        pts = [(32 + math.cos(a + d) * r, 32 + math.sin(a + d) * r) for d, r in [(-0.2, 17), (-0.14, 26), (0.14, 26), (0.2, 17)]]
+        teeth += P(pts, "#aab3b8")
+    base = teeth + C(32, 32, 19, "#aab3b8")
+    det = teeth + C(32, 32, 19, "#aab3b8") + '<path d="M32 13 A19 19 0 0 0 13 32 L32 32 Z" fill="#cfd6da"></path>' + C(32, 32, 8, "#16110c")
+    return outlined(base, det)
+
+
+def esquivar():
+    c = "#d8dcc8"
+    body = C(40, 16, 6.5, c) + P([(30, 22), (40, 26), (34, 42), (24, 38)], c) + P([(24, 38), (34, 42), (44, 52), (40, 56), (26, 46)], c) + P([(24, 38), (28, 44), (14, 50), (12, 45)], c) + P([(36, 26), (40, 28), (50, 34), (48, 38), (36, 32)], c)
+    lines = L("M6 22 L20 22 M4 32 L16 32 M8 12 L18 12", c, 3.5)
+    return outlined(body, "", 4) + f'<g stroke="{OUT}">' + L("M6 22 L20 22 M4 32 L16 32 M8 12 L18 12", OUT, 7) + '</g>' + lines
+
+
+UI = {"ajustes": ajustes(), "esquivar": esquivar(), "vida": vida(), "comida": comida(), "agua": agua(), "energia": energia(), "fabricar": fabricar(),
       "construir": construir(), "mapa": mapa(), "agachar": agachar(), "de_pie": de_pie(), "puno": puno(), "mano": mano()}
