@@ -29,7 +29,8 @@
 | Diseños: mapa antiguo, HUD y tienda · Documentos: zonas y tienda | ✅ |
 | HUD con iconos: barras con porcentaje, botones redondos y acción con borde de estado | ✅ |
 | Mapa del Valle en papel antiguo dentro del juego, esquivar, sonido (efectos, ambiente, música) y ajustes | ✅ |
-| 512 tests y APK automático | ✅ |
+| Pinos y rocas facetados; 9 tipos de infectado con habilidades (docs/infectados.md), coloso como jefe | ✅ |
+| 571 tests y APK automático | ✅ |
 
 ---
 

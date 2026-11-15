@@ -33,6 +33,11 @@ x = t(0.18); save('recoger', lp(noise(len(x)), 0.6) * env(len(x), a=0.03, decay=
 x = t(0.35); save('dano', (np.sin(2 * np.pi * (190 - 220 * x) * x) + 0.5 * lp(noise(len(x)), 0.15)) * env(len(x), decay=10))
 x = t(0.5); save('romper', hp(noise(len(x)), 0.2) * env(len(x), decay=9) * (0.6 + 0.4 * np.sign(np.sin(2 * np.pi * 37 * x))))
 x = t(0.25); save('esquivar', lp(noise(len(x)), 0.3) * np.sin(np.pi * x / 0.25) ** 2, 0.5)
+# Infectados especiales
+x = t(1.3); save('grito', (np.sin(2 * np.pi * (620 + 160 * np.sin(2 * np.pi * 7 * x) + 260 * x) * x) * 0.6 + hp(noise(len(x)), 0.4) * 0.5) * np.minimum(x / 0.08, 1) * np.exp(-np.maximum(x - 0.9, 0) * 8), 0.85)
+x = t(0.7); save('reventar', lp(noise(len(x)), 0.2) * env(len(x), a=0.004, decay=7) + 0.7 * np.sin(2 * np.pi * (90 - 60 * x) * x) * env(len(x), decay=9) + 0.3 * lp(noise(len(x)), 0.05) * np.exp(-((x - 0.25) * 9) ** 2), 0.8)
+x = t(0.9); save('pisoton', lp(noise(len(x)), 0.06) * env(len(x), a=0.003, decay=5) + np.sin(2 * np.pi * (55 - 25 * x) * x) * env(len(x), decay=4.5), 0.95)
+x = t(0.4); save('lanzar', lp(noise(len(x)), 0.3) * np.sin(np.pi * x / 0.4) ** 2, 0.6)
 # Interfaz
 x = t(0.06); save('clic', np.sin(2 * np.pi * 900 * x) * env(len(x), decay=60), 0.4)
 x = t(0.5); save('fabricar', sum(np.sin(2 * np.pi * f * x) * env(len(x), decay=7) * (x > d) for f, d in [(523, 0), (659, 0.09), (784, 0.18)]), 0.5)

@@ -34,6 +34,7 @@ const CLOTH := {
 var look := {"sex": "m", "skin": 1, "hair": 1, "hair_color": 1, "eyes": 0, "eye_color": 0, "nose": 0, "mouth": 1}
 var physique := {"fuerza": 0.0, "resistencia": 0.0}
 var outfit := {"cabeza": "", "torso": "", "piernas": "", "pies": "", "manos": "", "espalda": ""}
+var tint: Dictionary = {}    # color propio de una prenda (infectados): {"camiseta": Color}
 var explode := 0.0           # separa las piezas (vista de despiece)
 
 var j: Dictionary = {}       # articulaciones
@@ -529,6 +530,10 @@ func _build_underwear(d: Dictionary) -> void:
 		_p(j["leg_" + ("l" if side < 0 else "r")], loft(grow(slice(_thigh(d), 0.04, -0.07), 1.08), 8, false), under)
 
 
+func _cloth(id: String) -> Color:
+	return tint.get(id, CLOTH.get(id, Color.GRAY))
+
+
 func _build_outfit(d: Dictionary) -> void:
 	var s: float = d["s"]
 	var ws: float = d["waist"]
@@ -538,7 +543,7 @@ func _build_outfit(d: Dictionary) -> void:
 	var spine: Node3D = j["spine"]
 	var t := str(outfit.get("torso", ""))
 	if t != "":
-		var c: Color = CLOTH.get(t, Color.GRAY)
+		var c: Color = _cloth(t)
 		var g := 1.06 if t == "camiseta" else 1.1
 		var shirt := grow(slice(_torso(d), 0.47 * s, -0.05), g, g * 1.04)
 		shirt.push_front([-0.06, 0.142 * ws * g, 0.097 * ws * g])
@@ -575,7 +580,7 @@ func _build_outfit(d: Dictionary) -> void:
 				_p(spine, box(Vector3(0.05, 0.04, 0.26)), c.darkened(0.08), Vector3(side * 0.085, 0.43 * s, -0.005))
 	var pz := str(outfit.get("piernas", ""))
 	if pz != "":
-		var c2: Color = CLOTH.get(pz, Color.GRAY)
+		var c2: Color = _cloth(pz)
 		_p(j["hips"], loft(grow(_pelvis(d), 1.06, 1.08), 9), c2)
 		_p(j["hips"], loft([[0.07, 0.14 * ws * 1.08, 0.095 * ws * 1.1], [0.05, 0.14 * ws * 1.08, 0.095 * ws * 1.1]], 9, false), Color("2e2a26"))
 		for side in [-1, 1]:
@@ -590,7 +595,7 @@ func _build_outfit(d: Dictionary) -> void:
 				_p(j["leg_" + tag], box(Vector3(0.02, 0.025, 0.084)), c2.darkened(0.25), Vector3(side * 0.088 * lg, -float(d["thigh"]) * 0.5 + 0.045, 0))
 	var pies := str(outfit.get("pies", ""))
 	if pies != "":
-		var c3: Color = CLOTH.get(pies, Color.GRAY)
+		var c3: Color = _cloth(pies)
 		for side in [-1, 1]:
 			var tag := "l" if side < 0 else "r"
 			_p(j["foot_" + tag], loft(grow(_foot(), 1.16, 1.2), 7), c3, Vector3(0, 0.004, 0), Vector3(-PI / 2.0, 0, 0))
@@ -604,7 +609,7 @@ func _build_outfit(d: Dictionary) -> void:
 				_p(j["knee_" + tag], loft([[-sh2 * 0.6, 0.053, 0.055], [-sh2 * 0.65, 0.053, 0.055]], 8, false), c3.darkened(0.25))
 	var cab := str(outfit.get("cabeza", ""))
 	if cab != "":
-		var c4: Color = CLOTH.get(cab, Color.GRAY)
+		var c4: Color = _cloth(cab)
 		var hr := grow(slice(_head_rings(), 0.2, 0.045), 1.12, 1.1)
 		if cab == "gorra":
 			_p(j["head"], loft(hr, 10), c4, Vector3(0, 0.012, 0))
@@ -616,7 +621,7 @@ func _build_outfit(d: Dictionary) -> void:
 	if _has("manos"):
 		for side in [-1, 1]:
 			var hh: Node3D = j["hand_" + ("l" if side < 0 else "r")]
-			_p(hh, loft([[0.005, 0.032, 0.022], [-0.035, 0.038, 0.02], [-0.07, 0.037, 0.018]], 6), CLOTH["guantes"], Vector3.ZERO, Vector3(0.15, 0, 0))
+			_p(hh, loft([[0.005, 0.032, 0.022], [-0.035, 0.038, 0.02], [-0.07, 0.037, 0.018]], 6), _cloth("guantes"), Vector3.ZERO, Vector3(0.15, 0, 0))
 	if _has("espalda"):
 		var c6: Color = CLOTH.get(str(outfit.get("espalda", "")), CLOTH["mochila"])
 		var back := 0.115 * ch + 0.07

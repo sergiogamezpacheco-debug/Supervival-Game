@@ -1182,6 +1182,117 @@ func test_infected() -> void:
 	await _frames(8)
 	check(r.aware and r._lunge_cd > 0.0 and r.velocity.length() > float(DB.creatures["corredora"]["speed"]) * 1.2, "la corredora embiste al acercarse (%.1f m/s)" % r.velocity.length())
 	r.queue_free()
+	# --- Gritona: llama a los infectados lejanos y no ataca
+	player.global_position = Vector3(0, 0, 10)
+	GS.health = 100.0
+	var g: Node3D = spawn.call("gritona", Vector3(8, 0, 10))
+	g._face(Vector3(-1, 0, 0))
+	var lejos: Node3D = spawn.call("infectado", Vector3(24, 0, 10))
+	lejos._face(Vector3(1, 0, 0))
+	await _frames(6)
+	check(g.aware and SFX.played.has("grito"), "la gritona te ve y grita")
+	check(lejos.aware and lejos._called > 0.0, "su grito llama a un infectado a 16 m que no te veía")
+	lejos.process_mode = Node.PROCESS_MODE_DISABLED
+	g.global_position = Vector3(3, 0, 10)
+	for k in 110:
+		await get_tree().physics_frame
+	check(g.global_position.distance_to(player.global_position) > 3.2, "si te acercas, la gritona se aleja")
+	check(is_equal_approx(GS.health, 100.0), "la gritona no hace daño")
+	for z in [g, lejos]:
+		z.queue_free()
+	# --- Acechador: invisible de noche y salto con daño doble
+	GS.forced_hour = 23.0
+	var a: Node3D = spawn.call("acechador", Vector3(14, 0, 10))
+	a.process_mode = Node.PROCESS_MODE_DISABLED
+	a.process_mode = Node.PROCESS_MODE_INHERIT
+	await _frames(3)
+	check(not a._visual.visible and a.visible, "de noche el acechador no se ve de lejos")
+	a.global_position = Vector3(4.5, 0, 10)
+	a.aware = true
+	a._face(Vector3(-1, 0, 0))
+	GS.health = 100.0
+	for k in 30:
+		await get_tree().physics_frame
+		if GS.health < 100.0:
+			break
+	check(a._visual.visible, "cerca sí se le ve")
+	check(absf(GS.health - (100.0 - 2.0 * float(DB.creatures["acechador"]["attack_damage"]))) < 0.6, "su salto hace daño doble (vida %d)" % GS.health)
+	a.queue_free()
+	GS.forced_hour = 12.0
+	# --- Purulento: revienta en una nube de veneno
+	GS.poison = 0.0
+	var pu: Node3D = spawn.call("purulento", Vector3(1.5, 0, 10))
+	pu.process_mode = Node.PROCESS_MODE_DISABLED
+	pu.hp = 1.0
+	pu.interact(player)
+	await _frames(2)
+	check(get_tree().get_nodes_in_group("hazard").size() == 1 and GS.poison > 0.0, "el purulento revienta y te envenena si estás cerca")
+	for hz in get_tree().get_nodes_in_group("hazard"):
+		hz.queue_free()
+	pu.queue_free()
+	GS.poison = 0.0
+	# --- Blindado: de frente casi no le haces nada, por la espalda sí
+	var b: Node3D = spawn.call("blindado", Vector3(1.5, 0, 10))
+	b.process_mode = Node.PROCESS_MODE_DISABLED
+	b.aware = true
+	b._face(Vector3(-1, 0, 0))
+	var bh: float = b.hp
+	b.interact(player)
+	check(is_equal_approx(bh - b.hp, GS.hand_damage() * 0.3), "de frente el blindado recibe un 70 % menos")
+	b._face(Vector3(1, 0, 0))
+	bh = b.hp
+	b.interact(player)
+	check(is_equal_approx(bh - b.hp, GS.hand_damage()), "por la espalda recibe el daño completo")
+	b.queue_free()
+	# --- Coloso: pisotón con aviso y rocas a distancia
+	await _frames(2)
+	GS.health = 100.0
+	var co: Node3D = spawn.call("coloso", Vector3(3.0, 0, 10))
+	co.aware = true
+	co._face(Vector3(-1, 0, 0))
+	await _frames(3)
+	var rings := 0
+	for hz in get_tree().get_nodes_in_group("hazard"):
+		if hz.mode == "stomp":
+			rings += 1
+	check(rings == 1, "el pisotón avisa con un círculo rojo")
+	GS.invulnerable = 0.0
+	for k in 70:
+		await get_tree().physics_frame
+		if GS.health < 100.0:
+			break
+	check(GS.health <= 75.5 and SFX.played.has("pisoton"), "el pisotón hace daño en área (vida %d)" % GS.health)
+	co._special_cd = 99.0
+	co._attack_cd = 99.0
+	co.global_position = Vector3(12, 0, 10)
+	co._throw_cd = 0.0
+	GS.health = 100.0
+	var thrown := false
+	for k in 40:
+		await get_tree().physics_frame
+		for hz in get_tree().get_nodes_in_group("hazard"):
+			if hz.mode == "rock":
+				thrown = true
+		if thrown:
+			break
+	check(thrown, "a distancia lanza rocas")
+	for k in 90:
+		await get_tree().physics_frame
+		if GS.health < 100.0:
+			break
+	check(is_equal_approx(GS.health, 100.0 - float(DB.creatures["coloso"]["throw_damage"])), "si no te apartas, la roca te da (vida %d)" % GS.health)
+	check(co._bar != null and co._bar.visible, "el jefe muestra su barra de vida")
+	co.queue_free()
+	for hz in get_tree().get_nodes_in_group("hazard"):
+		hz.queue_free()
+	# Reparto por zonas
+	var where := {}
+	for m in DB.maps:
+		for gr in DB.maps[m].get("creatures", []):
+			where[str(gr["type"])] = true
+	for kind in ["gritona", "acechador", "purulento", "blindado", "coloso"]:
+		check(where.has(kind) and Infected.has(kind), "%s aparece en alguna zona y tiene modelo" % kind)
+	check(not DB.creatures.has("escupidor"), "no hay escupidor")
 	# Árboles y rocas nuevos
 	var meshes := 0
 	for res in get_tree().get_nodes_in_group("resource"):

@@ -36,6 +36,34 @@ func _ready() -> void:
 	p.global_position = Vector3(2, 0, 3)
 	world.camera.global_position = p.global_position + Vector3(0, 13.0, 8.5)
 
+	if out.ends_with("_cantera"):
+		GS.food = 100.0
+		GS.water = 100.0
+		world.travel_to("cantera")
+		await _wait(10)
+		p = world.player
+		for c in get_tree().get_nodes_in_group("creature"):
+			c.process_mode = Node.PROCESS_MODE_DISABLED
+			c.visible = false
+		p.global_position = Vector3(0, 0, 6)
+		var k2 := 0
+		for d in [["coloso", Vector3(-3.8, 0, 1.2)], ["blindado", Vector3(2.4, 0, 2.6)], ["gritona", Vector3(5.0, 0, 4.0)], ["purulento", Vector3(-4.8, 0, 6.5)], ["acechador", Vector3(3.6, 0, 7.4)]]:
+			var z: Node3D = world.CreatureScript.new()
+			z.setup(d[0])
+			z.home = p.global_position + d[1] - Vector3(0, 0, 6)
+			z.position = z.home
+			world.add_child(z)
+			z.process_mode = Node.PROCESS_MODE_DISABLED
+			await _wait(1)
+			z._face(p.global_position - z.position)
+			Infected.pose(z._model, 0.9, 0.5, 0.0, 1.0 if d[0] == "gritona" else 0.0)
+			k2 += 1
+		world.camera.global_position = p.global_position + Vector3(0, 11.0, 7.5)
+		world.camera.look_at(p.global_position + Vector3(0, 0, -1.0), Vector3.UP)
+		await _wait(14)
+		await _shot("cantera_infectados")
+		get_tree().quit()
+		return
 	if out.ends_with("_bosque"):
 		GS.food = 100.0
 		GS.water = 100.0

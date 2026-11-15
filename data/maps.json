@@ -56,6 +56,15 @@
           1
         ],
         "min_dist": 32
+      },
+      {
+        "type": "purulento",
+        "groups": 1,
+        "size": [
+          1,
+          1
+        ],
+        "min_dist": 28
       }
     ],
     "spawn": [
@@ -175,13 +184,32 @@
           1
         ],
         "min_dist": 22
+      },
+      {
+        "type": "gritona",
+        "groups": 1,
+        "size": [
+          1,
+          1
+        ],
+        "min_dist": 24
+      },
+      {
+        "type": "acechador",
+        "groups": 2,
+        "size": [
+          1,
+          1
+        ],
+        "min_dist": 20
       }
     ],
     "night": {
       "types": [
         "infectado",
-        "infectado",
-        "corredora"
+        "acechador",
+        "corredora",
+        "acechador"
       ],
       "count": 4
     }
@@ -283,6 +311,42 @@
           1
         ],
         "min_dist": 18
+      },
+      {
+        "type": "blindado",
+        "groups": 2,
+        "size": [
+          1,
+          1
+        ],
+        "min_dist": 20
+      },
+      {
+        "type": "gritona",
+        "groups": 1,
+        "size": [
+          1,
+          1
+        ],
+        "min_dist": 22
+      },
+      {
+        "type": "purulento",
+        "groups": 1,
+        "size": [
+          1,
+          1
+        ],
+        "min_dist": 18
+      },
+      {
+        "type": "coloso",
+        "groups": 1,
+        "size": [
+          1,
+          1
+        ],
+        "min_dist": 40
       }
     ],
     "night": {

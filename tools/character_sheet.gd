@@ -82,14 +82,14 @@ func _shot(file: String, size: Vector2i, eye: Vector3, target: Vector3, fov := 3
 
 
 ## Infectado en su postura (usa los mismos modelos que el juego).
-func _zombie(kind: String, pos: Vector3, rot_y := 0.3, phase := 0.9, attack := 0.0) -> CharacterModel:
+func _zombie(kind: String, pos: Vector3, rot_y := 0.3, phase := 0.9, attack := 0.0, special := 0.0) -> CharacterModel:
 	var k: String = {"a": "infectado", "b": "acorazado", "c": "corredora"}.get(kind, kind)
 	var c := Infected.build(k)
 	c.position = pos
 	c.rotation.y = rot_y
 	stage.add_child(c)
 	await get_tree().process_frame
-	Infected.pose(c, phase, 0.7, attack)
+	Infected.pose(c, phase, 0.5, attack, special)
 	return c
 
 
@@ -105,15 +105,22 @@ func _protos() -> void:
 		g.material_override = CharacterModel.mat(Color("6f9a56"))
 		g.position.y = -0.01
 		stage.add_child(g)
-	var rows := [["escupidor", "gritona", "acechador"], ["purulento", "blindado", "coloso"]]
+	var rows := [["gritona", "acechador", "purulento"], ["blindado", "coloso"]]
 	for r in 2:
 		_clear()
 		ground.call()
-		for k in 3:
-			await _zombie(rows[r][k], Vector3(1.9 - k * 1.9, 0, 0), -0.4 + k * 0.1 if rows[r][k] != "acechador" else -1.1, 0.9, 0.5 if rows[r][k] == "escupidor" else 0.0)
+		for k in rows[r].size():
+			var kind: String = rows[r][k]
+			var x: float = (1.9 - k * 1.9) if r == 0 else (1.6 - k * 2.6)
+			await _zombie(kind, Vector3(x, 0, 0), -0.35 if kind != "acechador" else -0.9, 0.9, 0.0, 1.0 if kind == "gritona" else 0.0)
 		if r == 1:   # el superviviente junto al coloso, para la escala
-			_char({"sex": "m", "hair": 4}, {}, {"torso": "camiseta", "piernas": "pantalon_cargo", "pies": "botas"}, Vector3(-3.5, 0, 0.2), 0.4)
-		await _shot("proto_%d" % r, Vector2i(1400, 900), Vector3(-0.6 if r == 1 else 0.0, 1.5 if r == 1 else 1.2, -9.0 if r == 1 else -7.0), Vector3(-0.6 if r == 1 else 0.0, 1.25 if r == 1 else 0.9, 0), 30)
+			_char({"sex": "m", "hair": 4}, {}, {"torso": "camiseta", "piernas": "pantalon_cargo", "pies": "botas"}, Vector3(-2.6, 0, 0.3), 0.3)
+		await _shot("proto_%d" % r, Vector2i(1400, 900), Vector3(-0.2 if r == 1 else 0.0, 1.6 if r == 1 else 1.2, -8.2 if r == 1 else -6.6), Vector3(-0.2 if r == 1 else 0.0, 1.35 if r == 1 else 0.9, 0), 30)
+	# Detalle de cerca
+	for kind in ["gritona", "acechador", "purulento", "blindado"]:
+		_clear()
+		await _zombie(kind, Vector3.ZERO, -0.35 if kind != "acechador" else -0.9, 0.9, 0.0, 1.0 if kind == "gritona" else 0.0)
+		await _shot("det_" + kind, Vector2i(700, 900), Vector3(0, 1.1, -3.0), Vector3(0, 0.95 if kind != "acechador" else 0.6, 0), 30)
 
 
 ## Propuestas de modelos: pinos, rocas e infectados (A, B, C).
