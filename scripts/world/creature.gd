@@ -16,6 +16,12 @@ var _wander_target := Vector3.ZERO
 var _wander_timer := 0.0
 var _visual: Node3D
 var _player: Node3D
+var _model: CharacterModel = null
+var _walk_phase := 0.0
+var _walk_amount := 0.0
+var _attack_t := 0.0
+var _lunge := 0.0
+var _lunge_cd := 0.0
 var aware := false                # te ha visto u oído: te persigue
 var _lost := 0.0                  # segundos sin tenerte a tiro (deja de perseguir)
 var _bar: Node3D                  # barra de vida sobre la cabeza
@@ -46,7 +52,12 @@ func _ready() -> void:
 	shape.shape = cap
 	shape.position.y = cap.height / 2.0
 	add_child(shape)
-	_visual = Builder.creature_mesh(kind)
+	if Infected.has(kind):   # infectados: el mismo cuerpo que el superviviente
+		_visual = Node3D.new()
+		_model = Infected.build(kind)
+		_visual.add_child(_model)
+	else:
+		_visual = Builder.creature_mesh(kind)
 	add_child(_visual)
 	_wander_target = home
 
@@ -74,7 +85,7 @@ func interact(by: Node3D) -> void:
 	# Golpe por sorpresa: agachado y sin que te haya visto
 	var sneak: bool = by != null and by.get("crouching") == true and not aware and provoked <= 0.0
 	if sneak:
-		dmg *= float(DB.bal("sneak_mult", 3.0))
+		dmg *= stat("sneak_mult", float(DB.bal("sneak_mult", 3.0)))
 	hp -= dmg
 	GS.wear_hand()
 	provoked = 15.0
@@ -122,6 +133,7 @@ func _physics_process(delta: float) -> void:
 		aware = true
 		if behavior() == "aggressive":
 			SFX.play("grunido", -8.0, 0.2)
+			_alert_others()
 	if aware:
 		if dist > sight * float(DB.bal("lose_interest", 1.7)) and provoked <= 0.0:
 			_lost += delta
@@ -133,6 +145,14 @@ func _physics_process(delta: float) -> void:
 
 	var hostile := behavior() == "aggressive" or (behavior() == "neutral" and provoked > 0.0)
 	if hostile and (aware or provoked > 0.0) and dist < sight * float(DB.bal("lose_interest", 1.7)):
+		# Embestida (corredora): acelón corto al acercarse
+		_lunge_cd = maxf(_lunge_cd - delta, 0.0)
+		_lunge = maxf(_lunge - delta, 0.0)
+		if data.has("lunge_speed") and _lunge_cd <= 0.0 and dist < 6.0 and dist > 2.5:
+			_lunge = 0.6
+			_lunge_cd = stat("lunge_cd", 4.0)
+		if _lunge > 0.0:
+			speed *= stat("lunge_speed", 1.5)
 		if dist > stat("attack_range", 1.4):
 			move = to_player.normalized() * speed
 		elif _attack_cd <= 0.0:
@@ -154,15 +174,29 @@ func _physics_process(delta: float) -> void:
 	velocity = move
 	move_and_slide()
 	position.y = 0.0
+	if _model:
+		var sp := move.length()
+		_walk_amount = move_toward(_walk_amount, 1.0 if sp > 0.2 else 0.0, delta * 5.0)
+		_walk_phase += delta * (3.0 + sp * 2.2)
+		_attack_t = maxf(_attack_t - delta / 0.4, 0.0)
+		if dist < 32.0 or _attack_t > 0.0:   # lejos de la cámara no hace falta animar
+			Infected.pose(_model, _walk_phase, _walk_amount, 1.0 - _attack_t if _attack_t > 0.0 else 0.0)
 
 
 func _attack() -> void:
 	_attack_cd = stat("attack_interval", 1.2)
+	_attack_t = 1.0
+	if GS.invulnerable > 0.0:    # lo has esquivado
+		return
 	GS.hit(stat("attack_damage", 8))
 	if data.has("poison"):
 		GS.poison_for(stat("poison", 5.0))
 	if _player and _player.has_method("hurt_flash"):
 		_player.hurt_flash()
+	if data.has("knockback") and _player and _player.has_method("push"):
+		var away: Vector3 = _player.global_position - global_position
+		away.y = 0.0
+		_player.push(away.normalized() * stat("knockback", 6.0))
 	var tw := create_tween()
 	tw.tween_property(_visual, "scale", Vector3(1.1, 1.15, 1.1), 0.08)
 	tw.tween_property(_visual, "scale", Vector3.ONE, 0.15)
@@ -253,7 +287,20 @@ func _collect_meshes(n: Node) -> void:
 
 
 func _top() -> float:
+	if Infected.has(kind):
+		return Infected.top(kind)
 	return 0.7 if behavior() == "passive" else 1.95
+
+
+## Da la alarma: los infectados cercanos que la oigan también te buscan.
+func _alert_others() -> void:
+	var r := stat("alert_radius", 0.0)
+	if r <= 0.0:
+		return
+	for c in get_tree().get_nodes_in_group("enemy"):
+		if c != self and c.visible and not c.aware and c.global_position.distance_to(global_position) <= r:
+			c.aware = true
+			c._lost = 0.0
 
 
 ## Barra de vida sobre la cabeza: aparece unos segundos al recibir un golpe.

@@ -60,13 +60,27 @@ static func resource_mesh(kind: String) -> Node3D:
 	var root := Node3D.new()
 	match kind:
 		"pino":
-			root.add_child(part(cyl(0.18, 0.25, 1.2), Color("6b4423"), Vector3(0, 0.6, 0)))
-			root.add_child(part(cyl(0.0, 1.1, 1.6), Color("2f6b34"), Vector3(0, 1.8, 0)))
-			root.add_child(part(cyl(0.0, 0.8, 1.3), Color("3a7d3f"), Vector3(0, 2.6, 0)))
+			# Mezcla: en el bosque mandan el pino por capas y el abeto; fuera hay más pino de monte
+			var mix := "aaccb" if GS.current_map == "bosque" else "abbc"
+			var t: Node3D
+			match mix[randi() % mix.length()]:
+				"a": t = Nature.pine_a(randi() % 6 + 1)
+				"b": t = Nature.pine_b(randi() % 6 + 1)
+				_: t = Nature.pine_c(randi() % 6 + 1)
+			t.scale = Vector3.ONE * randf_range(0.85, 1.2)
+			t.rotation.y = randf() * TAU
+			root.add_child(t)
 		"roca":
-			var r := part(sphere(0.8, 1.0), Color("7d7f82"), Vector3(0, 0.35, 0))
-			r.scale = Vector3(1.0, 0.8, 0.85)
-			root.add_child(r)
+			# En la cantera, losas; en el resto, peñascos y rocas con musgo
+			var mixr := "bbba" if GS.current_map == "cantera" else "aacb"
+			var rk: Node3D
+			match mixr[randi() % mixr.length()]:
+				"a": rk = Nature.rock_a(randi() % 6 + 1)
+				"b": rk = Nature.rock_b(randi() % 6 + 1)
+				_: rk = Nature.rock_c(randi() % 6 + 1)
+			rk.scale = Vector3.ONE * randf_range(0.85, 1.1)
+			rk.rotation.y = randf() * TAU
+			root.add_child(rk)
 		"veta_hierro":
 			var v := part(sphere(0.8, 1.1), Color("5f5650"), Vector3(0, 0.4, 0))
 			v.scale = Vector3(1.0, 0.85, 0.9)

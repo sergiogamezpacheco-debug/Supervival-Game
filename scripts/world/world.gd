@@ -373,11 +373,14 @@ func _update_night() -> void:
 
 func spawn_night() -> void:
 	var cfg: Dictionary = map.get("night", {})
-	var kind := str(cfg.get("type", "infectado"))
+	var kinds: Array = cfg.get("types", [cfg.get("type", "infectado")])
 	var count := int(cfg.get("count", DB.bal("night_extra", 3)))
-	if count <= 0 or not DB.creatures.has(kind):
+	if count <= 0:
 		return
 	for i in count:
+		var kind := str(kinds[i % kinds.size()])
+		if not DB.creatures.has(kind):
+			continue
 		var ang := rng.randf_range(0.0, TAU)
 		var dist := rng.randf_range(14.0, 22.0)
 		var pos := player.global_position + Vector3(cos(ang), 0.0, sin(ang)) * dist

@@ -22,6 +22,7 @@ var dodging := 0.0                # segundos que quedan de esquiva
 var _dodge_dir := Vector3.ZERO
 var _dodge_cd := 0.0
 var _step_phase := 0.0
+var _push := Vector3.ZERO          # empujón recibido (golpe del hinchado)
 var _noise_pulse := 0.0           # ruido puntual (golpear, talar) que se apaga en un segundo
 var training := 0.0               # segundos de entrenamiento en el gimnasio (animación)
 var _exhausted := false
@@ -69,6 +70,8 @@ func _physics_process(delta: float) -> void:
 	if crouching:
 		speed *= float(DB.bal("crouch_speed", 0.55))
 	velocity = Vector3(dir.x, 0.0, dir.y) * speed
+	velocity += _push
+	_push = _push.move_toward(Vector3.ZERO, delta * 22.0)
 	_dodge_cd = maxf(_dodge_cd - delta, 0.0)
 	if dodging > 0.0:
 		dodging = maxf(dodging - delta, 0.0)
@@ -154,6 +157,11 @@ func dodge() -> bool:
 	make_noise(float(DB.bal("noise_walk", 7.0)))
 	SFX.play("esquivar")
 	return true
+
+
+## Empujón (m/s) que se apaga en un instante.
+func push(v: Vector3) -> void:
+	_push = v
 
 
 # ------------------------------------------------------------ sigilo

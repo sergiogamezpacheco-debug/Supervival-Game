@@ -49,6 +49,8 @@ func _ready() -> void:
 	await test_night_stealth()
 	print("== Esquivar, sonido y ajustes")
 	await test_dodge_audio()
+	print("== Infectados: tipos y habilidades")
+	await test_infected()
 	print("== Creación de personaje")
 	await test_creator()
 	print("\nResultado: %d OK, %d fallos" % [passed, failures])
@@ -1113,6 +1115,82 @@ func test_dodge_audio() -> void:
 	world.queue_free()
 	await _frames(2)
 	DirAccess.remove_absolute(ProjectSettings.globalize_path(SFX.settings_path))
+	DirAccess.remove_absolute(ProjectSettings.globalize_path(GS.save_path))
+	GS.new_game()
+
+
+func test_infected() -> void:
+	DirAccess.remove_absolute(ProjectSettings.globalize_path(GS.save_path))
+	GS.new_game()
+	var world := await _new_world()
+	var player: Node3D = world.player
+	for c in get_tree().get_nodes_in_group("creature"):
+		c.process_mode = Node.PROCESS_MODE_DISABLED
+		c.global_position = Vector3(60, 0, 60)
+	var spawn := func(kind: String, pos: Vector3) -> Node3D:
+		var z: Node3D = world.CreatureScript.new()
+		z.setup(kind)
+		z.home = pos
+		z.position = pos
+		world.add_child(z)
+		return z
+	for kind in ["infectado", "corredora", "acorazado", "minero"]:
+		check(Infected.has(kind) and DB.creatures[kind].has("ability"), "%s tiene modelo y habilidad descrita" % kind)
+	check(float(DB.creatures["acorazado"]["health"]) > 3.0 * float(DB.creatures["infectado"]["health"]) and float(DB.creatures["corredora"]["health"]) < float(DB.creatures["infectado"]["health"]), "el hinchado aguanta mucho y la corredora poco")
+	check(float(DB.creatures["corredora"]["speed"]) > float(DB.bal("player_speed", 4.5)) and float(DB.creatures["corredora"]["speed"]) < float(DB.bal("player_speed", 4.5)) * float(DB.bal("run_mult", 1.5)), "la corredora te alcanza andando pero no corriendo")
+	# Modelo con el cuerpo del superviviente, animado
+	player.global_position = Vector3(0, 0, 10)
+	var z1: Node3D = spawn.call("infectado", Vector3(3, 0, 10))
+	var z2: Node3D = spawn.call("infectado", Vector3(6, 0, 13))
+	var far: Node3D = spawn.call("infectado", Vector3(3, 0, 30))
+	z2._face(Vector3(1, 0, 0))    # de espaldas: no te ve
+	z1._face(Vector3(-1, 0, 0))
+	await _frames(6)
+	check(z1._model != null and not z1._model.j.is_empty() and z1._model.j["spine"].has_meta("dressed"), "el infectado usa el cuerpo facetado con sus manchas")
+	check(absf(z1._model.j["arm_l"].rotation.x) > 1.0, "anda con los brazos al frente")
+	check(z1.aware and z2.aware and not far.aware, "da la alarma a los que tiene cerca, no a los lejanos")
+	for z in [z1, z2, far]:
+		z.queue_free()
+	# Hinchado: empujón y sorpresa reducida
+	await _frames(2)
+	player.global_position = Vector3(0, 0, 10)
+	GS.health = 100.0
+	var h: Node3D = spawn.call("acorazado", Vector3(1.2, 0, 10))
+	h.process_mode = Node.PROCESS_MODE_DISABLED
+	world.hud.toggle_crouch()
+	var hp0: float = h.hp
+	h.interact(player)
+	check(is_equal_approx(hp0 - h.hp, GS.hand_damage() * 1.5), "al hinchado el golpe por sorpresa solo le hace x1,5")
+	world.hud.toggle_crouch()
+	h._player = player
+	h._attack()
+	check(GS.health <= 80.5, "el hinchado pega fuerte (vida %d)" % GS.health)
+	var x0: float = player.global_position.x
+	await _frames(12)
+	check(player.global_position.x < x0 - 0.8, "y te lanza hacia atrás (%.1f m)" % (x0 - player.global_position.x))
+	# Esquivar su golpe
+	GS.health = 100.0
+	GS.invulnerable = 0.3
+	h._attack()
+	check(is_equal_approx(GS.health, 100.0), "si esquivas, el golpe no te alcanza")
+	GS.invulnerable = 0.0
+	h.queue_free()
+	# Corredora: embiste
+	player.global_position = Vector3(0, 0, 10)
+	var r: Node3D = spawn.call("corredora", Vector3(5, 0, 10))
+	r._face(Vector3(-1, 0, 0))
+	await _frames(8)
+	check(r.aware and r._lunge_cd > 0.0 and r.velocity.length() > float(DB.creatures["corredora"]["speed"]) * 1.2, "la corredora embiste al acercarse (%.1f m/s)" % r.velocity.length())
+	r.queue_free()
+	# Árboles y rocas nuevos
+	var meshes := 0
+	for res in get_tree().get_nodes_in_group("resource"):
+		if res.kind == "pino" or res.kind == "roca":
+			meshes += _count_meshes(res._visual)
+			break
+	check(meshes >= 3, "los pinos y rocas usan los modelos facetados")
+	world.queue_free()
+	await _frames(2)
 	DirAccess.remove_absolute(ProjectSettings.globalize_path(GS.save_path))
 	GS.new_game()
 

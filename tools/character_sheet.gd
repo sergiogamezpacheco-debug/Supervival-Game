@@ -38,7 +38,9 @@ func _ready() -> void:
 	vp.add_child(cam)
 	stage = Node3D.new()
 	vp.add_child(stage)
-	if OS.get_cmdline_user_args().size() > 1 and OS.get_cmdline_user_args()[1] == "props":
+	if OS.get_cmdline_user_args().size() > 1 and OS.get_cmdline_user_args()[1] == "protos":
+		await _protos()
+	elif OS.get_cmdline_user_args().size() > 1 and OS.get_cmdline_user_args()[1] == "props":
 		await _props()
 	elif OS.get_cmdline_user_args().size() > 1 and OS.get_cmdline_user_args()[1] == "inv":
 		await _inventory()
@@ -79,59 +81,39 @@ func _shot(file: String, size: Vector2i, eye: Vector3, target: Vector3, fov := 3
 	print("render ", file)
 
 
-## Infectado de propuesta: piel, ropa, físico y postura.
-func _zombie(kind: String, pos: Vector3, rot_y := 0.3) -> CharacterModel:
-	var c: CharacterModel
-	match kind:
-		"a":   # Infectado común: encorvado, brazos al frente, ropa rota
-			c = _char({"sex": "m", "hair": 1, "hair_color": 0, "eyes": 4, "mouth": 4, "skin_color": Color("8a9a78")}, {"fuerza": 0.15}, {"torso": "camiseta", "piernas": "pantalon_tela"}, pos, rot_y)
-		"b":   # Hinchado: enorme, sin camisa, lento
-			c = _char({"sex": "m", "hair": 0, "eyes": 2, "mouth": 2, "skin_color": Color("8b97a0")}, {"fuerza": 1.0}, {"piernas": "pantalon_cargo"}, pos, rot_y)
-			c.scale = Vector3(1.18, 1.1, 1.25)
-		_:     # Corredora: delgada, inclinada, rápida
-			c = _char({"sex": "f", "hair": 2, "hair_color": 0, "eyes": 3, "mouth": 3, "skin_color": Color("a9ad9a")}, {}, {"torso": "camiseta", "piernas": "pantalon_tela", "pies": "zapatillas"}, pos, rot_y)
+## Infectado en su postura (usa los mismos modelos que el juego).
+func _zombie(kind: String, pos: Vector3, rot_y := 0.3, phase := 0.9, attack := 0.0) -> CharacterModel:
+	var k: String = {"a": "infectado", "b": "acorazado", "c": "corredora"}.get(kind, kind)
+	var c := Infected.build(k)
+	c.position = pos
+	c.rotation.y = rot_y
+	stage.add_child(c)
 	await get_tree().process_frame
-	c.animate_walk(0.9, 0.7)
-	var j := c.j
-	match kind:
-		"a":
-			j["spine"].rotation.x = -0.3
-			j["head"].rotation = Vector3(0.25, 0.2, 0.3)
-			j["arm_l"].rotation.x = 1.35
-			j["arm_r"].rotation.x = 1.1
-			j["elbow_r"].rotation.x = 0.5
-		"b":
-			j["spine"].rotation.x = -0.12
-			j["head"].rotation.x = -0.15
-			j["arm_l"].rotation = Vector3(0.15, 0, -0.35)
-			j["arm_r"].rotation = Vector3(0.3, 0, 0.35)
-			j["elbow_l"].rotation.x = 0.5
-			j["elbow_r"].rotation.x = 0.6
-		_:
-			j["spine"].rotation.x = -0.55
-			j["head"].rotation.x = 0.45
-			j["arm_l"].rotation = Vector3(-0.7, 0, -0.25)
-			j["arm_r"].rotation = Vector3(-0.5, 0, 0.25)
-			j["elbow_l"].rotation.x = 0.9
-			j["elbow_r"].rotation.x = 1.1
-	# Manchas de sangre irregulares en el pecho y la boca
-	var spots := [[Vector3(0.06, 0.3, -0.118), Vector3(0.05, 0.07, 0.012)], [Vector3(0.02, 0.2, -0.122), Vector3(0.03, 0.05, 0.012)], [Vector3(-0.09, 0.14, -0.115), Vector3(0.035, 0.03, 0.012)]]
-	if kind == "b":
-		spots = [[Vector3(0.1, 0.32, -0.158), Vector3(0.06, 0.08, 0.014)], [Vector3(-0.1, 0.2, -0.16), Vector3(0.04, 0.09, 0.014)], [Vector3(0.02, 0.12, -0.15), Vector3(0.05, 0.03, 0.014)]]
-	for k in spots.size():
-		var w := MeshInstance3D.new()
-		w.mesh = Nature.blob(40 + k, 0.3, 6, 3, false)
-		w.material_override = CharacterModel.mat(Color("5e1410"))
-		w.position = spots[k][0]
-		w.scale = spots[k][1]
-		j["spine"].add_child(w)
-	var jaw := MeshInstance3D.new()
-	jaw.mesh = Nature.blob(77, 0.3, 6, 3, false)
-	jaw.material_override = CharacterModel.mat(Color("4e100c"))
-	jaw.position = Vector3(0.005, -0.082, -0.1)
-	jaw.scale = Vector3(0.028, 0.02, 0.012)
-	j["head"].add_child(jaw)
+	Infected.pose(c, phase, 0.7, attack)
 	return c
+
+
+## Prototipos nuevos de infectados (aún no están en el juego).
+func _protos() -> void:
+	var ground := func():
+		var g := MeshInstance3D.new()
+		var pm := CylinderMesh.new()
+		pm.top_radius = 9.0
+		pm.bottom_radius = 9.0
+		pm.height = 0.02
+		g.mesh = pm
+		g.material_override = CharacterModel.mat(Color("6f9a56"))
+		g.position.y = -0.01
+		stage.add_child(g)
+	var rows := [["escupidor", "gritona", "acechador"], ["purulento", "blindado", "coloso"]]
+	for r in 2:
+		_clear()
+		ground.call()
+		for k in 3:
+			await _zombie(rows[r][k], Vector3(1.9 - k * 1.9, 0, 0), -0.4 + k * 0.1 if rows[r][k] != "acechador" else -1.1, 0.9, 0.5 if rows[r][k] == "escupidor" else 0.0)
+		if r == 1:   # el superviviente junto al coloso, para la escala
+			_char({"sex": "m", "hair": 4}, {}, {"torso": "camiseta", "piernas": "pantalon_cargo", "pies": "botas"}, Vector3(-3.5, 0, 0.2), 0.4)
+		await _shot("proto_%d" % r, Vector2i(1400, 900), Vector3(-0.6 if r == 1 else 0.0, 1.5 if r == 1 else 1.2, -9.0 if r == 1 else -7.0), Vector3(-0.6 if r == 1 else 0.0, 1.25 if r == 1 else 0.9, 0), 30)
 
 
 ## Propuestas de modelos: pinos, rocas e infectados (A, B, C).

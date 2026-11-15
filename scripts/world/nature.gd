@@ -147,7 +147,7 @@ static func rock_b(seed_ := 1) -> Node3D:
 static func rock_c(seed_ := 1) -> Node3D:
 	var root := Node3D.new()
 	_p(root, blob(seed_ * 11 + 1, 0.16, 8, 4), Color("7f8587"), Vector3(0, 0.38, 0), Vector3.ZERO, Vector3(1.0, 0.72, 0.85))
-	_p(root, blob(seed_ * 11 + 2, 0.18, 7, 3), Color("4f7a3a"), Vector3(-0.1, 0.78, 0.05), Vector3.ZERO, Vector3(0.7, 0.2, 0.6))
+	_p(root, blob(seed_ * 11 + 2, 0.18, 7, 3), Color("4f7a3a"), Vector3(-0.05, 0.9, 0.0), Vector3.ZERO, Vector3(0.78, 0.22, 0.66))
 	_p(root, blob(seed_ * 11 + 3, 0.16, 6, 3), Color("6f7577"), Vector3(0.75, 0.16, -0.3), Vector3.ZERO, Vector3(0.38, 0.3, 0.34))
 	for d in [[0.9, 0.35], [-0.95, 0.2], [0.2, 0.95], [-0.5, -0.75]]:
 		for a in [-0.4, 0.0, 0.45]:

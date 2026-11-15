@@ -36,6 +36,40 @@ func _ready() -> void:
 	p.global_position = Vector3(2, 0, 3)
 	world.camera.global_position = p.global_position + Vector3(0, 13.0, 8.5)
 
+	if out.ends_with("_bosque"):
+		GS.food = 100.0
+		GS.water = 100.0
+		world.travel_to("bosque")
+		await _wait(10)
+		p = world.player
+		for c in get_tree().get_nodes_in_group("creature"):
+			c.process_mode = Node.PROCESS_MODE_DISABLED
+			c.visible = false
+		var best := Vector3.ZERO
+		var best_n := 0
+		for r in get_tree().get_nodes_in_group("resource"):
+			var n := 0
+			for r2 in get_tree().get_nodes_in_group("resource"):
+				if r2.global_position.distance_to(r.global_position) < 9.0:
+					n += 1
+			if n > best_n:
+				best_n = n
+				best = r.global_position
+		p.global_position = best + Vector3(0.5, 0, 1.5)
+		var k := 0
+		for kind in ["infectado", "corredora", "acorazado", "infectado"]:
+			var z: Node3D = world.CreatureScript.new()
+			z.setup(kind)
+			z.home = p.global_position + Vector3(-4.5 + k * 2.6, 0, -3.2 + (k % 2) * 1.2)
+			z.position = z.home
+			world.add_child(z)
+			z._face(p.global_position - z.position)
+			k += 1
+		world.camera.global_position = p.global_position + Vector3(0, 13.0, 8.5)
+		await _wait(14)
+		await _shot("bosque")
+		get_tree().quit()
+		return
 	world.hud.settings_btn.pressed.emit()
 	await _wait(6)
 	await _shot("ajustes")
