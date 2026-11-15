@@ -272,6 +272,8 @@ func rebuild() -> void:
 	j.clear()
 	var d := dims()
 	var skin: Color = SKINS[clampi(int(look["skin"]), 0, 4)]
+	if look.has("skin_color"):    # infectados: piel fuera de la paleta
+		skin = look["skin_color"]
 	var e := explode
 	var s: float = d["s"]
 

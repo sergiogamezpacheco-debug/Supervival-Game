@@ -38,7 +38,9 @@ func _ready() -> void:
 	vp.add_child(cam)
 	stage = Node3D.new()
 	vp.add_child(stage)
-	if OS.get_cmdline_user_args().size() > 1 and OS.get_cmdline_user_args()[1] == "inv":
+	if OS.get_cmdline_user_args().size() > 1 and OS.get_cmdline_user_args()[1] == "props":
+		await _props()
+	elif OS.get_cmdline_user_args().size() > 1 and OS.get_cmdline_user_args()[1] == "inv":
 		await _inventory()
 	elif OS.get_cmdline_user_args().size() > 1 and OS.get_cmdline_user_args()[1] == "heads":
 		await _all(true)
@@ -75,6 +77,113 @@ func _shot(file: String, size: Vector2i, eye: Vector3, target: Vector3, fov := 3
 	var img := vp.get_texture().get_image()
 	img.save_png("%s/%s.png" % [out, file])
 	print("render ", file)
+
+
+## Infectado de propuesta: piel, ropa, físico y postura.
+func _zombie(kind: String, pos: Vector3, rot_y := 0.3) -> CharacterModel:
+	var c: CharacterModel
+	match kind:
+		"a":   # Infectado común: encorvado, brazos al frente, ropa rota
+			c = _char({"sex": "m", "hair": 1, "hair_color": 0, "eyes": 4, "mouth": 4, "skin_color": Color("8a9a78")}, {"fuerza": 0.15}, {"torso": "camiseta", "piernas": "pantalon_tela"}, pos, rot_y)
+		"b":   # Hinchado: enorme, sin camisa, lento
+			c = _char({"sex": "m", "hair": 0, "eyes": 2, "mouth": 2, "skin_color": Color("8b97a0")}, {"fuerza": 1.0}, {"piernas": "pantalon_cargo"}, pos, rot_y)
+			c.scale = Vector3(1.18, 1.1, 1.25)
+		_:     # Corredora: delgada, inclinada, rápida
+			c = _char({"sex": "f", "hair": 2, "hair_color": 0, "eyes": 3, "mouth": 3, "skin_color": Color("a9ad9a")}, {}, {"torso": "camiseta", "piernas": "pantalon_tela", "pies": "zapatillas"}, pos, rot_y)
+	await get_tree().process_frame
+	c.animate_walk(0.9, 0.7)
+	var j := c.j
+	match kind:
+		"a":
+			j["spine"].rotation.x = -0.3
+			j["head"].rotation = Vector3(0.25, 0.2, 0.3)
+			j["arm_l"].rotation.x = 1.35
+			j["arm_r"].rotation.x = 1.1
+			j["elbow_r"].rotation.x = 0.5
+		"b":
+			j["spine"].rotation.x = -0.12
+			j["head"].rotation.x = -0.15
+			j["arm_l"].rotation = Vector3(0.15, 0, -0.35)
+			j["arm_r"].rotation = Vector3(0.3, 0, 0.35)
+			j["elbow_l"].rotation.x = 0.5
+			j["elbow_r"].rotation.x = 0.6
+		_:
+			j["spine"].rotation.x = -0.55
+			j["head"].rotation.x = 0.45
+			j["arm_l"].rotation = Vector3(-0.7, 0, -0.25)
+			j["arm_r"].rotation = Vector3(-0.5, 0, 0.25)
+			j["elbow_l"].rotation.x = 0.9
+			j["elbow_r"].rotation.x = 1.1
+	# Manchas de sangre irregulares en el pecho y la boca
+	var spots := [[Vector3(0.06, 0.3, -0.118), Vector3(0.05, 0.07, 0.012)], [Vector3(0.02, 0.2, -0.122), Vector3(0.03, 0.05, 0.012)], [Vector3(-0.09, 0.14, -0.115), Vector3(0.035, 0.03, 0.012)]]
+	if kind == "b":
+		spots = [[Vector3(0.1, 0.32, -0.158), Vector3(0.06, 0.08, 0.014)], [Vector3(-0.1, 0.2, -0.16), Vector3(0.04, 0.09, 0.014)], [Vector3(0.02, 0.12, -0.15), Vector3(0.05, 0.03, 0.014)]]
+	for k in spots.size():
+		var w := MeshInstance3D.new()
+		w.mesh = Nature.blob(40 + k, 0.3, 6, 3, false)
+		w.material_override = CharacterModel.mat(Color("5e1410"))
+		w.position = spots[k][0]
+		w.scale = spots[k][1]
+		j["spine"].add_child(w)
+	var jaw := MeshInstance3D.new()
+	jaw.mesh = Nature.blob(77, 0.3, 6, 3, false)
+	jaw.material_override = CharacterModel.mat(Color("4e100c"))
+	jaw.position = Vector3(0.005, -0.082, -0.1)
+	jaw.scale = Vector3(0.028, 0.02, 0.012)
+	j["head"].add_child(jaw)
+	return c
+
+
+## Propuestas de modelos: pinos, rocas e infectados (A, B, C).
+func _props() -> void:
+	var ground := func():
+		var g := MeshInstance3D.new()
+		var pm := CylinderMesh.new()
+		pm.top_radius = 9.0
+		pm.bottom_radius = 9.0
+		pm.height = 0.02
+		g.mesh = pm
+		g.material_override = CharacterModel.mat(Color("6f9a56"))
+		g.position.y = -0.01
+		stage.add_child(g)
+	# Pinos (con el superviviente para la escala)
+	_clear()
+	ground.call()
+	var makers := [Nature.pine_a, Nature.pine_b, Nature.pine_c]
+	for k in 3:
+		for v in 2:
+			var t: Node3D = makers[k].call(k * 10 + v + 1)
+			t.position = Vector3(4.2 - k * 4.2 - v * 1.7, 0, v * 1.6)
+			t.scale = Vector3.ONE * (1.0 if v == 0 else 0.8)
+			stage.add_child(t)
+	_char({"sex": "m", "hair": 4}, {}, {"torso": "camiseta", "piernas": "pantalon_cargo", "pies": "botas"}, Vector3(6.0, 0, -0.6), 0.4)
+	await _shot("prop_pinos", Vector2i(1400, 760), Vector3(0.4, 4.2, -12.5), Vector3(0.4, 1.7, 0), 32)
+	# Rocas
+	_clear()
+	ground.call()
+	var rocks := [Nature.rock_a, Nature.rock_b, Nature.rock_c]
+	for k in 3:
+		for v in 2:
+			var r: Node3D = rocks[k].call(k * 10 + v + 1)
+			r.position = Vector3(3.6 - k * 3.6 - v * 1.5, 0, v * 1.5 - 0.2)
+			r.scale = Vector3.ONE * (1.0 if v == 0 else 0.7)
+			r.rotation.y = v * 1.7
+			stage.add_child(r)
+	_char({"sex": "m", "hair": 4}, {}, {"torso": "camiseta", "piernas": "pantalon_cargo", "pies": "botas"}, Vector3(5.3, 0, -0.3), 0.4)
+	await _shot("prop_rocas", Vector2i(1400, 620), Vector3(0.3, 3.0, -9.0), Vector3(0.3, 0.6, 0), 34)
+	# Infectados
+	_clear()
+	ground.call()
+	await _zombie("a", Vector3(1.7, 0, 0), -0.35)
+	await _zombie("b", Vector3(0.1, 0, 0), 0.2)
+	await _zombie("c", Vector3(-1.5, 0, 0), 0.45)
+	await _shot("prop_infectados", Vector2i(1400, 900), Vector3(0.1, 1.3, -5.6), Vector3(0.1, 0.95, 0), 30)
+	_clear()
+	ground.call()
+	await _zombie("a", Vector3(1.7, 0, 0), PI / 2.0)
+	await _zombie("b", Vector3(0.1, 0, 0), PI / 2.0)
+	await _zombie("c", Vector3(-1.5, 0, 0), PI / 2.0)
+	await _shot("prop_infectados_lado", Vector2i(1400, 900), Vector3(0.1, 1.3, -5.6), Vector3(0.1, 0.95, 0), 30)
 
 
 ## Superviviente de frente para la pantalla de mochila.
