@@ -21,8 +21,9 @@
   `GS.testing = true` en tests y herramientas para no abrir la pantalla de creación de personaje.
 - Hora y lluvia salen del reloj real (`GS.hour()`, `GS.raining()`); tests y capturas fijan
   `GS.forced_hour = 12.0` y `GS.forced_rain = 0` para no depender de la hora a la que se ejecutan.
-- Iconos: `assets/icons/items/<id>.svg` (uno por objeto, lo comprueba un test), `DB.item_icon(id)`.
-  Se generan con `tools/iconos/generar.py` (Python, sin dependencias).
+- Iconos: `assets/icons/items/<id>.png` recortados de los diseños del usuario (`docs/diseno_*.jpg`) con
+  `tools/iconos/recortar.py`; si no hay PNG, `<id>.svg` de `tools/iconos/generar.py`. `DB.item_icon(id)` prefiere PNG.
+  El usuario quiere los iconos IGUALES a sus diseños: recortarlos, no redibujarlos.
 - En tests, tras un fotograma lento (modelos 3D, miniaturas) esperar `process_frame` y no solo
   `physics_frame` antes de comprobar un toque: si no, el evento aún no se ha procesado.
 - Herramientas (`type: tool`) no se equipan: se usan desde el inventario (`GS.best_tool`); en la

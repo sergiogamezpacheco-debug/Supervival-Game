@@ -53,8 +53,13 @@ func item(id: String) -> Dictionary:
 var _icons: Dictionary = {}
 func item_icon(id: String) -> Texture2D:
 	if not _icons.has(id):
-		var path := "res://assets/icons/items/%s.svg" % id
-		_icons[id] = load(path) if ResourceLoader.exists(path) else null
+		# Primero el icono recortado de los diseños (PNG); si no, el dibujado (SVG)
+		_icons[id] = null
+		for ext in ["png", "svg"]:
+			var path := "res://assets/icons/items/%s.%s" % [id, ext]
+			if ResourceLoader.exists(path):
+				_icons[id] = load(path)
+				break
 	return _icons[id]
 
 
