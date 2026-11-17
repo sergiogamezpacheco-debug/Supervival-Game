@@ -93,6 +93,18 @@ static func resource_mesh(kind: String) -> Node3D:
 			root.add_child(v)
 			for p in [Vector3(0.35, 0.6, 0.3), Vector3(-0.3, 0.55, 0.3), Vector3(0.05, 0.8, -0.3)]:
 				root.add_child(part(box(Vector3(0.24, 0.2, 0.22)), Color("151515"), p))
+		"veta_cobre":
+			var v := part(sphere(0.8, 1.05), Color("6a5f58"), Vector3(0, 0.4, 0))
+			v.scale = Vector3(1.0, 0.85, 0.9)
+			root.add_child(v)
+			for p in [Vector3(0.4, 0.6, 0.3), Vector3(-0.35, 0.5, 0.35), Vector3(0.1, 0.85, -0.3), Vector3(-0.2, 0.7, -0.15)]:
+				root.add_child(part(box(Vector3(0.22, 0.18, 0.2)), Color("4aa38a") if p.x < 0 else Color("c9733f"), p))
+		"veta_azufre":
+			var v := part(sphere(0.75, 0.95), Color("7a7064"), Vector3(0, 0.36, 0))
+			v.scale = Vector3(1.0, 0.8, 0.9)
+			root.add_child(v)
+			for p in [Vector3(0.35, 0.55, 0.3), Vector3(-0.3, 0.5, 0.3), Vector3(0.05, 0.75, -0.3)]:
+				root.add_child(part(box(Vector3(0.26, 0.2, 0.24)), Color("e3d03a"), p))
 		"chatarra":
 			root.add_child(part(box(Vector3(1.0, 0.25, 0.7)), Color("7a4a2a"), Vector3(0, 0.12, 0)))
 			var pipe := part(cyl(0.08, 0.08, 1.1), Color("6a6e70"), Vector3(0.1, 0.35, 0))

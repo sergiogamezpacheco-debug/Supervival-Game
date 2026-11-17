@@ -229,7 +229,9 @@
       "veta_hierro": 20,
       "veta_carbon": 15,
       "chatarra": 10,
-      "hierba": 10
+      "hierba": 10,
+      "veta_cobre": 12,
+      "veta_azufre": 8
     },
     "prefabs": [
       {

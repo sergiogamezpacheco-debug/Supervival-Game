@@ -1,12 +1,12 @@
 {
   "madera": {
-    "name": "Madera",
+    "name": "Troncos",
     "type": "material",
     "stack": 50,
     "desc": "Troncos de pino. Base de casi todo."
   },
   "piedra": {
-    "name": "Piedra",
+    "name": "Piedra bruta",
     "type": "material",
     "stack": 50,
     "desc": "Piedra suelta para herramientas y estaciones."
@@ -48,7 +48,7 @@
     "desc": "Piel de animal salvaje."
   },
   "mineral_hierro": {
-    "name": "Mineral de hierro",
+    "name": "Mena de hierro",
     "type": "material",
     "stack": 50,
     "desc": "Se funde en el horno."
@@ -173,6 +173,42 @@
     "type": "material",
     "stack": 50,
     "desc": "Restos metálicos. Se funden en el horno."
+  },
+  "mineral_cobre": {
+    "name": "Mena de cobre",
+    "type": "material",
+    "stack": 50,
+    "desc": "Roca verdosa de la cantera. Se funde en el horno."
+  },
+  "lingote_cobre": {
+    "name": "Lingote de cobre",
+    "type": "material",
+    "stack": 50,
+    "desc": "Metal blando y buen conductor: cables y piezas finas."
+  },
+  "cuero": {
+    "name": "Cuero curtido",
+    "type": "material",
+    "stack": 30,
+    "desc": "Piel curtida. Más resistente para mochilas y equipo."
+  },
+  "azufre": {
+    "name": "Azufre",
+    "type": "material",
+    "stack": 50,
+    "desc": "Polvo amarillo de la cantera. Con carbón, pólvora."
+  },
+  "polvora": {
+    "name": "Pólvora",
+    "type": "material",
+    "stack": 30,
+    "desc": "Carbón y azufre molidos. Para munición y explosivos."
+  },
+  "componentes": {
+    "name": "Componentes",
+    "type": "material",
+    "stack": 30,
+    "desc": "Muelles, engranajes y cables. Se sacan de la chatarra."
   },
   "gorra": {
     "name": "Gorra",

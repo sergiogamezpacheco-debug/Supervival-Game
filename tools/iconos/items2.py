@@ -287,6 +287,71 @@ def mochila(pal=None):
     det += R(19.5, 3.5, 5, 15, "#3d3626", 1) + R(39.5, 3.5, 5, 15, "#3d3626", 1)
     return outlined(base, det)
 
+
+# ------------------------------------------------------------------ materiales nuevos (cobre, cuero, azufre, pólvora, componentes)
+def mineral_cobre():
+    pts = [(8, 44), (14, 24), (30, 13), (48, 18), (57, 36), (50, 52), (30, 57), (14, 54)]
+    det = rock(pts, (32, 36), ["#6a635c", "#857d74", "#9a9188", "#6e6760", "#4f4944", "#3f3a36", "#4a4540", "#5c5650"])
+    for (x, y, s, c, l) in [(22, 32, 5, "#2f8f78", "#6fd0b4"), (38, 26, 4, "#d9803f", "#f5b77a"), (40, 42, 5, "#3aa88c", "#86e0c6"), (26, 46, 3.5, "#c9733f", "#f0a874")]:
+        det += P([(x, y - s), (x + s * 0.9, y), (x, y + s * 0.8), (x - s * 0.9, y)], c) + P([(x, y - s), (x + s * 0.9, y), (x, y)], l)
+    return outlined(P(pts, "#666"), det)
+
+def lingote_cobre():
+    base = ""; det = ""
+    for (x, y) in [(10, 46), (18, 34)]:
+        t, f, s_ = lingote(x, y)
+        base += P(t + [s_[2], f[3], f[0]], "#888")
+        det += P(t, "#f0b48a") + P(f, "#cf7a4c") + P(s_, "#9a4f2d")
+        det += L(f"M{x+4} {y-2} L{x+26} {y-2}", "#ffe2c8", 1.2, ' opacity="0.8"')
+    return outlined(base, det)
+
+def cuero():
+    def roll(x, y, w, r, c1, c2, ce):
+        body = P([(x, y - r), (x + w, y - r - 6), (x + w, y + r - 6), (x, y + r)], c1) + P([(x, y), (x + w, y - 6), (x + w, y + r - 6), (x, y + r)], c2)
+        end = E(x, y, r * 0.55, r, ce)
+        spiral = f'<path d="M{x} {y} m-1 -3 a3 3 0 1 1 -3 3 a6 6 0 0 1 6 -6" fill="none" stroke="#5a2f1c" stroke-width="1.3"></path>'
+        return body, end + spiral
+    b1, e1 = roll(12, 42, 30, 9, "#b4623a", "#8f4528", "#d38457")
+    b2, e2 = roll(24, 24, 30, 9, "#c26d42", "#9a4d2c", "#e29566")
+    base = b1 + b2 + E(12, 42, 5, 9, "#888") + E(24, 24, 5, 9, "#888")
+    return outlined(base, b1 + e1 + b2 + e2 + L("M30 18 L50 12 M18 38 L38 32", "#e7a77c", 1.2, ' opacity="0.7"'))
+
+def azufre():
+    lumps = [([(8, 48), (14, 36), (26, 32), (32, 42), (28, 54), (14, 56)], (20, 45)),
+             ([(28, 42), (34, 26), (48, 22), (58, 34), (54, 50), (36, 54)], (44, 38)),
+             ([(16, 32), (22, 16), (36, 12), (42, 24), (32, 30), (22, 34)], (30, 22))]
+    base = "".join(P(p_, "#888") for p_, _ in lumps)
+    det = ""
+    for p_, c in lumps:
+        det += rock(p_, c, ["#e9d74a", "#f6ea7a", "#cdb92f", "#b9a526", "#f2e25a", "#d8c63a", "#a8951f", "#e2cf40"])
+    det += P([(24, 17), (32, 14), (29, 21)], "#fffbd0", ' opacity="0.8"') + P([(42, 28), (50, 26), (46, 32)], "#fffbd0", ' opacity="0.7"')
+    return outlined(base, det)
+
+def polvora():
+    bag = [(14, 14), (34, 10), (46, 16), (44, 44), (40, 54), (18, 54), (12, 44)]
+    det = P(bag, "#cfb98a") + P([(14, 14), (34, 10), (32, 26), (16, 28)], "#e0cd9f") + P([(32, 26), (46, 16), (44, 44), (40, 54), (34, 50)], "#a89468")
+    det += P([(16, 28), (32, 26), (34, 50), (40, 54), (18, 54), (12, 44)], "#bba87a")
+    det += P([(14, 14), (34, 10), (46, 16), (36, 20), (20, 20)], "#8a7850")
+    det += R(19, 32, 20, 10, "#4a3a22", 2) + L("M22 37 L36 37", "#d9c79a", 1.6)
+    pile = [(36, 54), (44, 46), (54, 48), (60, 56), (52, 60), (40, 60)]
+    pile_det = P(pile, "#e6e6e0") + P([(44, 46), (54, 48), (50, 54)], "#ffffff") + P([(40, 60), (50, 54), (60, 56), (52, 60)], "#b9b9b2")
+    return outlined(P(bag, "#888") + P(pile, "#888"), det + pile_det)
+
+def componentes():
+    box = [(8, 30), (50, 30), (50, 56), (8, 56)]
+    lid = [(8, 30), (14, 12), (56, 12), (50, 30)]
+    det = P(lid, "#9a7c58") + P([(8, 30), (14, 12), (22, 12), (16, 30)], "#b8946a")
+    det += P(box, "#bba07a") + P([(8, 30), (50, 30), (50, 38), (8, 38)], "#8f7650") + R(26, 38, 8, 6, "#6a5a3a", 1)
+    gear = ""
+    for k in range(8):
+        a = k * math.pi / 4
+        gear += P([(26 + math.cos(a - 0.22) * 9, 26 + math.sin(a - 0.22) * 9), (26 + math.cos(a - 0.22) * 13, 26 + math.sin(a - 0.22) * 13),
+                   (26 + math.cos(a + 0.22) * 13, 26 + math.sin(a + 0.22) * 13), (26 + math.cos(a + 0.22) * 9, 26 + math.sin(a + 0.22) * 9)], "#8a9298")
+    gear += C(26, 26, 10, "#a9b2b8") + C(26, 26, 4, "#3a4046")
+    spring = L("M40 30 l6 -3 l-6 -3 l6 -3 l-6 -3 l6 -3", "#c7ccd0", 2.4)
+    wires = L("M12 44 C18 40 24 52 30 48", "#c0392b", 2) + L("M32 50 C38 46 44 54 48 48", "#2f7fb8", 2)
+    return outlined(P(box, "#888") + P(lid, "#888") + gear + C(26, 26, 10, "#888"), det + gear + spring + wires)
+
 NEW = {
     "madera": madera(), "piedra": piedra(), "bloque_piedra": bloque_piedra(), "fibra": fibra(), "tela": tela(),
     "tablon": tablon(), "cuerda": cuerda(), "piel": piel(), "mineral_hierro": mineral_hierro(),
@@ -296,6 +361,7 @@ NEW = {
     "mochila_excursion": mochila({"body": "#3f5f73", "body_d": "#355062", "flap": "#4d7088", "flap_l": "#5f84a0", "pocket": "#30495a", "side_l": "#2c4352", "side_r": "#253947"}),
     "mochila_tactica": mochila({"body": "#4b4d3f", "body_d": "#404236", "flap": "#585a4a", "flap_l": "#686a58", "pocket": "#3a3c31", "side_l": "#34362c", "side_r": "#2c2e25"}),
 }
+NEW.update({"mineral_cobre": mineral_cobre(), "lingote_cobre": lingote_cobre(), "cuero": cuero(), "azufre": azufre(), "polvora": polvora(), "componentes": componentes()})
 # El resto (comida y ropa): mismo contorno para que todo el juego tenga el mismo trazo
 ICONS = {}
 for k, v in OLD.items():

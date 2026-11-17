@@ -110,5 +110,33 @@
     "hand_ok": true,
     "respawn": 180,
     "radius": 0.6
+  },
+  "veta_cobre": {
+    "name": "Veta de cobre",
+    "action": "Picar",
+    "yield": "mineral_cobre",
+    "amount": [
+      1,
+      2
+    ],
+    "hits": 5,
+    "tool": "pickaxe",
+    "hand_ok": false,
+    "respawn": 120,
+    "radius": 0.7
+  },
+  "veta_azufre": {
+    "name": "Veta de azufre",
+    "action": "Picar",
+    "yield": "azufre",
+    "amount": [
+      1,
+      2
+    ],
+    "hits": 4,
+    "tool": "pickaxe",
+    "hand_ok": false,
+    "respawn": 120,
+    "radius": 0.7
   }
 }

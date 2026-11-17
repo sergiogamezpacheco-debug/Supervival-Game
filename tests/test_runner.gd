@@ -359,6 +359,41 @@ func test_base() -> void:
 	check(base.upgrade(bench) and bench.level == 2, "banco mejorado a nivel 2")
 	check(bench.start("machete") == "", "con nivel 2 ya fabrica el machete")
 
+	# Materiales nuevos: pólvora, componentes (banco nv2), lingote de cobre (horno), cuero (costura)
+	check(DB.item_name("madera") == "Troncos" and DB.item_name("mineral_hierro") == "Mena de hierro", "nombres de los materiales como en el diseño")
+	for rid in ["lingote_cobre", "cuero", "polvora", "componentes"]:
+		check(not DB.recipe(rid).is_empty(), "existe la receta %s" % rid)
+	# Hueco en la mochila (8 bolsillos) para recoger el machete y probar las recetas nuevas
+	var tablones := GS.count("tablon")
+	var bloques := GS.count("bloque_piedra")
+	GS.remove_item("tablon", tablones)
+	GS.remove_item("bloque_piedra", bloques)
+	GS.time_offset += 60.0
+	bench.collect()
+	check(GS.count("machete") == 1, "machete recogido")
+	GS.remove_item("machete", 1)
+	GS.add_item("chatarra", 4)
+	var why_c: String = bench.start("componentes")
+	check(why_c == "", "el banco nv2 saca componentes de la chatarra")
+	GS.time_offset += 16.0
+	bench.collect()
+	check(GS.count("componentes") == 1, "componentes recogidos")
+	GS.add_item("carbon", 2)
+	GS.add_item("azufre", 1)
+	check(bench.start("polvora") == "", "carbón y azufre dan pólvora")
+	GS.time_offset += 26.0
+	bench.collect()
+	check(GS.count("polvora") == 2, "se obtienen 2 de pólvora")
+	GS.remove_item("polvora", 2)
+	GS.remove_item("componentes", 1)
+	GS.add_item("tablon", tablones)
+	GS.add_item("bloque_piedra", bloques)
+	check(DB.recipe("lingote_cobre")["station"] == "horno" and DB.recipe("cuero")["station"] == "mesa_costura", "cobre en el horno y cuero en la costura")
+	for kind in ["veta_cobre", "veta_azufre"]:
+		check(Builder.resource_mesh(kind).get_child_count() > 3, "modelo 3D de %s" % kind)
+	check(DB.maps["cantera"]["resources"].has("veta_cobre") and DB.maps["cantera"]["resources"].has("veta_azufre"), "cobre y azufre en la cantera")
+	check(DB.item_icon("lingote_cobre") != DB.item_icon("lingote_hierro"), "el cobre tiene su propio icono")
+
 	var fire: Node3D = base.place("hoguera", Vector2i(-2, 6), 0, 0, pp)
 	GS.add_item("carne_cruda", 1)
 	check(fire != null and fire.start("carne_asada") == "", "la hoguera cocina carne")

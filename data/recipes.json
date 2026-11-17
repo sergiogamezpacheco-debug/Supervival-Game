@@ -170,6 +170,53 @@
     }
   },
   {
+    "id": "lingote_cobre",
+    "result": "lingote_cobre",
+    "qty": 1,
+    "station": "horno",
+    "level": 1,
+    "time": 20,
+    "cost": {
+      "mineral_cobre": 3,
+      "madera": 2
+    }
+  },
+  {
+    "id": "cuero",
+    "result": "cuero",
+    "qty": 1,
+    "station": "mesa_costura",
+    "level": 1,
+    "time": 15,
+    "cost": {
+      "piel": 2,
+      "fibra": 1
+    }
+  },
+  {
+    "id": "polvora",
+    "result": "polvora",
+    "qty": 2,
+    "station": "banco_trabajo",
+    "level": 2,
+    "time": 25,
+    "cost": {
+      "carbon": 2,
+      "azufre": 1
+    }
+  },
+  {
+    "id": "componentes",
+    "result": "componentes",
+    "qty": 1,
+    "station": "banco_trabajo",
+    "level": 2,
+    "time": 15,
+    "cost": {
+      "chatarra": 4
+    }
+  },
+  {
     "id": "camiseta",
     "result": "camiseta",
     "qty": 1,
