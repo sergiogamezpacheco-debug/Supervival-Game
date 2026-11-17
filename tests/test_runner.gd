@@ -35,6 +35,8 @@ func _ready() -> void:
 	await test_world()
 	print("== Construcción y estaciones")
 	await test_base()
+	print("== Estructuras del refugio (obra por fases)")
+	await test_shelter_structures()
 	print("== Animales")
 	await test_animals()
 	print("== Viajes y zonas")
@@ -173,6 +175,13 @@ func test_save() -> void:
 	check(w.get("player", [])[0] == 3.0, "carga la posición")
 	DirAccess.remove_absolute(ProjectSettings.globalize_path(GS.save_path))
 	GS.new_game()
+
+
+## Fotogramas de proceso (el HUD se actualiza en _process; tras un fotograma lento
+## pueden pasar varios de física sin ninguno de proceso).
+func _pframes(n: int) -> void:
+	for i in n:
+		await get_tree().process_frame
 
 
 func _frames(n: int) -> void:
@@ -354,37 +363,31 @@ func test_base() -> void:
 	check(bench != null, "banco de trabajo colocado")
 	GS.add_item("lingote_hierro", 10)
 	GS.add_item("cuerda", 5)
-	check(bench.start("machete") != "", "el machete pide banco de nivel 2")
+	check(bench.start("hacha_hierro") != "", "el hacha de hierro pide banco de nivel 2")
 	GS.add_item("bloque_piedra", 10)
 	check(base.upgrade(bench) and bench.level == 2, "banco mejorado a nivel 2")
-	check(bench.start("machete") == "", "con nivel 2 ya fabrica el machete")
+	check(bench.start("hacha_hierro") == "", "con nivel 2 ya fabrica el hacha de hierro")
+	check(bench.start("machete") != "" and DB.recipe("machete")["station"] == "banco_armas", "el machete ahora sale del banco de armas")
 
 	# Materiales nuevos: pólvora, componentes (banco nv2), lingote de cobre (horno), cuero (costura)
 	check(DB.item_name("madera") == "Troncos" and DB.item_name("mineral_hierro") == "Mena de hierro", "nombres de los materiales como en el diseño")
 	for rid in ["lingote_cobre", "cuero", "polvora", "componentes"]:
 		check(not DB.recipe(rid).is_empty(), "existe la receta %s" % rid)
-	# Hueco en la mochila (8 bolsillos) para recoger el machete y probar las recetas nuevas
+	# Hueco en la mochila (8 bolsillos) para recoger el hacha y probar las recetas nuevas
 	var tablones := GS.count("tablon")
 	var bloques := GS.count("bloque_piedra")
 	GS.remove_item("tablon", tablones)
 	GS.remove_item("bloque_piedra", bloques)
 	GS.time_offset += 60.0
 	bench.collect()
-	check(GS.count("machete") == 1, "machete recogido")
-	GS.remove_item("machete", 1)
+	check(GS.count("hacha_hierro") == 1, "hacha de hierro recogida")
+	GS.remove_item("hacha_hierro", 1)
 	GS.add_item("chatarra", 4)
 	var why_c: String = bench.start("componentes")
 	check(why_c == "", "el banco nv2 saca componentes de la chatarra")
 	GS.time_offset += 16.0
 	bench.collect()
 	check(GS.count("componentes") == 1, "componentes recogidos")
-	GS.add_item("carbon", 2)
-	GS.add_item("azufre", 1)
-	check(bench.start("polvora") == "", "carbón y azufre dan pólvora")
-	GS.time_offset += 26.0
-	bench.collect()
-	check(GS.count("polvora") == 2, "se obtienen 2 de pólvora")
-	GS.remove_item("polvora", 2)
 	GS.remove_item("componentes", 1)
 	GS.add_item("tablon", tablones)
 	GS.add_item("bloque_piedra", bloques)
@@ -441,6 +444,163 @@ func test_base() -> void:
 
 func Base_key(x: int, y: int) -> String:
 	return "%d,%d" % [x, y]
+
+
+func _place_any(base: Node3D, id: String, pp: Vector3) -> Node3D:
+	for j in range(-8, 8, 2):
+		for i in range(-8, 8, 2):
+			if base.check_place(id, Vector2i(i, j), 0, pp) == "":
+				return base.place(id, Vector2i(i, j), 0, 0, pp)
+	return null
+
+
+func _give(cost: Dictionary) -> void:
+	for id in cost:
+		GS.add_item(str(id), int(cost[id]))
+
+
+func test_shelter_structures() -> void:
+	DirAccess.remove_absolute(ProjectSettings.globalize_path(GS.save_path))
+	GS.new_game()
+	GS.forced_rain = 0
+	var world := await _new_world()
+	var base: Node3D = world.base
+	world.player.global_position = Vector3(30, 0, 30)
+	var pp := Vector3(30, 0, 30)
+	GS.slots.resize(48)
+	for i in GS.slots.size():
+		GS.slots[i] = null
+
+	# Modelos según la lámina
+	for id in ["carpinteria", "horno", "hoguera", "banco_armas", "recolector_agua", "secadero", "huerto", "mesa_medica", "generador", "recicladora"]:
+		var m := StationModels.make(id, 1)
+		check(m != null and m.get_child_count() >= 6, "modelo 3D de %s" % id)
+		if m:
+			m.free()
+	for id in ["carne_seca", "botiquin", "antidoto", "polvora", "componentes"]:
+		check(DB.item_icon(id) != null and DB.item_icon(id).resource_path.ends_with(".png"), "icono de %s sacado del diseño" % id)
+
+	# Obra por fases: generador
+	check(base.place_cost("generador") == DB.station_phases("generador")[0]["cost"], "colocar paga solo la primera fase")
+	_give(DB.station_phases("generador")[0]["cost"])
+	var gen: Node3D = _place_any(base, "generador", pp)
+	check(gen != null and gen.stage == 1 and not gen.is_built(), "el generador queda en obra (fase 1 de 3)")
+	check(gen.action_label() == "Construir", "tocarlo sirve para seguir la obra")
+	check(gen._visual.has_meta("en_obra"), "se ve con andamio mientras está en obra")
+	check(gen.add_phase() == "Faltan materiales", "sin materiales no avanza")
+	world.hud.open_station(gen)
+	await _frames(2)
+	var add_btn: Button = null
+	for row in world.hud._station_list.get_children():
+		for c in row.get_children():
+			if c is Button and c.text == "Añadir":
+				add_btn = c
+	check(add_btn != null and add_btn.disabled, "el panel muestra la siguiente fase con su botón")
+	_give(DB.station_phases("generador")[1]["cost"])
+	world.hud._refresh_station()
+	await _frames(1)
+	for row in world.hud._station_list.get_children():
+		for c in row.get_children():
+			if c is Button and c.text == "Añadir":
+				add_btn = c
+	add_btn.pressed.emit()
+	check(gen.stage == 2, "Añadir paga la fase 2")
+	_give(DB.station_phases("generador")[2]["cost"])
+	check(gen.add_phase() == "" and gen.is_built(), "fase 3: generador terminado")
+	check(not gen._visual.has_meta("en_obra"), "ya sin andamio")
+	world.hud.close_panels()
+
+	# Recicladora: necesita energía
+	var rec: Node3D = null
+	for ph in DB.station_phases("recicladora"):
+		_give(ph["cost"])
+	rec = _place_any(base, "recicladora", pp)
+	while rec != null and not rec.is_built():
+		rec.add_phase()
+	check(rec != null and rec.is_built(), "recicladora construida en 3 fases")
+	GS.add_item("chatarra", 4)
+	check(rec.start("reciclar_componentes") == "Al generador le falta combustible", "sin combustible no recicla")
+	GS.add_item("carbon", 1)
+	check(gen.add_fuel("carbon") == "" and int(gen.fuel) == 300, "un carbón da 5 minutos de energía")
+	check(rec.start("reciclar_componentes") == "" and int(gen.fuel) == 270, "reciclar gasta la energía que dura")
+	GS.time_offset += 31.0
+	check(rec.collect() and GS.count("componentes") == 2, "la recicladora da 2 componentes por 4 de chatarra")
+
+	# Recolector de agua: se llena solo, más con lluvia
+	_give(DB.station_build_cost("recolector_agua"))
+	var col: Node3D = _place_any(base, "recolector_agua", pp)
+	check(col != null and col.is_built(), "recolector colocado de una vez")
+	col.water = 0.0
+	col.water_t = GS.now() - 3600.0
+	check(absf(col.water_now() - 20.0) < 0.5, "junta 20 de agua por hora")
+	GS.forced_rain = 1
+	check(absf(col.water_now() - 80.0) < 0.5, "con lluvia, cuatro veces más")
+	GS.forced_rain = 0
+	GS.water = 50.0
+	col.drink()
+	check(GS.water >= 69.0 and col.water < 1.0, "beber del recolector")
+
+	# Huerto: obra en 2 fases y riego
+	for ph in DB.station_phases("huerto"):
+		_give(ph["cost"])
+	var garden: Node3D = _place_any(base, "huerto", pp)
+	garden.add_phase()
+	check(garden.is_built(), "huerto terminado")
+	check(is_equal_approx(garden.recipe_time(DB.recipe("cultivo_bayas")), 300.0), "con recolector crece el doble de rápido")
+	GS.add_item("baya", 2)
+	check(garden.start("cultivo_bayas") == "", "plantar bayas")
+	GS.time_offset += 301.0
+	check(garden.collect() and GS.count("baya") == 6, "cosecha de 6 bayas")
+
+	# Secadero, banco de armas y mesa médica
+	for id in ["secadero", "banco_armas", "mesa_medica"]:
+		var all_cost := DB.station_build_cost(id)
+		for ph in DB.station_phases(id):
+			_give(ph["cost"])
+		if DB.station_phases(id).is_empty():
+			_give(all_cost)
+		var st: Node3D = _place_any(base, id, pp)
+		while st != null and not st.is_built():
+			st.add_phase()
+		check(st != null and st.is_built(), "%s construido" % id)
+		var rid: String = {"secadero": "carne_seca", "banco_armas": "polvora", "mesa_medica": "botiquin"}[id]
+		var r := DB.recipe(rid)
+		_give(r["cost"])
+		check(st.start(rid) == "", "%s fabrica %s" % [id, rid])
+		GS.time_offset += float(r["time"]) + 1.0
+		var before := GS.count(str(r["result"]))
+		check(st.collect() and GS.count(str(r["result"])) == before + int(r.get("qty", 1)), "%s recogido" % rid)
+	GS.add_item("botiquin", 1)
+	GS.health = 20.0
+	GS.poison = 5.0
+	var bslot := -1
+	for i in GS.slots.size():
+		if GS.slots[i] != null and GS.slots[i]["id"] == "botiquin":
+			bslot = i
+	GS.use_slot(bslot)
+	check(GS.health >= 79.0 and GS.poison == 0.0, "el botiquín cura 60 y quita el veneno")
+
+	# Desmontar una obra a medias devuelve la mitad de lo pagado
+	_give(DB.station_phases("generador")[0]["cost"])
+	var half_gen: Node3D = _place_any(base, "generador", pp)
+	var iron := GS.count("lingote_hierro")
+	base.demolish(half_gen)
+	check(GS.count("lingote_hierro") == iron + 2, "desmontar la obra devuelve la mitad de la fase pagada")
+
+	# Guardar y cargar conserva fases, agua y combustible
+	_give(DB.station_phases("generador")[0]["cost"])
+	var g2: Node3D = _place_any(base, "generador", pp)
+	var list: Array = base.to_list()
+	var saved_stage := -1
+	var saved_fuel := -1.0
+	for e in list:
+		if e.get("id", "") == "generador" and e.get("key", "") == g2.key:
+			saved_stage = int(e["stage"])
+		if e.get("id", "") == "generador" and e.get("key", "") == gen.key:
+			saved_fuel = float(e["fuel"])
+	check(saved_stage == 1 and int(saved_fuel) == 270, "se guardan la fase y el combustible")
+	world.queue_free()
+	await _frames(2)
 
 
 func test_animals() -> void:
@@ -1038,14 +1198,14 @@ func test_action_hud(world: Node3D, player: Node3D, tree: Node3D) -> void:
 		GS.slots[i] = null
 	GS.hand = null
 	tree._respawn_timer = 0.0      # por si se agotó al talarlo
-	await _frames(3)
+	await _pframes(3)
 	tree.hits_left = 50
-	await _frames(3)
+	await _pframes(3)
 	check(hud.action_icon == "puno" and hud.action_button.ring < 0.0, "junto al pino sin hacha: puño y sin borde")
 	GS.add_item("hacha_piedra", 1)
 	GS.add_item("lanza", 1)
 	GS.equip_slot(1)
-	await _frames(3)
+	await _pframes(3)
 	check(hud.action_icon == "hacha_piedra" and is_equal_approx(hud.action_button.ring, 1.0), "junto al pino con hacha en el inventario: icono del hacha, borde al 100 %")
 	var hits0: int = tree.hits_left
 	var lance0 := int(GS.hand["dur"])
@@ -1053,18 +1213,18 @@ func test_action_hud(world: Node3D, player: Node3D, tree: Node3D) -> void:
 	tree.interact(player)
 	check(int(GS.slots[0]["dur"]) == 59 and int(GS.hand["dur"]) == lance0 and GS.count("madera") > wood0, "talar gasta el hacha, no el arma")
 	GS.slots[0]["dur"] = 24
-	await _frames(3)
+	await _pframes(3)
 	check(hud.action_button.ring < 0.5 and hud.action_button.ring_color(hud.action_button.ring) == Color("f2c230"), "por debajo del 50 % el borde es amarillo")
 	check(hud.action_button.ring_color(0.2) == Color("e0463c") and hud.action_button.ring_color(0.8) == Color("6fd24a"), "rojo por debajo del 25 % y verde por encima del 50 %")
 	check(player._hand_item == "hacha_piedra", "el superviviente saca el hacha para talar")
 	var pos: Vector3 = player.global_position
 	player.global_position = Vector3(0.5, 0, 9.5)
-	await _frames(3)
+	await _pframes(3)
 	if world.find_target() == null:
 		check(hud.action_icon == "lanza" and hud.action_button.ring > 0.9, "lejos de todo: icono del arma equipada con su borde")
 		check(player._hand_item == "lanza", "y lleva la lanza en la mano")
 	GS.unequip()
-	await _frames(3)
+	await _pframes(3)
 	if world.find_target() == null:
 		check(hud.action_icon == "puno", "sin arma: puño")
 	check(hud.action_button.icon != null and hud.crouch_button.icon == DB.ui_icon("agachar"), "acción y agachar son iconos")
@@ -1080,7 +1240,7 @@ func test_action_hud(world: Node3D, player: Node3D, tree: Node3D) -> void:
 		GS.slots[i] = keep[i]
 	GS.hand = keep_hand
 	GS.inventory_changed.emit()
-	await _frames(2)
+	await _pframes(2)
 
 
 func test_dodge_audio() -> void:

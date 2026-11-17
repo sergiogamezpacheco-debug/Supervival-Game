@@ -106,7 +106,7 @@ static func is_edge_piece(id: String) -> bool:
 static func place_cost(id: String) -> Dictionary:
 	if DB.structures.has(id):
 		return DB.structure_tier(id, 0).get("cost", {})
-	return DB.station_level(id, 1).get("cost", {})
+	return DB.station_build_cost(id)
 
 
 static func piece_name(id: String) -> String:
@@ -180,8 +180,11 @@ func place(id: String, c: Vector2i, side: int, rot: int, player_pos: Vector3) ->
 	elif DB.structures.has(id):
 		n = _spawn_structure(id, 0, ckey(c))
 	else:
-		n = _spawn_station(id, 1, ckey(c), rot)
-	GS.message.emit("Construido: %s" % piece_name(id))
+		n = _spawn_station(id, 1, ckey(c), rot, 1)
+	if n.is_in_group("station") and not n.is_built():
+		GS.message.emit("Obra empezada: %s (fase 1 de %d). Tócala para seguir." % [piece_name(id), n.phases().size()])
+	else:
+		GS.message.emit("Construido: %s" % piece_name(id))
 	return n
 
 
@@ -202,8 +205,9 @@ func _spawn_structure(id: String, tier: int, key: String) -> Node3D:
 	return s
 
 
-func _spawn_station(id: String, level: int, key: String, rot: int) -> Node3D:
+func _spawn_station(id: String, level: int, key: String, rot: int, stage := -1) -> Node3D:
 	var s := StationScript.new()
+	s.stage = stage if stage >= 0 else DB.station_phases(id).size()
 	s.setup(id, level, key, rot)
 	var k := parse_key(key)
 	s.position = cell_center(Vector2i(k[0], k[1]))
@@ -271,6 +275,12 @@ func refund_of(n: Node3D) -> Dictionary:
 	var cost: Dictionary
 	if n.is_in_group("structure"):
 		cost = DB.structure_tier(n.id, n.tier).get("cost", {})
+	elif not n.phases().is_empty():
+		cost = {}
+		for i in mini(n.stage, n.phases().size()):
+			var pc: Dictionary = n.phases()[i].get("cost", {})
+			for k in pc:
+				cost[k] = int(cost.get(k, 0)) + int(pc[k])
 	else:
 		cost = DB.station_level(n.id, n.level).get("cost", {})
 	var out := {}
@@ -346,10 +356,13 @@ func load_list(list: Array) -> void:
 		var id := str(e.get("id", ""))
 		var key := str(e.get("key", ""))
 		if str(e.get("type", "")) == "station" and DB.stations.has(id):
-			var s := _spawn_station(id, int(e.get("level", 1)), key, int(e.get("rot", 0)))
+			var s := _spawn_station(id, int(e.get("level", 1)), key, int(e.get("rot", 0)), int(e.get("stage", DB.station_phases(id).size())))
+			s.water = float(e.get("water", 0.0))
+			s.water_t = float(e.get("water_t", GS.now()))
+			s.fuel = float(e.get("fuel", 0.0))
 			var job: Dictionary = e.get("job", {})
 			if not job.is_empty():
-				s.job = {"recipe": str(job["recipe"]), "end": float(job["end"])}
+				s.job = {"recipe": str(job["recipe"]), "end": float(job["end"]), "time": float(job.get("time", DB.recipe(str(job["recipe"])).get("time", 1)))}
 			var st: Array = e.get("storage", [])
 			for i in mini(st.size(), s.storage.size()):
 				var it = st[i]

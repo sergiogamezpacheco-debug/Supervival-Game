@@ -685,7 +685,9 @@ func _refresh_build_menu() -> void:
 	_section(_build_list, "Estaciones y almacenaje")
 	for id in DB.stations:
 		var d: Dictionary = DB.stations[id]
-		_build_row(str(id), "%s — %s" % [d.get("name", id), d.get("desc", "")], DB.station_level(str(id), 1).get("cost", {}))
+		var nph := DB.station_phases(str(id)).size()
+		var extra := ("  (obra en %d fases)" % nph) if nph > 1 else ""
+		_build_row(str(id), "%s%s — %s" % [d.get("name", id), extra, d.get("desc", "")], DB.station_build_cost(str(id)))
 
 
 func _section(box: VBoxContainer, title: String) -> void:
@@ -697,11 +699,16 @@ func _section(box: VBoxContainer, title: String) -> void:
 
 func _build_row(id: String, title: String, cost: Dictionary) -> void:
 	var row := HBoxContainer.new()
+	var col := VBoxContainer.new()
+	col.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	var lbl := Label.new()
-	lbl.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	lbl.autowrap_mode = TextServer.AUTOWRAP_WORD
+	lbl.custom_minimum_size.x = 480
 	lbl.add_theme_font_size_override("font_size", 19)
-	lbl.text = "%s\n   %s" % [title, DB.cost_text(cost)]
-	row.add_child(lbl)
+	lbl.text = title
+	col.add_child(lbl)
+	col.add_child(_cost_chips(cost))
+	row.add_child(col)
 	var b := Button.new()
 	b.text = "Colocar"
 	b.custom_minimum_size = Vector2(140, 56)
@@ -815,7 +822,12 @@ func _build_station_panel() -> void:
 	_station_collect.text = "Recoger"
 	_station_collect.custom_minimum_size = Vector2(160, 52)
 	_station_collect.pressed.connect(func():
-		if station and station.collect():
+		if station == null:
+			return
+		if station.is_collector():
+			station.drink()
+			_refresh_station_job()
+		elif station.collect():
 			_refresh_station())
 	h.add_child(_station_collect)
 	v.add_child(h)
@@ -835,6 +847,30 @@ func _refresh_station() -> void:
 	_station_title.text = station.display_name()
 	for c in _station_list.get_children():
 		c.queue_free()
+	if not station.is_built():
+		_refresh_phases()
+		return
+	if station.is_generator():
+		_refresh_generator()
+		return
+	if station.needs_power():
+		var gen: Node3D = station._generator()
+		var info := Label.new()
+		info.add_theme_font_size_override("font_size", 18)
+		if gen == null:
+			info.text = "⚠ Necesita un generador terminado en el refugio."
+			info.add_theme_color_override("font_color", Color("e0705a"))
+		else:
+			var f := int(gen.fuel)
+			info.text = "Energía del generador: %d:%02d" % [f / 60, f % 60]
+			info.add_theme_color_override("font_color", Color("9fd36a") if f > 0 else Color("e0705a"))
+		_station_list.add_child(info)
+	if station.id == "huerto" and station._has_station("recolector_agua"):
+		var w := Label.new()
+		w.text = "Riego con el recolector de agua: crece el doble de rápido."
+		w.add_theme_font_size_override("font_size", 18)
+		w.add_theme_color_override("font_color", Color("7fc4e8"))
+		_station_list.add_child(w)
 	for r in DB.recipes_for(station.id):
 		var row := HBoxContainer.new()
 		row.add_theme_constant_override("separation", 12)
@@ -845,7 +881,8 @@ func _refresh_station() -> void:
 		lbl.custom_minimum_size.x = 100
 		lbl.add_theme_font_size_override("font_size", 19)
 		var unlocked: bool = station.recipe_unlocked(r)
-		var head := "%s  (%ds)" % [DB.item_name(str(r["result"])), int(r.get("time", 0))]
+		var qty := int(r.get("qty", 1))
+		var head := "%s%s  (%s)" % [DB.item_name(str(r["result"])), (" ×%d" % qty) if qty > 1 else "", _time_text(station.recipe_time(r))]
 		var rd := DB.item(str(r["result"]))
 		if rd.has("armor"):
 			head += "  · Defensa +%d%%" % int(rd["armor"])
@@ -853,10 +890,15 @@ func _refresh_station() -> void:
 			head += "  · +%d huecos" % int(rd["bag_slots"])
 		if not unlocked:
 			head += "  — requiere nivel %d" % int(r.get("level", 1))
-		lbl.text = "%s\n   %s" % [head, DB.cost_text(r.get("cost", {}))]
+		lbl.text = head
+		var col := VBoxContainer.new()
+		col.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		col.add_theme_constant_override("separation", 2)
+		col.add_child(lbl)
+		col.add_child(_cost_chips(r.get("cost", {})))
 		if not unlocked:
-			lbl.modulate = Color(1, 1, 1, 0.5)
-		row.add_child(lbl)
+			col.modulate = Color(1, 1, 1, 0.5)
+		row.add_child(col)
 		var b := Button.new()
 		b.text = "Fabricar"
 		b.custom_minimum_size = Vector2(150, 56)
@@ -923,6 +965,27 @@ func _add_repair_rows() -> void:
 func _refresh_station_job() -> void:
 	if station == null or not is_instance_valid(station) or station.is_chest():
 		return
+	_station_collect.text = "Recoger"
+	_station_collect.visible = not station.is_generator() and station.is_built()
+	if not station.is_built():
+		var n: int = station.phases().size()
+		_station_job.text = "En obra: fase %d de %d hecha" % [station.stage, n]
+		_station_bar.value = float(station.stage) / float(n)
+		_station_collect.disabled = true
+		return
+	if station.is_collector():
+		var w: float = station.water_now()
+		_station_job.text = "Agua: %d / %d%s" % [int(w), int(station.water_capacity()), "  · llueve: se llena más rápido" if GS.raining() else ""]
+		_station_bar.value = w / station.water_capacity()
+		_station_collect.text = "Beber"
+		_station_collect.disabled = w < 1.0
+		return
+	if station.is_generator():
+		var f := int(station.fuel)
+		_station_job.text = "Energía: %d:%02d" % [f / 60, f % 60]
+		_station_bar.value = station.fuel / float(DB.bal("generator_max", 3600))
+		_station_collect.disabled = true
+		return
 	if station.job.is_empty():
 		_station_job.text = "Libre. Elige qué fabricar."
 		_station_bar.value = 0.0
@@ -937,6 +1000,107 @@ func _refresh_station_job() -> void:
 		_station_job.text = "Fabricando %s — %d:%02d" % [nm, t / 60, t % 60]
 		_station_collect.disabled = true
 	_station_bar.value = station.progress()
+
+
+func _time_text(t: float) -> String:
+	var s := int(round(t))
+	if s < 60:
+		return "%ds" % s
+	return "%d:%02d min" % [s / 60, s % 60]
+
+
+## Materiales con icono y "tengo/necesito" (verde si llega, rojo si falta).
+func _cost_chips(cost: Dictionary) -> HFlowContainer:
+	var flow := HFlowContainer.new()
+	flow.add_theme_constant_override("h_separation", 10)
+	for id in cost:
+		var need := int(cost[id])
+		var have := GS.count(str(id))
+		var chip := HBoxContainer.new()
+		chip.add_theme_constant_override("separation", 3)
+		chip.tooltip_text = DB.item_name(str(id))
+		var ic := TextureRect.new()
+		ic.texture = DB.item_icon(str(id))
+		ic.custom_minimum_size = Vector2(30, 30)
+		ic.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+		ic.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+		chip.add_child(ic)
+		var l := Label.new()
+		l.text = "%d/%d" % [have, need]
+		l.add_theme_font_size_override("font_size", 17)
+		l.add_theme_color_override("font_color", Color("9fd36a") if have >= need else Color("e0705a"))
+		chip.add_child(l)
+		flow.add_child(chip)
+	flow.set_meta("cost", cost)
+	return flow
+
+
+## Estación grande a medio construir: lista de fases y botón para la siguiente.
+func _refresh_phases() -> void:
+	_station_title.text = "%s — en obra" % DB.station_name(station.id)
+	var ph: Array = station.phases()
+	for i in ph.size():
+		var row := HBoxContainer.new()
+		row.add_theme_constant_override("separation", 12)
+		var col := VBoxContainer.new()
+		col.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		var lbl := Label.new()
+		lbl.add_theme_font_size_override("font_size", 19)
+		var done: bool = i < station.stage
+		lbl.text = "%s Fase %d: %s" % ["✔" if done else ("▶" if i == station.stage else "·"), i + 1, ph[i].get("name", "")]
+		col.add_child(lbl)
+		if not done:
+			col.add_child(_cost_chips(ph[i].get("cost", {})))
+		else:
+			lbl.add_theme_color_override("font_color", Color("9fd36a"))
+		if i > station.stage:
+			col.modulate = Color(1, 1, 1, 0.5)
+		row.add_child(col)
+		if i == station.stage:
+			var b := Button.new()
+			b.text = "Añadir"
+			b.custom_minimum_size = Vector2(150, 56)
+			b.disabled = not GS.has_cost(ph[i].get("cost", {}))
+			b.pressed.connect(func():
+				var why: String = station.add_phase()
+				if why != "":
+					show_message(why)
+				_refresh_station())
+			row.add_child(b)
+		_station_list.add_child(row)
+	_refresh_station_job()
+
+
+func _refresh_generator() -> void:
+	var info := Label.new()
+	info.text = "Da energía a la recicladora. Cada fabricación gasta tantos segundos de energía como dura."
+	info.autowrap_mode = TextServer.AUTOWRAP_WORD
+	info.custom_minimum_size.x = 680
+	info.add_theme_font_size_override("font_size", 18)
+	_station_list.add_child(info)
+	var per: Dictionary = DB.bal("generator_fuel", {"carbon": 300, "madera": 90})
+	for fid in per:
+		var row := HBoxContainer.new()
+		row.add_theme_constant_override("separation", 12)
+		row.add_child(_row_icon(str(fid)))
+		var lbl := Label.new()
+		lbl.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		lbl.add_theme_font_size_override("font_size", 19)
+		lbl.text = "Echar %s  (+%s de energía)\n   Tienes %d" % [DB.item_name(str(fid)).to_lower(), _time_text(float(per[fid])), GS.count(str(fid))]
+		row.add_child(lbl)
+		var b := Button.new()
+		b.text = "Echar"
+		b.custom_minimum_size = Vector2(150, 56)
+		b.disabled = GS.count(str(fid)) <= 0
+		var item_id := str(fid)
+		b.pressed.connect(func():
+			var why: String = station.add_fuel(item_id)
+			if why != "":
+				show_message(why)
+			_refresh_station())
+		row.add_child(b)
+		_station_list.add_child(row)
+	_refresh_station_job()
 
 
 # ---------------------------------------------------------------- gimnasio

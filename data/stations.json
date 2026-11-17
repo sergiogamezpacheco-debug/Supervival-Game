@@ -1,10 +1,17 @@
 {
   "banco_trabajo": {"name": "Banco de trabajo", "desc": "Armas y herramientas. Nivel 2: hierro.", "levels": [{"cost": {"madera": 15, "piedra": 10}}, {"cost": {"tablon": 10, "bloque_piedra": 6, "lingote_hierro": 2}}]},
-  "carpinteria": {"name": "Banco de carpintería", "desc": "Madera → tablones.", "levels": [{"cost": {"madera": 20, "piedra": 6}}]},
+  "carpinteria": {"name": "Banco de carpintería", "desc": "Troncos → tablones.", "levels": [{"cost": {"madera": 20, "piedra": 6}}]},
   "cantero": {"name": "Mesa de cantería", "desc": "Piedra → bloques.", "levels": [{"cost": {"madera": 12, "piedra": 20}}]},
-  "hoguera": {"name": "Hoguera", "desc": "Cocinar carne.", "levels": [{"cost": {"madera": 6, "piedra": 4}}]},
+  "hoguera": {"name": "Hoguera", "desc": "Cocinar carne y hervir comida.", "levels": [{"cost": {"madera": 6, "piedra": 4}}]},
   "horno": {"name": "Horno de fundición", "desc": "Mineral → lingotes.", "levels": [{"cost": {"bloque_piedra": 10, "madera": 10}}]},
   "mesa_costura": {"name": "Mesa de costura", "desc": "Vendas, ropa y mochilas. Nivel 2: piel; nivel 3: mochila táctica.", "levels": [{"cost": {"tablon": 8, "fibra": 10}}, {"cost": {"tablon": 12, "cuerda": 6, "lingote_hierro": 2}}, {"cost": {"tablon": 16, "lingote_hierro": 6, "cuerda": 8, "piel": 6}}]},
   "cofre": {"name": "Cofre", "desc": "Guarda objetos a salvo.", "levels": [{"cost": {"madera": 12}, "storage": 12}, {"cost": {"tablon": 10, "cuerda": 2}, "storage": 20}]},
-  "gimnasio": {"name": "Gimnasio", "desc": "Entrena fuerza y resistencia más rápido.", "levels": [{"cost": {"madera": 20, "piedra": 12, "cuerda": 4}, "gain": 0.03, "cooldown": 90}, {"cost": {"tablon": 10, "lingote_hierro": 4, "cuerda": 4}, "gain": 0.05, "cooldown": 60}]}
+  "gimnasio": {"name": "Gimnasio", "desc": "Entrena fuerza y resistencia más rápido.", "levels": [{"cost": {"madera": 20, "piedra": 12, "cuerda": 4}, "gain": 0.03, "cooldown": 90}, {"cost": {"tablon": 10, "lingote_hierro": 4, "cuerda": 4}, "gain": 0.05, "cooldown": 60}]},
+  "banco_armas": {"name": "Banco de armas", "desc": "Armas cuerpo a cuerpo y pólvora.", "levels": [{"cost": {}}], "phases": [{"name": "Mesa de metal", "cost": {"tablon": 10, "lingote_hierro": 4}}, {"name": "Tornillo de banco y herramientas", "cost": {"lingote_hierro": 4, "componentes": 2, "cuerda": 2}}]},
+  "recolector_agua": {"name": "Recolector de agua", "desc": "Junta agua sola; con lluvia, cuatro veces más rápido.", "levels": [{"cost": {"tablon": 8, "lingote_hierro": 1, "cuerda": 2}, "capacity": 100, "rate": 20}]},
+  "secadero": {"name": "Secadero de alimentos", "desc": "Carne seca: llena mucho y no necesita fuego.", "levels": [{"cost": {"madera": 8, "cuerda": 3}}]},
+  "huerto": {"name": "Huerto", "desc": "Cultiva bayas, setas y fibra. Con recolector de agua crece el doble de rápido.", "levels": [{"cost": {}}], "phases": [{"name": "Cajón de madera", "cost": {"tablon": 6, "madera": 4}}, {"name": "Tierra y abono", "cost": {"fibra": 10, "piedra": 6, "baya": 2}}]},
+  "mesa_medica": {"name": "Mesa médica", "desc": "Vendas, botiquines y antídotos.", "levels": [{"cost": {"tablon": 8, "tela": 6, "lingote_hierro": 2}}]},
+  "generador": {"name": "Generador", "desc": "Da energía a la recicladora. Funciona con carbón o troncos.", "levels": [{"cost": {}}], "phases": [{"name": "Chasis", "cost": {"lingote_hierro": 4, "tablon": 2}}, {"name": "Motor", "cost": {"lingote_hierro": 4, "componentes": 4, "lingote_cobre": 2}}, {"name": "Depósito y escape", "cost": {"lingote_hierro": 2, "componentes": 2}}]},
+  "recicladora": {"name": "Recicladora", "desc": "Saca componentes y metal de la chatarra. Necesita el generador.", "power": true, "levels": [{"cost": {}}], "phases": [{"name": "Estructura", "cost": {"lingote_hierro": 6, "tablon": 4}}, {"name": "Tolva trituradora", "cost": {"lingote_hierro": 4, "chatarra": 10}}, {"name": "Cinta y motor", "cost": {"componentes": 4, "cuero": 2, "lingote_cobre": 2}}]}
 }

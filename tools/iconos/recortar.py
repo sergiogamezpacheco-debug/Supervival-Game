@@ -1,5 +1,6 @@
 # Recorta los iconos de los diseños del usuario (láminas "low poly pack") y quita el fondo.
-#   python3 recortar.py <lamina_materiales.jpg> <lamina_objetos.jpg> <salida_dir>
+#   python3 recortar.py docs/diseno_materiales.jpg docs/diseno_objetos.jpg docs/diseno_estructuras.jpg assets/icons/items
+#   python3 recortar.py --contorno <png renderizados>
 # Fondo: píxeles oscuros y azulados conectados al borde del recorte. Se guarda PNG 128x128.
 import sys
 import numpy as np
@@ -11,6 +12,9 @@ MATERIALES = {  # id: (x, y, w, h)
     "chatarra": (660, 200, 210, 150), "tablon": (40, 440, 210, 150), "bloque_piedra": (270, 440, 170, 150),
     "lingote_hierro": (470, 470, 180, 120), "lingote_cobre": (675, 470, 180, 120), "tela": (30, 780, 220, 130),
     "cuero": (255, 775, 210, 150), "polvora": (490, 750, 140, 180), "componentes": (675, 735, 200, 200),
+}
+ESTRUCTURAS = {  # objetos sacados de la lámina de estructuras
+    "carne_seca": (528, 478, 70, 60),
 }
 OBJETOS = {
     "hacha_piedra": (40, 180, 200, 170), "pico_piedra": (255, 180, 200, 170), "lanza": (460, 180, 200, 180),
@@ -54,6 +58,11 @@ def cut(img, box):
     alpha = Image.fromarray((fg * 255).astype(np.uint8)).filter(ImageFilter.GaussianBlur(0.8))
     rgba = Image.fromarray(a.astype(np.uint8)).convert("RGBA")
     rgba.putalpha(alpha)
+    return finish(rgba)
+
+
+def finish(rgba):
+    """Recorta al contenido, centra en 128x128 y pone el contorno oscuro común."""
     bb = rgba.getbbox()
     rgba = rgba.crop(bb)
     # cuadrado 128 con margen y contorno oscuro suave (como el resto de iconos)
@@ -94,8 +103,12 @@ def variantes(outdir):
 
 
 if __name__ == "__main__":
-    mat, obj, outdir = sys.argv[1:4]
-    for src, table in [(mat, MATERIALES), (obj, OBJETOS)]:
+    if sys.argv[1] == "--contorno":   # iconos renderizados en 3D (tools/item_render.tscn)
+        for f in sys.argv[2:]:
+            finish(Image.open(f).convert("RGBA")).save(f)
+        sys.exit()
+    mat, obj, est, outdir = sys.argv[1:5]
+    for src, table in [(mat, MATERIALES), (obj, OBJETOS), (est, ESTRUCTURAS)]:
         img = Image.open(src)
         for k, box in table.items():
             cut(img, box).save(f"{outdir}/{k}.png")

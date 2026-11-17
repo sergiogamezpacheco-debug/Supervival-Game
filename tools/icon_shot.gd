@@ -27,4 +27,26 @@ func _ready() -> void:
 		await get_tree().process_frame
 	await RenderingServer.frame_post_draw
 	get_viewport().get_texture().get_image().save_png(out + "/inventario_iconos.png")
+	world.hud.close_panels()
+	# Panel de obra por fases y panel de recetas con materiales
+	for id in ["lingote_hierro", "tablon", "componentes", "lingote_cobre", "chatarra", "carne_cruda", "carbon"]:
+		GS.add_item(id, 12)
+	var base: Node3D = world.base
+	var pp := Vector3(30, 0, 30)
+	var gen: Node3D = base.place("generador", Vector2i(2, 4), 0, 0, pp)
+	gen.add_phase()
+	world.hud.open_station(gen)
+	for i in 10:
+		await get_tree().process_frame
+	await RenderingServer.frame_post_draw
+	get_viewport().get_texture().get_image().save_png(out + "/panel_obra.png")
+	world.hud.close_panels()
+	GS.add_item("cuerda", 4)
+	var arm: Node3D = base.place("banco_armas", Vector2i(-2, 4), 0, 0, pp)
+	arm.add_phase()
+	world.hud.open_station(arm)
+	for i in 10:
+		await get_tree().process_frame
+	await RenderingServer.frame_post_draw
+	get_viewport().get_texture().get_image().save_png(out + "/panel_banco_armas.png")
 	get_tree().quit()

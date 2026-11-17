@@ -82,6 +82,14 @@
     "food": 28,
     "desc": "Quita mucha hambre."
   },
+  "carne_seca": {
+    "name": "Carne seca",
+    "type": "consumable",
+    "stack": 20,
+    "food": 35,
+    "water": -2,
+    "desc": "Tiras de carne secadas al aire. Llenan mucho, pero dan algo de sed."
+  },
   "venda": {
     "name": "Venda",
     "type": "consumable",
@@ -89,6 +97,22 @@
     "heal": 25,
     "desc": "Cura 25 de vida y el veneno.",
     "cure_poison": true
+  },
+  "botiquin": {
+    "name": "Botiquín",
+    "type": "consumable",
+    "stack": 5,
+    "heal": 60,
+    "cure_poison": true,
+    "desc": "Cura 60 de vida y el veneno."
+  },
+  "antidoto": {
+    "name": "Antídoto",
+    "type": "consumable",
+    "stack": 10,
+    "heal": 5,
+    "cure_poison": true,
+    "desc": "Quita el veneno al momento (víboras, purulentos)."
   },
   "hacha_piedra": {
     "name": "Hacha de piedra",

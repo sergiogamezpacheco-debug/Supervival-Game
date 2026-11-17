@@ -53,5 +53,12 @@
   "dodge_cost": 22,
   "dodge_time": 0.32,
   "dodge_speed": 3.2,
-  "dodge_cooldown": 0.9
+  "dodge_cooldown": 0.9,
+  "generator_fuel": {
+    "carbon": 300,
+    "madera": 90
+  },
+  "generator_max": 3600,
+  "garden_water_mult": 0.5,
+  "collector_rain_mult": 4.0
 }

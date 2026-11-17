@@ -80,8 +80,8 @@
     "id": "machete",
     "result": "machete",
     "qty": 1,
-    "station": "banco_trabajo",
-    "level": 2,
+    "station": "banco_armas",
+    "level": 1,
     "time": 25,
     "cost": {
       "lingote_hierro": 4,
@@ -197,8 +197,8 @@
     "id": "polvora",
     "result": "polvora",
     "qty": 2,
-    "station": "banco_trabajo",
-    "level": 2,
+    "station": "banco_armas",
+    "level": 1,
     "time": 25,
     "cost": {
       "carbon": 2,
@@ -358,6 +358,121 @@
       "cuerda": 6,
       "chatarra": 6,
       "lingote_hierro": 2
+    }
+  },
+  {
+    "id": "carne_seca",
+    "result": "carne_seca",
+    "qty": 1,
+    "station": "secadero",
+    "level": 1,
+    "time": 120,
+    "cost": {
+      "carne_cruda": 2
+    }
+  },
+  {
+    "id": "cultivo_bayas",
+    "result": "baya",
+    "qty": 6,
+    "station": "huerto",
+    "level": 1,
+    "time": 600,
+    "cost": {
+      "baya": 2
+    }
+  },
+  {
+    "id": "cultivo_setas",
+    "result": "seta",
+    "qty": 4,
+    "station": "huerto",
+    "level": 1,
+    "time": 900,
+    "cost": {
+      "seta": 1
+    }
+  },
+  {
+    "id": "cultivo_fibra",
+    "result": "fibra",
+    "qty": 8,
+    "station": "huerto",
+    "level": 1,
+    "time": 300,
+    "cost": {
+      "fibra": 2
+    }
+  },
+  {
+    "id": "venda_medica",
+    "result": "venda",
+    "qty": 2,
+    "station": "mesa_medica",
+    "level": 1,
+    "time": 10,
+    "cost": {
+      "tela": 2,
+      "fibra": 1
+    }
+  },
+  {
+    "id": "botiquin",
+    "result": "botiquin",
+    "qty": 1,
+    "station": "mesa_medica",
+    "level": 1,
+    "time": 40,
+    "cost": {
+      "venda": 2,
+      "seta": 2,
+      "tela": 1
+    }
+  },
+  {
+    "id": "antidoto",
+    "result": "antidoto",
+    "qty": 1,
+    "station": "mesa_medica",
+    "level": 1,
+    "time": 30,
+    "cost": {
+      "seta": 2,
+      "baya": 2,
+      "azufre": 1
+    }
+  },
+  {
+    "id": "reciclar_componentes",
+    "result": "componentes",
+    "qty": 2,
+    "station": "recicladora",
+    "level": 1,
+    "time": 30,
+    "cost": {
+      "chatarra": 4
+    }
+  },
+  {
+    "id": "reciclar_hierro",
+    "result": "lingote_hierro",
+    "qty": 1,
+    "station": "recicladora",
+    "level": 1,
+    "time": 40,
+    "cost": {
+      "chatarra": 3
+    }
+  },
+  {
+    "id": "reciclar_cobre",
+    "result": "lingote_cobre",
+    "qty": 1,
+    "station": "recicladora",
+    "level": 1,
+    "time": 40,
+    "cost": {
+      "componentes": 2
     }
   }
 ]

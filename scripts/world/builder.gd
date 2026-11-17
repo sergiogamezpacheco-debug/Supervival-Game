@@ -402,6 +402,9 @@ static func structure_mesh(kind: String, color: Color) -> Node3D:
 
 
 static func station_mesh(kind: String, level: int) -> Node3D:
+	var made := StationModels.make(kind, level)   # modelos según la lámina de estructuras
+	if made != null:
+		return made
 	var root := Node3D.new()
 	var wood := Color("8b5a2b")
 	var stone := Color("85837d")

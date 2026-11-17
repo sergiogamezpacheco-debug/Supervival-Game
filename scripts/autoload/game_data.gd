@@ -110,6 +110,19 @@ func structure_tier(id: String, tier: int) -> Dictionary:
 	return {}
 
 
+## Fases de obra de una estación grande (vacío si se construye de una vez).
+func station_phases(id: String) -> Array:
+	return stations.get(id, {}).get("phases", [])
+
+
+## Lo que cuesta colocarla: la primera fase si va por fases, si no el nivel 1.
+func station_build_cost(id: String) -> Dictionary:
+	var ph := station_phases(id)
+	if not ph.is_empty():
+		return ph[0].get("cost", {})
+	return station_level(id, 1).get("cost", {})
+
+
 func station_level(id: String, level: int) -> Dictionary:
 	var levels: Array = stations.get(id, {}).get("levels", [])
 	if level >= 1 and level <= levels.size():
