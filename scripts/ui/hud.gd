@@ -38,6 +38,7 @@ var _settings_panel: PanelContainer
 var _newgame_btn: Button
 var settings_controls: Dictionary = {}
 var _clock_icon: TextureRect
+var location_label: Label
 var _clock_label: Label
 var _rain_icon: TextureRect
 var _craft_panel: PanelContainer
@@ -308,6 +309,20 @@ func _build_controls() -> void:
 	_rain_icon.texture = DB.ui_icon("lluvia")
 	ch.add_child(_rain_icon)
 	_root.add_child(clock)
+	# Zona en la que estás, debajo del reloj
+	location_label = Label.new()
+	location_label.anchor_left = 0.5
+	location_label.anchor_right = 0.5
+	location_label.offset_left = -160
+	location_label.offset_right = 160
+	location_label.offset_top = 62
+	location_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	location_label.add_theme_font_size_override("font_size", 22)
+	location_label.add_theme_color_override("font_color", Color("f3ead2"))
+	location_label.add_theme_color_override("font_outline_color", Color(0, 0, 0, 0.8))
+	location_label.add_theme_constant_override("outline_size", 6)
+	location_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_root.add_child(location_label)
 
 	var side := VBoxContainer.new()
 	side.anchor_left = 1.0
@@ -1285,6 +1300,8 @@ func set_status(t: String) -> void:
 
 func set_location(id: String) -> void:
 	location = id
+	if location_label:
+		location_label.text = str(DB.maps.get(id, {}).get("name", id))
 	# Solo se construye en el refugio.
 	if build_btn:
 		build_btn.visible = DB.maps.get(id, {}).get("base_half", 0) > 0

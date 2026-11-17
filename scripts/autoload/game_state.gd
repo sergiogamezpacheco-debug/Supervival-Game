@@ -18,6 +18,7 @@ var dead := false
 var time_offset := 0.0         # solo para tests: adelanta el reloj
 var poison := 0.0              # segundos de veneno que quedan
 var current_map := "refugio"   # zona en la que está el jugador
+var _launched := false          # ya se cargó la partida una vez desde que se abrió el juego
 var maps_state: Dictionary = {} # estado guardado de cada zona (refugio, bolsas…)
 # Aspecto del superviviente (se elige al crear el personaje)
 var look := {"sex": "m", "skin": 1, "hair": 1, "hair_color": 1, "eyes": 0, "eye_color": 0, "nose": 0, "mouth": 1}
@@ -826,4 +827,12 @@ func load_game() -> Dictionary:
 	current_map = str(parsed.get("current_map", "refugio"))
 	if not DB.maps.has(current_map):
 		current_map = "refugio"
+	# Al abrir el juego siempre se empieza en el refugio (la zona en la que estabas se guarda)
+	if not _launched:
+		_launched = true
+		if current_map != "refugio":
+			var w: Dictionary = maps_state.get("refugio", {})
+			w.erase("player")
+			maps_state["refugio"] = w
+			current_map = "refugio"
 	return maps_state.get(current_map, {})

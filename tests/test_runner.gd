@@ -599,6 +599,24 @@ func test_shelter_structures() -> void:
 		if e.get("id", "") == "generador" and e.get("key", "") == gen.key:
 			saved_fuel = float(e["fuel"])
 	check(saved_stage == 1 and int(saved_fuel) == 270, "se guardan la fase y el combustible")
+	check(world.hud.location_label.text == "Refugio", "en pantalla pone en qué zona estás")
+
+	# Al abrir el juego se empieza siempre en el refugio
+	GS.current_map = "bosque"
+	GS.save_game({"map": "bosque", "player": [5, 5]})
+	GS._launched = false
+	GS.load_game()
+	check(GS.current_map == "refugio", "al abrir el juego apareces en el refugio")
+	GS.current_map = "bosque"
+	GS.save_game({"map": "bosque", "player": [5, 5]})
+	GS.load_game()
+	check(GS.current_map == "bosque", "al viajar sí se carga la zona de destino")
+	DirAccess.remove_absolute(ProjectSettings.globalize_path(GS.save_path))
+	GS.new_game()
+
+	# El APK pide permiso de vibración (sin él, Android cierra el juego al vibrar)
+	var presets := FileAccess.get_file_as_string("res://export_presets.cfg")
+	check(presets.contains("permissions/vibrate=true"), "el APK tiene permiso de vibración")
 	world.queue_free()
 	await _frames(2)
 
