@@ -3,61 +3,71 @@
     "name": "Troncos",
     "type": "material",
     "stack": 50,
-    "desc": "Troncos de pino. Base de casi todo."
+    "desc": "Troncos de pino. Base de casi todo.",
+    "weight": 0.3
   },
   "piedra": {
     "name": "Piedra bruta",
     "type": "material",
     "stack": 50,
-    "desc": "Piedra suelta para herramientas y estaciones."
+    "desc": "Piedra suelta para herramientas y estaciones.",
+    "weight": 0.4
   },
   "fibra": {
     "name": "Fibra vegetal",
     "type": "material",
     "stack": 50,
-    "desc": "Hierba seca para cuerdas y vendas."
+    "desc": "Hierba seca para cuerdas y vendas.",
+    "weight": 0.05
   },
   "tela": {
     "name": "Tela",
     "type": "material",
     "stack": 30,
-    "desc": "Jirones de ropa de los infectados."
+    "desc": "Jirones de ropa de los infectados.",
+    "weight": 0.15
   },
   "tablon": {
     "name": "Tablón",
     "type": "material",
     "stack": 50,
-    "desc": "Madera trabajada en el banco de carpintería."
+    "desc": "Madera trabajada en el banco de carpintería.",
+    "weight": 0.3
   },
   "bloque_piedra": {
     "name": "Bloque de piedra",
     "type": "material",
     "stack": 50,
-    "desc": "Piedra tallada en la mesa de cantería."
+    "desc": "Piedra tallada en la mesa de cantería.",
+    "weight": 0.5
   },
   "cuerda": {
     "name": "Cuerda",
     "type": "material",
     "stack": 30,
-    "desc": "Fibra trenzada."
+    "desc": "Fibra trenzada.",
+    "weight": 0.2
   },
   "piel": {
     "name": "Piel",
     "type": "material",
     "stack": 30,
-    "desc": "Piel de animal salvaje."
+    "desc": "Piel de animal salvaje.",
+    "weight": 0.3
   },
   "mineral_hierro": {
     "name": "Mena de hierro",
     "type": "material",
     "stack": 50,
-    "desc": "Se funde en el horno."
+    "desc": "Se funde en el horno.",
+    "weight": 0.5
   },
   "lingote_hierro": {
     "name": "Lingote de hierro",
     "type": "material",
     "stack": 50,
-    "desc": "Metal para herramientas y estructuras de metal."
+    "desc": "Metal para herramientas y estructuras de metal.",
+    "weight": 0.4
   },
   "baya": {
     "name": "Bayas",
@@ -65,7 +75,8 @@
     "stack": 20,
     "food": 8,
     "water": 3,
-    "desc": "Quitan un poco de hambre y sed."
+    "desc": "Quitan un poco de hambre y sed.",
+    "weight": 0.05
   },
   "carne_cruda": {
     "name": "Carne cruda",
@@ -73,14 +84,16 @@
     "stack": 20,
     "food": 6,
     "heal": -5,
-    "desc": "Mejor cocinarla en la hoguera."
+    "desc": "Mejor cocinarla en la hoguera.",
+    "weight": 0.3
   },
   "carne_asada": {
     "name": "Carne asada",
     "type": "consumable",
     "stack": 20,
     "food": 28,
-    "desc": "Quita mucha hambre."
+    "desc": "Quita mucha hambre.",
+    "weight": 0.25
   },
   "carne_seca": {
     "name": "Carne seca",
@@ -88,7 +101,8 @@
     "stack": 20,
     "food": 35,
     "water": -2,
-    "desc": "Tiras de carne secadas al aire. Llenan mucho, pero dan algo de sed."
+    "desc": "Tiras de carne secadas al aire. Llenan mucho, pero dan algo de sed.",
+    "weight": 0.1
   },
   "venda": {
     "name": "Venda",
@@ -96,7 +110,8 @@
     "stack": 10,
     "heal": 25,
     "desc": "Cura 25 de vida y el veneno.",
-    "cure_poison": true
+    "cure_poison": true,
+    "weight": 0.05
   },
   "botiquin": {
     "name": "Botiquín",
@@ -104,7 +119,8 @@
     "stack": 5,
     "heal": 60,
     "cure_poison": true,
-    "desc": "Cura 60 de vida y el veneno."
+    "desc": "Cura 60 de vida y el veneno.",
+    "weight": 0.5
   },
   "antidoto": {
     "name": "Antídoto",
@@ -112,7 +128,8 @@
     "stack": 10,
     "heal": 5,
     "cure_poison": true,
-    "desc": "Quita el veneno al momento (víboras, purulentos)."
+    "desc": "Quita el veneno al momento (víboras, purulentos).",
+    "weight": 0.2
   },
   "hacha_piedra": {
     "name": "Hacha de piedra",
@@ -122,7 +139,8 @@
     "durability": 60,
     "gather_mult": 2,
     "stack": 1,
-    "desc": "Tala pinos más rápido."
+    "desc": "Tala pinos más rápido.",
+    "weight": 1.5
   },
   "pico_piedra": {
     "name": "Pico de piedra",
@@ -132,7 +150,8 @@
     "durability": 60,
     "gather_mult": 2,
     "stack": 1,
-    "desc": "Pica rocas y vetas de hierro."
+    "desc": "Pica rocas y vetas de hierro.",
+    "weight": 1.8
   },
   "hacha_hierro": {
     "name": "Hacha de hierro",
@@ -142,7 +161,8 @@
     "durability": 120,
     "gather_mult": 3,
     "stack": 1,
-    "desc": "Tala mucho más rápido."
+    "desc": "Tala mucho más rápido.",
+    "weight": 2.0
   },
   "pico_hierro": {
     "name": "Pico de hierro",
@@ -152,7 +172,8 @@
     "durability": 120,
     "gather_mult": 3,
     "stack": 1,
-    "desc": "Pica mucho más rápido."
+    "desc": "Pica mucho más rápido.",
+    "weight": 2.3
   },
   "lanza": {
     "name": "Lanza de madera",
@@ -160,7 +181,8 @@
     "damage": 24,
     "durability": 40,
     "stack": 1,
-    "desc": "Arma básica cuerpo a cuerpo."
+    "desc": "Arma básica cuerpo a cuerpo.",
+    "weight": 1.5
   },
   "garrote": {
     "name": "Garrote",
@@ -168,7 +190,8 @@
     "damage": 20,
     "durability": 70,
     "stack": 1,
-    "desc": "Pesado y resistente."
+    "desc": "Pesado y resistente.",
+    "weight": 1.8
   },
   "machete": {
     "name": "Machete",
@@ -176,7 +199,8 @@
     "damage": 34,
     "durability": 90,
     "stack": 1,
-    "desc": "Hoja de hierro afilada."
+    "desc": "Hoja de hierro afilada.",
+    "weight": 1.2
   },
   "seta": {
     "name": "Seta",
@@ -184,55 +208,64 @@
     "stack": 20,
     "food": 6,
     "water": 1,
-    "desc": "Seta del bosque. Comestible."
+    "desc": "Seta del bosque. Comestible.",
+    "weight": 0.05
   },
   "carbon": {
     "name": "Carbón",
     "type": "material",
     "stack": 50,
-    "desc": "Combustible para el horno: funde más rápido."
+    "desc": "Combustible para el horno: funde más rápido.",
+    "weight": 0.2
   },
   "chatarra": {
     "name": "Chatarra",
     "type": "material",
     "stack": 50,
-    "desc": "Restos metálicos. Se funden en el horno."
+    "desc": "Restos metálicos. Se funden en el horno.",
+    "weight": 0.3
   },
   "mineral_cobre": {
     "name": "Mena de cobre",
     "type": "material",
     "stack": 50,
-    "desc": "Roca verdosa de la cantera. Se funde en el horno."
+    "desc": "Roca verdosa de la cantera. Se funde en el horno.",
+    "weight": 0.5
   },
   "lingote_cobre": {
     "name": "Lingote de cobre",
     "type": "material",
     "stack": 50,
-    "desc": "Metal blando y buen conductor: cables y piezas finas."
+    "desc": "Metal blando y buen conductor: cables y piezas finas.",
+    "weight": 0.4
   },
   "cuero": {
     "name": "Cuero curtido",
     "type": "material",
     "stack": 30,
-    "desc": "Piel curtida. Más resistente para mochilas y equipo."
+    "desc": "Piel curtida. Más resistente para mochilas y equipo.",
+    "weight": 0.3
   },
   "azufre": {
     "name": "Azufre",
     "type": "material",
     "stack": 50,
-    "desc": "Polvo amarillo de la cantera. Con carbón, pólvora."
+    "desc": "Polvo amarillo de la cantera. Con carbón, pólvora.",
+    "weight": 0.2
   },
   "polvora": {
     "name": "Pólvora",
     "type": "material",
     "stack": 30,
-    "desc": "Carbón y azufre molidos. Para munición y explosivos."
+    "desc": "Carbón y azufre molidos. Para munición y explosivos.",
+    "weight": 0.1
   },
   "componentes": {
     "name": "Componentes",
     "type": "material",
     "stack": 30,
-    "desc": "Muelles, engranajes y cables. Se sacan de la chatarra."
+    "desc": "Muelles, engranajes y cables. Se sacan de la chatarra.",
+    "weight": 0.2
   },
   "gorra": {
     "name": "Gorra",
@@ -242,7 +275,8 @@
     "model": "gorra",
     "armor": 2,
     "durability": 80,
-    "desc": "Protege del sol. Poca defensa."
+    "desc": "Protege del sol. Poca defensa.",
+    "weight": 0.1
   },
   "casco_obra": {
     "name": "Casco de obra",
@@ -252,7 +286,8 @@
     "model": "casco_obra",
     "armor": 8,
     "durability": 160,
-    "desc": "Casco amarillo de la cantera. Aguanta golpes."
+    "desc": "Casco amarillo de la cantera. Aguanta golpes.",
+    "weight": 0.6
   },
   "camiseta": {
     "name": "Camiseta",
@@ -262,7 +297,8 @@
     "model": "camiseta",
     "armor": 2,
     "durability": 80,
-    "desc": "Mejor que ir a pecho descubierto."
+    "desc": "Mejor que ir a pecho descubierto.",
+    "weight": 0.2
   },
   "chaqueta_piel": {
     "name": "Chaqueta de piel",
@@ -272,7 +308,8 @@
     "model": "chaqueta_piel",
     "armor": 8,
     "durability": 150,
-    "desc": "Piel curtida y cosida a mano."
+    "desc": "Piel curtida y cosida a mano.",
+    "weight": 1.2
   },
   "chaleco": {
     "name": "Chaleco táctico",
@@ -282,7 +319,8 @@
     "model": "chaleco",
     "armor": 15,
     "durability": 220,
-    "desc": "Placas de chatarra y bolsillos. La mejor defensa del torso."
+    "desc": "Placas de chatarra y bolsillos. La mejor defensa del torso.",
+    "weight": 2.5
   },
   "pantalon_tela": {
     "name": "Pantalón de tela",
@@ -292,7 +330,8 @@
     "model": "pantalon_tela",
     "armor": 2,
     "durability": 80,
-    "desc": "Pantalón sencillo."
+    "desc": "Pantalón sencillo.",
+    "weight": 0.4
   },
   "pantalon_cargo": {
     "name": "Pantalón cargo",
@@ -302,7 +341,8 @@
     "model": "pantalon_cargo",
     "armor": 5,
     "durability": 150,
-    "desc": "Reforzado en rodillas, con bolsillos laterales."
+    "desc": "Reforzado en rodillas, con bolsillos laterales.",
+    "weight": 0.7
   },
   "zapatillas": {
     "name": "Zapatillas",
@@ -313,7 +353,8 @@
     "armor": 1,
     "durability": 90,
     "speed": 0.06,
-    "desc": "Ligeras: corres un poco más rápido."
+    "desc": "Ligeras: corres un poco más rápido.",
+    "weight": 0.5
   },
   "botas": {
     "name": "Botas de piel",
@@ -323,7 +364,8 @@
     "model": "botas",
     "armor": 4,
     "durability": 160,
-    "desc": "Resistentes y con caña alta."
+    "desc": "Resistentes y con caña alta.",
+    "weight": 1.2
   },
   "guantes": {
     "name": "Guantes de trabajo",
@@ -334,7 +376,8 @@
     "armor": 2,
     "durability": 110,
     "gather": 1,
-    "desc": "Protegen las manos: +1 al recolectar."
+    "desc": "Protegen las manos: +1 al recolectar.",
+    "weight": 0.2
   },
   "mochila": {
     "name": "Mochila de lona",
@@ -343,7 +386,9 @@
     "slot": "espalda",
     "model": "mochila",
     "bag_slots": 8,
-    "desc": "8 huecos más. Con saco de dormir."
+    "desc": "8 huecos más. Con saco de dormir.",
+    "weight": 0.8,
+    "carry": 10
   },
   "mochila_excursion": {
     "name": "Mochila de excursión",
@@ -352,7 +397,9 @@
     "slot": "espalda",
     "model": "mochila_excursion",
     "bag_slots": 16,
-    "desc": "16 huecos más. Bolsillos laterales."
+    "desc": "16 huecos más. Bolsillos laterales.",
+    "weight": 1.2,
+    "carry": 20
   },
   "mochila_tactica": {
     "name": "Mochila táctica",
@@ -361,6 +408,8 @@
     "slot": "espalda",
     "model": "mochila_tactica",
     "bag_slots": 24,
-    "desc": "24 huecos más. Cinchas y placas."
+    "desc": "24 huecos más. Cinchas y placas.",
+    "weight": 1.6,
+    "carry": 30
   }
 }

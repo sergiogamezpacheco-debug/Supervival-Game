@@ -72,7 +72,13 @@ func action_label() -> String:
 	return "Registrar"
 
 
+var _xp_given := false
+
+
 func interact(_by: Node3D) -> void:
+	if not _xp_given and not is_chest() and not is_empty():
+		_xp_given = true
+		GS.add_xp(int(DB.xp_value("container_first", 3)))
 	get_tree().call_group("hud", "open_station", self)
 
 

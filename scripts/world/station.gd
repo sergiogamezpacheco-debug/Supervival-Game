@@ -94,8 +94,10 @@ func add_phase() -> String:
 	stage += 1
 	_rebuild()
 	SFX.play("fabricar")
+	GS.add_xp(int(DB.xp_value("build_phase", 10)))
 	if is_built():
 		GS.message.emit("¡%s terminado!" % DB.station_name(id))
+		GS.add_xp(int(DB.xp_value("build_station", 20)))
 	else:
 		GS.message.emit("Fase %d de %d hecha" % [stage, phases().size()])
 	return ""
@@ -242,6 +244,8 @@ func start(recipe_id: String) -> String:
 		return "Esto es un cofre"
 	if not is_built():
 		return "Termina antes la obra"
+	if GS.level < DB.recipe_unlock(DB.recipe(recipe_id)):
+		return "Se desbloquea en el nivel %d" % DB.recipe_unlock(DB.recipe(recipe_id))
 	if not job.is_empty():
 		return "La estación está ocupada"
 	var r := DB.recipe(recipe_id)
@@ -296,6 +300,7 @@ func collect() -> bool:
 		GS.message.emit("Inventario lleno: parte se ha perdido")
 	job = {}
 	GS.message.emit("+%d %s" % [qty - left, DB.item_name(result)])
+	GS.add_xp(GS.craft_xp(r))
 	return true
 
 

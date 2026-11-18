@@ -57,6 +57,8 @@ func interact(_player: Node3D) -> void:
 		GS.message.emit("Inventario lleno")
 		return
 	GS.message.emit("+%d %s" % [amount - left, DB.item_name(yield_id)])
+	var mult := float(DB.levels.get("xp", {}).get("gather_mult", {}).get(kind, 1))
+	GS.add_xp(maxi(1, int(round((amount - left) * DB.xp_value("gather", 1) * mult))))
 	SFX.play("talar" if needed == "axe" else ("picar" if needed == "pickaxe" else "recoger"), 0.0 if has_tool or needed == "" else -6.0)
 	if has_tool:
 		GS.wear_slot_item(tool_slot)

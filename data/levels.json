@@ -1,0 +1,63 @@
+{
+  "_doc": "Niveles 1-100. XP para pasar de L a L+1 = base + mult*(L-1)^exp, redondeado a 5; los pasos que llegan a un nivel redondo (10, 20…) cuestan un 15 % menos. Ver docs/niveles.md.",
+  "max_level": 100,
+  "curve": {
+    "base": 30,
+    "mult": 14,
+    "exp": 1.85,
+    "round_bonus": 0.85
+  },
+  "xp": {
+    "gather": 1,
+    "gather_mult": {
+      "veta_hierro": 2,
+      "veta_carbon": 2,
+      "veta_cobre": 2,
+      "veta_azufre": 2,
+      "chatarra": 1
+    },
+    "kill_default_per_hp": 0.25,
+    "craft_per_10s": 1,
+    "craft_max": 15,
+    "build_station": 20,
+    "build_phase": 10,
+    "build_piece": 2,
+    "upgrade_piece": 4,
+    "container_first": 3,
+    "zone_first": 40
+  },
+  "rewards": {
+    "5": {
+      "cuerda": 3,
+      "venda": 2
+    },
+    "10": {
+      "lingote_hierro": 4,
+      "tablon": 10,
+      "botiquin": 1
+    },
+    "15": {
+      "componentes": 3,
+      "cuero": 4
+    },
+    "20": {
+      "lingote_hierro": 8,
+      "componentes": 4,
+      "botiquin": 2
+    },
+    "25": {
+      "lingote_cobre": 4,
+      "polvora": 6
+    },
+    "30": {
+      "componentes": 8,
+      "botiquin": 3,
+      "lingote_hierro": 10
+    }
+  },
+  "reward_default_milestone": {
+    "lingote_hierro": 6,
+    "componentes": 5,
+    "botiquin": 2
+  }
+}

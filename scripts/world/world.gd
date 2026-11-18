@@ -98,6 +98,7 @@ func _ready() -> void:
 	camera.global_position = player.global_position + Vector3(0, 13.0, 8.5)
 	_update_camera(1.0)
 	GS.message.emit(str(map.get("name", "")))
+	GS.visit(map_id)
 	if not GS.created and not GS.testing:
 		open_creator()
 
@@ -549,6 +550,17 @@ func enemies_near(radius: float) -> bool:
 
 
 ## Viaja a otra zona. Devuelve "" si sale bien o el motivo si no.
+## Objeto clave que hay que llevar para viajar a una zona ("a|b" = cualquiera de ellos).
+func has_key_item(id: String) -> bool:
+	var k := str(DB.maps.get(id, {}).get("key_item", ""))
+	if k == "":
+		return true
+	for alt in k.split("|"):
+		if GS.count(alt) > 0:
+			return true
+	return false
+
+
 func travel_to(id: String) -> String:
 	var why := ""
 	if id == map_id:
@@ -557,6 +569,10 @@ func travel_to(id: String) -> String:
 		why = "Aún no se puede ir a ese lugar"
 	elif GS.dead:
 		why = "Estás muerto"
+	elif GS.level < DB.map_unlock(id):
+		why = "Necesitas nivel %d para ir allí" % DB.map_unlock(id)
+	elif not has_key_item(id):
+		why = "Para ir allí necesitas %s" % str(DB.maps[id].get("key_text", DB.maps[id].get("key_item", "")))
 	elif enemies_near(10.0):
 		why = "Hay enemigos cerca: aléjate antes de viajar"
 	if why != "":
@@ -625,6 +641,8 @@ func _on_creature_killed(c: Node3D) -> void:
 	else:
 		_respawns.append({"c": c, "t": float(c.data.get("respawn", 45))})
 	GS.message.emit("%s abatido" % str(c.data.get("name", "Enemigo")))
+	var xp_kill: int = int(c.data.get("xp", round(float(c.data.get("health", 20)) * DB.xp_value("kill_default_per_hp", 0.25))))
+	GS.add_xp(maxi(1, xp_kill))
 
 
 # ---------------------------------------------------------------- guardado

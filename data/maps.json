@@ -84,7 +84,8 @@
     "night": {
       "type": "infectado",
       "count": 2
-    }
+    },
+    "unlock": 1
   },
   "bosque": {
     "name": "Bosque de Pino Negro",
@@ -212,7 +213,8 @@
         "acechador"
       ],
       "count": 4
-    }
+    },
+    "unlock": 3
   },
   "cantera": {
     "name": "Cantera de Peñas Rojas",
@@ -354,6 +356,9 @@
     "night": {
       "type": "minero",
       "count": 3
-    }
+    },
+    "unlock": 8,
+    "key_item": "pico_piedra|pico_hierro",
+    "key_text": "un pico (para abrirte paso entre las rocas del camino)"
   }
 }

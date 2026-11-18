@@ -129,7 +129,16 @@ func _blocked_by_world(pos: Vector3, radius: float) -> bool:
 
 
 ## Devuelve "" si se puede colocar o el motivo por el que no.
+## Nivel que pide colocar esta pieza (0 si no hay bloqueo).
+static func unlock_level(id: String) -> int:
+	if DB.structures.has(id):
+		return DB.tier_unlock(id, 0)
+	return DB.station_unlock(id)
+
+
 func check_place(id: String, c: Vector2i, side: int, player_pos: Vector3) -> String:
+	if GS.level < unlock_level(id):
+		return "Se desbloquea en el nivel %d" % unlock_level(id)
 	if not in_base(c):
 		return "Fuera de la zona del refugio"
 	if is_edge_piece(id):
@@ -183,8 +192,13 @@ func place(id: String, c: Vector2i, side: int, rot: int, player_pos: Vector3) ->
 		n = _spawn_station(id, 1, ckey(c), rot, 1)
 	if n.is_in_group("station") and not n.is_built():
 		GS.message.emit("Obra empezada: %s (fase 1 de %d). Tócala para seguir." % [piece_name(id), n.phases().size()])
+		GS.add_xp(int(DB.xp_value("build_phase", 10)))
+	elif n.is_in_group("station"):
+		GS.message.emit("Construido: %s" % piece_name(id))
+		GS.add_xp(int(DB.xp_value("build_station", 20)))
 	else:
 		GS.message.emit("Construido: %s" % piece_name(id))
+		GS.add_xp(int(DB.xp_value("build_piece", 2)))
 	return n
 
 
@@ -260,6 +274,9 @@ func upgrade(n: Node3D) -> bool:
 	if cost.is_empty():
 		GS.message.emit("Ya está al máximo")
 		return false
+	if n.is_in_group("structure") and GS.level < DB.tier_unlock(n.id, n.tier + 1):
+		GS.message.emit("Se desbloquea en el nivel %d" % DB.tier_unlock(n.id, n.tier + 1))
+		return false
 	if not GS.pay(cost):
 		GS.message.emit("Faltan materiales")
 		return false
@@ -268,6 +285,7 @@ func upgrade(n: Node3D) -> bool:
 	else:
 		n.set_level(n.level + 1)
 	GS.message.emit("Mejorado: %s" % n.display_name())
+	GS.add_xp(int(DB.xp_value("upgrade_piece", 4)))
 	return true
 
 

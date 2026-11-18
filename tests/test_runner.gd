@@ -37,6 +37,8 @@ func _ready() -> void:
 	await test_base()
 	print("== Estructuras del refugio (obra por fases)")
 	await test_shelter_structures()
+	print("== Niveles y peso")
+	await test_levels_weight()
 	print("== Animales")
 	await test_animals()
 	print("== Viajes y zonas")
@@ -621,6 +623,171 @@ func test_shelter_structures() -> void:
 	await _frames(2)
 
 
+func test_levels_weight() -> void:
+	DirAccess.remove_absolute(ProjectSettings.globalize_path(GS.save_path))
+	GS.new_game()
+	GS.forced_rain = 0
+
+	# Curva: rápida al principio, cada vez más cara, hasta el 100
+	check(DB.max_level() == 100 and DB.xp_to_next(1) == 30, "del 1 al 2 bastan 30 de experiencia")
+	var total := 0
+	var to5 := 0
+	var rising := true
+	for lv in range(1, 100):
+		total += DB.xp_to_next(lv)
+		if lv == 4:
+			to5 = total
+		if lv > 1 and (lv + 1) % 10 != 0 and lv % 10 != 0 and DB.xp_to_next(lv) <= DB.xp_to_next(lv - 1):
+			rising = false
+	check(to5 <= 300, "llegar al nivel 5 cuesta poco (%d XP)" % to5)
+	check(rising and total > 1500000, "cada nivel cuesta más y el 100 es muy largo (%d XP)" % total)
+	check(DB.xp_to_next(9) < (DB.xp_to_next(8) + DB.xp_to_next(10)) / 2, "los niveles redondos cuestan algo menos")
+
+	# Subir de nivel: cura, desbloquea y da recompensa
+	GS.level = 1
+	GS.xp = 0
+	GS.health = 40.0
+	var got: Array = []
+	var on_up := func(lv: int, unl: Array, _rw: Dictionary): got.append([lv, unl])
+	GS.leveled_up.connect(on_up)
+	GS.add_xp(30)
+	check(GS.level == 2 and GS.xp == 0 and GS.health == 100.0, "con 30 XP subes al 2 y recuperas la vida")
+	check(got.size() == 1 and "Cofre" in got[0][1] and "Garrote" in got[0][1], "al 2 se desbloquean el cofre y el garrote")
+	GS.level = 4
+	GS.xp = 0
+	var cuerdas := GS.count("cuerda")
+	GS.add_xp(DB.xp_to_next(4) + DB.xp_to_next(5) + 3)
+	check(GS.level == 6 and GS.xp == 3, "mucha XP de golpe sube varios niveles")
+	check(GS.count("cuerda") == cuerdas + 3, "el nivel 5 trae recompensa")
+	GS.leveled_up.disconnect(on_up)
+	check(DB.unlocks_at(3).has("Viaje: Bosque de Pino Negro") and DB.unlocks_at(8).has("Viaje: Cantera de Peñas Rojas"), "los viajes se desbloquean por nivel")
+	check(DB.next_unlock_level(25) == 0 or DB.next_unlock_level(25) > 25, "se sabe cuál es el próximo desbloqueo")
+
+	# Bloqueos
+	GS.level = 1
+	GS.add_item("pico_piedra", 1)
+	var world := await _new_world()
+	var base: Node3D = world.base
+	world.player.global_position = Vector3(30, 0, 30)
+	var pp := Vector3(30, 0, 30)
+	check(base.check_place("carpinteria", Vector2i(2, 2), 0, pp) == "Se desbloquea en el nivel 3", "la carpintería pide nivel 3")
+	_give(DB.station_build_cost("banco_trabajo"))
+	var bench: Node3D = _place_any(base, "banco_trabajo", pp)
+	check(bench != null, "el banco de trabajo está desde el nivel 1")
+	_give(DB.recipe("garrote")["cost"])
+	check(bench.start("garrote") == "Se desbloquea en el nivel 2", "el garrote pide nivel 2")
+	GS.level = 2
+	check(bench.start("garrote") == "", "en el nivel 2 ya se fabrica")
+	world.hud.open_station(bench)
+	await _pframes(2)
+	var locked_btn := false
+	for row in world.hud._station_list.get_children():
+		for c in row.get_children():
+			if c is Button and str(c.text).begins_with("Nivel "):
+				locked_btn = true
+	check(locked_btn, "las recetas bloqueadas dicen en qué nivel salen")
+	world.hud.close_panels()
+	_creatures_away()
+	check(world.travel_to("bosque") == "Necesitas nivel 3 para ir allí", "al bosque desde el nivel 3")
+	GS.level = 8
+	GS.remove_item("pico_piedra", GS.count("pico_piedra"))
+	check(world.travel_to("cantera").begins_with("Para ir allí necesitas"), "a la cantera hay que llevar un pico")
+
+	# Experiencia por jugar
+	GS.level = 10
+	GS.xp = 0
+	var tree: Node3D = null
+	for r in get_tree().get_nodes_in_group("resource"):
+		if r.kind.begins_with("pino") or r.kind == "arbol":
+			tree = r
+			break
+	if tree == null:
+		tree = get_tree().get_nodes_in_group("resource")[0]
+	GS.add_item("hacha_piedra", 1)
+	GS.add_item("pico_piedra", 1)
+	tree.interact(world.player)
+	check(GS.xp > 0, "recoger materiales da experiencia")
+	var x0 := GS.xp
+	var wolf: Node3D = world.CreatureScript.new()
+	wolf.setup("lobo")
+	wolf.home = Vector3(40, 0, 40)
+	wolf.position = wolf.home
+	world.add_child(wolf)
+	world._on_creature_killed(wolf)
+	check(GS.xp == x0 + 10, "abatir un lobo da 10 de experiencia")
+	var x1 := GS.xp
+	GS.visit("bosque")
+	GS.visit("bosque")
+	check(GS.xp == x1 + 40, "la primera visita a una zona da 40 (solo una vez)")
+	await _pframes(2)
+	check(world.hud._xp_label.text.begins_with("Nivel 10"), "el HUD enseña el nivel y la experiencia")
+	world.hud.open_levels()
+	await _pframes(2)
+	var lines := 0
+	for c in world.hud._levels_list.get_children():
+		if c is Label and str(c.text).begins_with("Nivel 12"):
+			lines += 1
+	check(world.hud._levels_panel.visible and lines == 1, "tocando el nivel se ven los próximos desbloqueos")
+	world.hud.close_panels()
+	GS.add_xp(GS.xp_needed())
+	await _pframes(2)
+	check(world.hud._levelup.visible and world.hud._levelup_title.text == "¡NIVEL 11!", "aviso grande al subir de nivel")
+
+	# Partidas antiguas sin nivel empiezan en el 12
+	var old := GS.to_dict()
+	old.erase("level")
+	old.erase("xp")
+	GS.from_dict(old)
+	check(GS.level == 12, "las partidas de antes empiezan en el nivel 12")
+
+	# Peso
+	var no_weight := 0
+	for id in DB.items:
+		if not DB.items[id].has("weight") or float(DB.items[id]["weight"]) <= 0.0:
+			no_weight += 1
+	check(no_weight == 0, "todos los objetos tienen peso")
+	GS.new_game()
+	check(is_equal_approx(GS.carry_capacity(), 35.0) and GS.carry_weight() == 0.0, "sin nada encima aguantas 35 kg")
+	check(is_equal_approx(GS.speed_factor(), 1.0), "sin carga vas a velocidad normal")
+	var light := GS.stamina_drain()
+	GS.add_item("piedra", 50)   # 20 kg
+	check(is_equal_approx(GS.carry_weight(), 20.0), "50 piedras pesan 20 kg")
+	check(GS.speed_factor() < 1.0 and GS.stamina_drain() > light, "con más de media carga vas más lento y te cansas antes")
+	GS.add_item("mochila", 1)
+	var mi := -1
+	for i in GS.slots.size():
+		if GS.slots[i] != null and GS.slots[i]["id"] == "mochila":
+			mi = i
+	GS.wear_slot(mi)
+	check(is_equal_approx(GS.carry_capacity(), 45.0), "la mochila deja llevar 10 kg más")
+	GS.add_item("piedra", 100)
+	check(GS.overloaded(), "con 150 piedras vas sobrecargado")
+	world.player.move_input = Vector2(1, 0)
+	world.hud.joystick.value = Vector2(1, 0)
+	GS.stamina = GS.max_stamina()
+	await _frames(3)
+	check(not world.player.running, "sobrecargado no puedes correr")
+	world.hud.joystick.value = Vector2.ZERO
+	world.player.move_input = Vector2.ZERO
+	# Ficha del inventario: peso del objeto y carga total
+	world.hud.close_panels()
+	world.hud._toggle(world.hud._inv_panel)
+	var pi := -1
+	for i in GS.slots.size():
+		if GS.slots[i] != null and GS.slots[i]["id"] == "piedra":
+			pi = i
+			break
+	world.hud._inv_panel.select_slot(pi)
+	await _pframes(2)
+	var inv: Control = world.hud._inv_panel
+	check(inv._d_weight.text.contains("0,4 kg"), "junto al nombre sale el peso (%s)" % inv._d_weight.text)
+	check(inv.load_label.text.begins_with("Carga total:") and inv.load_label.text.contains("sobrecarga"), "abajo sale la carga total")
+	world.hud.close_panels()
+	world.queue_free()
+	await _frames(2)
+	GS.new_game()
+
+
 func test_animals() -> void:
 	GS.new_game()
 	var world := await _new_world()
@@ -759,6 +926,7 @@ func test_travel() -> void:
 	_creatures_away()
 	GS.food = 100.0
 	GS.water = 100.0
+	GS.add_item("pico_piedra", 1)   # objeto clave para ir a la cantera
 	check(home.travel_to("cantera") == "", "viajar a la cantera")
 	home.queue_free()
 	await _frames(3)
@@ -911,7 +1079,7 @@ func test_survivor() -> void:
 	GS.physique["fuerza"] = 0.0
 	var drain_empty := GS.stamina_drain()
 	for i in GS.slots.size():
-		GS.slots[i] = GS.make_item("piedra", 1)
+		GS.slots[i] = GS.make_item("piedra", 15)   # 8 x 15 piedras = 48 kg (aguantas 35)
 	check(GS.stamina_drain() > drain_empty * 1.6, "correr con la mochila llena cansa más")
 	check(GS.speed_factor() < 1.0, "la mochila llena frena")
 	var drain_full := GS.stamina_drain()

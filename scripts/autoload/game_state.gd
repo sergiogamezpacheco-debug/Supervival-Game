@@ -6,6 +6,8 @@ signal stats_changed
 signal message(text: String)
 signal died
 signal look_changed            # ropa o físico: hay que rehacer el modelo
+signal xp_gained(amount: int)
+signal leveled_up(new_level: int, unlocks: Array, reward: Dictionary)
 
 var save_path := "user://save.json"
 
@@ -30,6 +32,9 @@ var worn: Dictionary = {}      # ranura -> objeto puesto ({"id","qty","dur"}) o 
 var created := false           # ya se ha creado el personaje (primer arranque)
 var player_name := "Superviviente"
 var stamina := 100.0           # aguante para correr
+var level := 1                 # nivel del superviviente (1-100)
+var xp := 0                    # experiencia dentro del nivel actual
+var visited: Dictionary = {}   # zonas ya visitadas (dan XP la primera vez)
 var train_ready: Dictionary = {} # ejercicio -> hora (unix) en que se puede volver a entrenar
 var testing := false           # los tests no muestran la pantalla de creación
 var pending_drop: Array = []
@@ -65,6 +70,10 @@ func new_game() -> void:
 	slots.clear()
 	slots.resize(int(DB.bal("inventory_slots", 20)))
 	hand = null
+	# En los tests todo está desbloqueado salvo que el test fije el nivel
+	level = DB.max_level() if testing else 1
+	xp = 0
+	visited = {"refugio": true}
 	reset_stats()
 	inventory_changed.emit()
 
@@ -244,6 +253,9 @@ func craft(recipe_id: String) -> bool:
 	var r := DB.recipe(recipe_id)
 	if r.is_empty() or str(r.get("station", "")) != "":
 		return false
+	if level < DB.recipe_unlock(r):
+		message.emit("Se desbloquea en el nivel %d" % DB.recipe_unlock(r))
+		return false
 	if not can_craft(r):
 		message.emit("Faltan materiales")
 		return false
@@ -260,7 +272,104 @@ func craft(recipe_id: String) -> bool:
 	if left > 0:
 		message.emit("Inventario lleno: se perdió parte del objeto")
 	message.emit("Fabricado: %s" % DB.item_name(result))
+	add_xp(craft_xp(r))
 	return true
+
+
+# ---------------------------------------------------------------- niveles
+
+## XP por fabricar: según lo que tarda la receta (las manuales dan 1).
+func craft_xp(r: Dictionary) -> int:
+	var t := float(r.get("time", 0))
+	return clampi(int(t / 10.0 * DB.xp_value("craft_per_10s", 1)), 1, int(DB.xp_value("craft_max", 15)))
+
+
+func has_level(lv: int) -> bool:
+	return level >= lv
+
+
+func xp_needed() -> int:
+	return DB.xp_to_next(level)
+
+
+func xp_progress() -> float:
+	if level >= DB.max_level():
+		return 1.0
+	return clampf(float(xp) / float(xp_needed()), 0.0, 1.0)
+
+
+## Suma experiencia y sube de nivel las veces que haga falta.
+func add_xp(amount: int) -> void:
+	if amount <= 0 or level >= DB.max_level():
+		return
+	xp += amount
+	xp_gained.emit(amount)
+	while level < DB.max_level() and xp >= xp_needed():
+		xp -= xp_needed()
+		level += 1
+		health = 100.0   # subir de nivel cura del todo
+		var reward := level_reward(level)
+		for id in reward:
+			var left := add_item(str(id), int(reward[id]))
+			if left > 0:
+				pending_drop.append(make_item(str(id), left))
+		SFX.play("nivel", 0.0, 0.0)
+		leveled_up.emit(level, DB.unlocks_at(level), reward)
+	if level >= DB.max_level():
+		xp = 0
+	stats_changed.emit()
+
+
+## Recompensa al llegar a un nivel: las de levels.json; cada 5 niveles algo siempre.
+func level_reward(lv: int) -> Dictionary:
+	var r: Dictionary = DB.levels.get("rewards", {})
+	if r.has(str(lv)):
+		return r[str(lv)]
+	if lv % 10 == 0:
+		return DB.levels.get("reward_default_milestone", {})
+	return {}
+
+
+## Primera visita a una zona.
+func visit(map_id: String) -> void:
+	if not visited.has(map_id):
+		visited[map_id] = true
+		add_xp(int(DB.xp_value("zone_first", 40)))
+
+
+# ------------------------------------------------------------------- peso
+
+func carry_weight() -> float:
+	var w := 0.0
+	for it in slots:
+		if it != null:
+			w += DB.weight(str(it["id"])) * int(it["qty"])
+	for k in worn:
+		if worn[k] != null:
+			w += DB.weight(str(worn[k]["id"]))
+	if hand != null:
+		w += DB.weight(str(hand["id"]))
+	return w
+
+
+## Lo que puedes llevar sin ir sobrecargado: base, fuerza y mochila.
+func carry_capacity() -> float:
+	var c := float(DB.bal("carry_base", 30.0)) + float(physique["fuerza"]) * float(DB.bal("carry_per_fuerza", 15.0))
+	for k in worn:
+		if worn[k] != null:
+			c += float(DB.item(str(worn[k]["id"])).get("carry", 0))
+	return c
+
+
+func overloaded() -> bool:
+	return load_ratio() > 1.0
+
+
+## Cuántos huecos de la mochila están ocupados (anillo del botón de inventario).
+func slot_fill() -> float:
+	if slots.is_empty():
+		return 0.0
+	return 1.0 - float(free_slots()) / float(slots.size())
 
 
 func use_slot(i: int) -> void:
@@ -653,31 +762,34 @@ func clock_text() -> String:
 # ------------------------------------------------------- físico y aguante
 
 ## Fracción de la mochila ocupada (0..1).
+## Peso que llevas respecto a lo que aguantas (1 = al límite).
 func load_ratio() -> float:
-	if slots.is_empty():
-		return 0.0
-	return 1.0 - float(free_slots()) / float(slots.size())
+	return carry_weight() / maxf(carry_capacity(), 1.0)
 
 
 func max_stamina() -> float:
 	return float(DB.bal("stamina_base", 100)) + float(physique["resistencia"]) * float(DB.bal("stamina_per_resistencia", 60))
 
 
-## Aguante que se gasta por segundo corriendo (más con la mochila llena).
+## Aguante que se gasta por segundo corriendo: más cuanto más peso llevas.
 func stamina_drain() -> float:
-	return float(DB.bal("stamina_drain", 14.0)) * (1.0 + load_ratio() * 0.8) * (1.0 - float(physique["resistencia"]) * 0.45)
+	return float(DB.bal("stamina_drain", 5.0)) * (1.0 + float(DB.bal("stamina_drain_load", 1.2)) * load_ratio()) * (1.0 - float(physique["resistencia"]) * 0.45)
 
 
-## Velocidad relativa: la carga frena salvo que tengas fuerza; las zapatillas ayudan.
+## Velocidad relativa: a partir de media carga vas más lento, y mucho más con sobrecarga.
+## La fuerza reduce el castigo; las zapatillas ayudan.
 func speed_factor() -> float:
 	var f := 1.0 + wear_bonus("speed")
-	var l := load_ratio()
-	if l > 0.75:
-		f -= 0.2 * (l - 0.75) / 0.25 * (1.0 - float(physique["fuerza"]) * 0.7)
-	return f
+	var r := load_ratio()
+	var pen := 0.0
+	if r > 0.5:
+		pen += minf(r - 0.5, 0.5) / 0.5 * 0.25
+	if r > 1.0:
+		pen += minf(r - 1.0, 0.7) * 0.5
+	pen *= 1.0 - float(physique["fuerza"]) * 0.5
+	return maxf(f - pen, 0.35)
 
 
-## Sube un poco una capacidad (cuanto más alta, más cuesta).
 func exercise(stat: String, amount: float) -> void:
 	if not physique.has(stat):
 		return
@@ -731,6 +843,9 @@ func to_dict() -> Dictionary:
 		"created": created,
 		"name": player_name,
 		"train_ready": train_ready,
+		"level": level,
+		"xp": xp,
+		"visited": visited,
 	}
 
 
@@ -786,6 +901,10 @@ func from_dict(d: Dictionary) -> void:
 	player_name = str(d.get("name", player_name))
 	for k in d.get("train_ready", {}):
 		train_ready[k] = float(d["train_ready"][k])
+	# Partidas de antes de los niveles: se empieza en el 12 para no perder lo que ya tenías
+	level = clampi(int(d.get("level", 12)), 1, DB.max_level())
+	xp = int(d.get("xp", 0))
+	visited = d.get("visited", {"refugio": true})
 	_resize_bag()
 	_sync_outfit()
 	health = float(d.get("health", health))

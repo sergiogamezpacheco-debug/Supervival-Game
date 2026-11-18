@@ -60,3 +60,13 @@ for k, chord in enumerate([(110, 164.8, 220, 261.6), (87.3, 174.6, 220, 261.6), 
 m[: int(SR * 0.6)] += m[int(SR * 16):int(SR * 16) + int(SR * 0.6)]
 save('musica', lp(m[: int(SR * 16)], 0.25), 0.5)
 print('ok')
+
+# subir de nivel: arpegio ascendente brillante (do-mi-sol-do)
+notes = [523.25, 659.25, 783.99, 1046.5]
+lvl = np.zeros(int(SR * 1.1))
+for i, f in enumerate(notes):
+    st = int(SR * 0.09 * i); n = int(SR * (0.6 if i == 3 else 0.35))
+    x = t(n / SR)
+    s_ = (np.sin(2 * np.pi * f * x) + 0.35 * np.sin(2 * np.pi * 2 * f * x) + 0.15 * np.sin(2 * np.pi * 3 * f * x)) * env(n, 0.004, 4.0 if i == 3 else 7.0)
+    lvl[st:st + n] += s_[: len(lvl) - st]
+save('nivel', lvl, 0.6)

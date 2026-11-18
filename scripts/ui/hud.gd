@@ -25,6 +25,15 @@ const InventoryScript := preload("res://scripts/ui/inventory_screen.gd")
 var joystick: Control
 var action_button: Control
 var _bars: Dictionary = {}
+var level_badge: Button
+var _xp_bar: ProgressBar
+var _xp_label: Label
+var _xp_pop: Label
+var _levelup: PanelContainer
+var _levelup_title: Label
+var _levelup_text: Label
+var _levels_panel: PanelContainer
+var _levels_list: VBoxContainer
 var _msg: Label
 var _msg_timer := 0.0
 var _pcts: Dictionary = {}
@@ -102,6 +111,8 @@ func _ready() -> void:
 	_build_chest_panel()
 	_build_map_panel()
 	_build_gym_panel()
+	_build_levels_panel()
+	_build_levelup_banner()
 	add_to_group("hud")
 
 	_msg = Label.new()
@@ -131,10 +142,13 @@ func _ready() -> void:
 	# El inventario ocupa toda la pantalla: va encima de todo (salvo los avisos).
 	_root.move_child(_map_panel, -1)
 	_root.move_child(_inv_panel, -1)
+	_root.move_child(_levelup, -1)
 	_root.move_child(_msg, -1)
 	GS.stats_changed.connect(_refresh_stats)
 	GS.inventory_changed.connect(_refresh_inventory)
 	GS.message.connect(show_message)
+	GS.xp_gained.connect(_on_xp)
+	GS.leveled_up.connect(_on_level_up)
 	_refresh_stats()
 	_refresh_inventory()
 
@@ -146,6 +160,57 @@ func _build_bars() -> void:
 	box.position = Vector2(20, 16)
 	box.add_theme_constant_override("separation", 6)
 	_root.add_child(box)
+	# Nivel: insignia redonda con anillo de experiencia y barra fina con los puntos
+	var lrow := HBoxContainer.new()
+	lrow.add_theme_constant_override("separation", 8)
+	level_badge = Button.new()
+	level_badge.flat = true
+	level_badge.custom_minimum_size = Vector2(56, 56)
+	level_badge.focus_mode = Control.FOCUS_NONE
+	level_badge.draw.connect(func():
+		var c := level_badge.size / 2.0
+		var r := minf(c.x, c.y) - 2.0
+		level_badge.draw_circle(c, r, Color(0.055, 0.07, 0.047, 0.9))
+		level_badge.draw_arc(c, r - 3.0, 0.0, TAU, 48, Color(0.91, 0.86, 0.72, 0.2), 5.0, true)
+		level_badge.draw_arc(c, r - 3.0, -PI / 2.0, -PI / 2.0 + TAU * GS.xp_progress(), 48, Color("e8b84a"), 5.0, true)
+		var f := level_badge.get_theme_default_font()
+		var txt := str(GS.level)
+		var fs := 24 if GS.level < 100 else 19
+		var w := f.get_string_size(txt, HORIZONTAL_ALIGNMENT_LEFT, -1, fs).x
+		level_badge.draw_string(f, Vector2(c.x - w / 2.0, c.y + fs * 0.36), txt, HORIZONTAL_ALIGNMENT_LEFT, -1, fs, Color("f3ead2")))
+	level_badge.pressed.connect(open_levels)
+	lrow.add_child(level_badge)
+	var lcol := VBoxContainer.new()
+	lcol.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	lcol.add_theme_constant_override("separation", 2)
+	_xp_label = Label.new()
+	_xp_label.add_theme_font_size_override("font_size", 17)
+	_xp_label.add_theme_color_override("font_outline_color", Color.BLACK)
+	_xp_label.add_theme_constant_override("outline_size", 5)
+	lcol.add_child(_xp_label)
+	var xrow := HBoxContainer.new()
+	_xp_bar = ProgressBar.new()
+	_xp_bar.custom_minimum_size = Vector2(176, 10)
+	_xp_bar.show_percentage = false
+	var xf := StyleBoxFlat.new()
+	xf.bg_color = Color("e8b84a")
+	xf.set_corner_radius_all(4)
+	var xb := StyleBoxFlat.new()
+	xb.bg_color = Color(0, 0, 0, 0.5)
+	xb.set_corner_radius_all(4)
+	_xp_bar.add_theme_stylebox_override("fill", xf)
+	_xp_bar.add_theme_stylebox_override("background", xb)
+	xrow.add_child(_xp_bar)
+	_xp_pop = Label.new()
+	_xp_pop.add_theme_font_size_override("font_size", 17)
+	_xp_pop.add_theme_color_override("font_color", Color("f6d27e"))
+	_xp_pop.add_theme_color_override("font_outline_color", Color.BLACK)
+	_xp_pop.add_theme_constant_override("outline_size", 5)
+	_xp_pop.modulate.a = 0.0
+	xrow.add_child(_xp_pop)
+	lcol.add_child(xrow)
+	lrow.add_child(lcol)
+	box.add_child(lrow)
 	for def in [["health", "vida", Color("d9443c")], ["food", "comida", Color("e09a3a")], ["water", "agua", Color("3a8fe0")], ["stamina", "energia", Color("d6c22e")]]:
 		var row := HBoxContainer.new()
 		row.add_theme_constant_override("separation", 8)
@@ -197,6 +262,158 @@ func _refresh_stats() -> void:
 	for k in ["health", "food", "water"]:
 		_pcts[k].text = "%d" % roundi(100.0 * _bars[k].value / maxf(_bars[k].max_value, 1.0))
 	_refresh_stamina()
+	_refresh_level()
+
+
+func _refresh_level() -> void:
+	if _xp_bar == null:
+		return
+	_xp_bar.value = GS.xp_progress() * 100.0
+	if GS.level >= DB.max_level():
+		_xp_label.text = "Nivel %d (máximo)" % GS.level
+	else:
+		_xp_label.text = "Nivel %d · %d/%d" % [GS.level, GS.xp, GS.xp_needed()]
+	level_badge.queue_redraw()
+
+
+var _xp_acc := 0
+var _xp_tween: Tween
+func _on_xp(amount: int) -> void:
+	_xp_acc += amount
+	_xp_pop.text = " +%d" % _xp_acc
+	_xp_pop.modulate.a = 1.0
+	if _xp_tween:
+		_xp_tween.kill()
+	_xp_tween = create_tween()
+	_xp_tween.tween_interval(1.2)
+	_xp_tween.tween_property(_xp_pop, "modulate:a", 0.0, 0.5)
+	_xp_tween.tween_callback(func(): _xp_acc = 0)
+	_refresh_level()
+
+
+# ------------------------------------------------------------------ niveles
+
+func _build_levelup_banner() -> void:
+	_levelup = PanelContainer.new()
+	_levelup.anchor_left = 0.5
+	_levelup.anchor_right = 0.5
+	_levelup.offset_left = -330
+	_levelup.offset_right = 330
+	_levelup.offset_top = 150
+	_levelup.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	var sb := StyleBoxFlat.new()
+	sb.bg_color = Color(0.07, 0.06, 0.03, 0.88)
+	sb.border_color = Color("e8b84a")
+	sb.set_border_width_all(3)
+	sb.set_corner_radius_all(18)
+	sb.set_content_margin_all(18)
+	_levelup.add_theme_stylebox_override("panel", sb)
+	var v := VBoxContainer.new()
+	v.alignment = BoxContainer.ALIGNMENT_CENTER
+	v.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_levelup.add_child(v)
+	_levelup_title = Label.new()
+	_levelup_title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_levelup_title.add_theme_font_size_override("font_size", 46)
+	_levelup_title.add_theme_color_override("font_color", Color("f6d27e"))
+	v.add_child(_levelup_title)
+	_levelup_text = Label.new()
+	_levelup_text.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_levelup_text.autowrap_mode = TextServer.AUTOWRAP_WORD
+	_levelup_text.add_theme_font_size_override("font_size", 21)
+	_levelup_text.add_theme_color_override("font_color", Color("f3ead2"))
+	v.add_child(_levelup_text)
+	_levelup.visible = false
+	_root.add_child(_levelup)
+
+
+var _levelup_tween: Tween
+func _on_level_up(lv: int, unlocks: Array, reward: Dictionary) -> void:
+	_levelup_title.text = "¡NIVEL %d!" % lv
+	var lines := PackedStringArray()
+	if not unlocks.is_empty():
+		lines.append("Desbloqueado: " + ", ".join(PackedStringArray(unlocks)))
+	if not reward.is_empty():
+		var parts := PackedStringArray()
+		for id in reward:
+			parts.append("%d %s" % [int(reward[id]), DB.item_name(str(id))])
+		lines.append("Recompensa: " + ", ".join(parts))
+	lines.append("Vida al máximo")
+	var nx := DB.next_unlock_level(lv)
+	if nx > 0 and unlocks.is_empty():
+		lines.append("Próximo desbloqueo en el nivel %d" % nx)
+	_levelup_text.text = "\n".join(lines)
+	_levelup.visible = true
+	_levelup.modulate.a = 1.0
+	_levelup.scale = Vector2(0.85, 0.85)
+	_levelup.pivot_offset = Vector2(330, 60)
+	if _levelup_tween:
+		_levelup_tween.kill()
+	_levelup_tween = create_tween()
+	_levelup_tween.tween_property(_levelup, "scale", Vector2.ONE, 0.25).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+	_levelup_tween.tween_interval(3.5)
+	_levelup_tween.tween_property(_levelup, "modulate:a", 0.0, 0.6)
+	_levelup_tween.tween_callback(func(): _levelup.visible = false)
+	_refresh_level()
+	if _levels_panel and _levels_panel.visible:
+		_refresh_levels()
+
+
+func _build_levels_panel() -> void:
+	var parts := _panel("Niveles", Vector2(420, 300))
+	_levels_panel = parts[0]
+	var scroll := ScrollContainer.new()
+	scroll.custom_minimum_size = Vector2(780, 470)
+	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	parts[1].add_child(scroll)
+	_levels_list = VBoxContainer.new()
+	_levels_list.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_levels_list.add_theme_constant_override("separation", 8)
+	scroll.add_child(_levels_list)
+
+
+func open_levels() -> void:
+	close_panels()
+	_refresh_levels()
+	_levels_panel.visible = true
+
+
+## Nivel actual, cuánto falta y lo que se va desbloqueando (los próximos 6 hitos).
+func _refresh_levels() -> void:
+	for c in _levels_list.get_children():
+		c.queue_free()
+	var head := Label.new()
+	head.add_theme_font_size_override("font_size", 22)
+	if GS.level >= DB.max_level():
+		head.text = "Nivel %d: has llegado al máximo." % GS.level
+	else:
+		head.text = "Nivel %d · te faltan %d de experiencia para el %d" % [GS.level, GS.xp_needed() - GS.xp, GS.level + 1]
+	_levels_list.add_child(head)
+	var how := Label.new()
+	how.autowrap_mode = TextServer.AUTOWRAP_WORD
+	how.custom_minimum_size.x = 740
+	how.add_theme_font_size_override("font_size", 17)
+	how.add_theme_color_override("font_color", Color(0.91, 0.86, 0.72, 0.7))
+	how.text = "Ganas experiencia recogiendo materiales, abatiendo infectados y animales, fabricando, construyendo, registrando cajas y visitando zonas nuevas. Al subir de nivel recuperas toda la vida."
+	_levels_list.add_child(how)
+	var shown := 0
+	var lv := GS.level
+	while shown < 6:
+		lv = DB.next_unlock_level(lv)
+		if lv == 0:
+			break
+		shown += 1
+		var row := Label.new()
+		row.autowrap_mode = TextServer.AUTOWRAP_WORD
+		row.custom_minimum_size.x = 740
+		row.add_theme_font_size_override("font_size", 19)
+		row.text = "Nivel %d — %s" % [lv, ", ".join(PackedStringArray(DB.unlocks_at(lv)))]
+		row.add_theme_color_override("font_color", Color("f6d27e") if shown == 1 else Color("f3ead2"))
+		_levels_list.add_child(row)
+	if shown == 0:
+		var more := Label.new()
+		more.text = "Todo desbloqueado por ahora. Llegarán zonas y objetos nuevos."
+		_levels_list.add_child(more)
 
 
 func _refresh_stamina() -> void:
@@ -397,14 +614,14 @@ func _toggle(panel: Control) -> void:
 
 
 func close_panels() -> void:
-	for p in [_inv_panel, _craft_panel, _build_panel, _station_panel, _chest_panel, _map_panel, _gym_panel, _settings_panel]:
+	for p in [_inv_panel, _craft_panel, _build_panel, _station_panel, _chest_panel, _map_panel, _gym_panel, _settings_panel, _levels_panel]:
 		if p:
 			p.visible = false
 	station = null
 
 
 func any_panel_open() -> bool:
-	for p in [_inv_panel, _craft_panel, _build_panel, _station_panel, _chest_panel, _map_panel, _gym_panel, _settings_panel]:
+	for p in [_inv_panel, _craft_panel, _build_panel, _station_panel, _chest_panel, _map_panel, _gym_panel, _settings_panel, _levels_panel]:
 		if p and p.visible:
 			return true
 	return false
@@ -605,7 +822,7 @@ func _make_inv_button() -> Button:
 		var r := minf(c.x, c.y) - 3.0
 		b.draw_circle(c, r + 1.0, Color(0.055, 0.07, 0.047, 0.88))
 		b.draw_arc(c, r - 3.0, 0.0, TAU, 64, Color(0.91, 0.86, 0.72, 0.2), 6.0, true)
-		var f := GS.load_ratio()
+		var f := minf(GS.load_ratio(), 1.0)
 		if f > 0.0:
 			b.draw_arc(c, r - 3.0, -PI / 2.0, -PI / 2.0 + TAU * f, 64, Color("e8b84a") if f < 1.0 else Color("d9534a"), 6.0, true))
 	b.pressed.connect(func(): _toggle(_inv_panel))
@@ -656,6 +873,10 @@ func _refresh_crafting() -> void:
 		b.text = "Fabricar"
 		b.custom_minimum_size = Vector2(150, 60)
 		b.disabled = not GS.can_craft(r)
+		if GS.level < DB.recipe_unlock(r):
+			b.disabled = true
+			b.text = "Nivel %d" % DB.recipe_unlock(r)
+			row.modulate = Color(1, 1, 1, 0.55)
 		var rid := str(r["id"])
 		b.pressed.connect(func(): GS.craft(rid))
 		row.add_child(b)
@@ -728,6 +949,11 @@ func _build_row(id: String, title: String, cost: Dictionary) -> void:
 	b.text = "Colocar"
 	b.custom_minimum_size = Vector2(140, 56)
 	b.disabled = not GS.has_cost(cost)
+	var need_lv := DB.tier_unlock(id, 0) if DB.structures.has(id) else DB.station_unlock(id)
+	if GS.level < need_lv:
+		b.disabled = true
+		b.text = "Nivel %d" % need_lv
+		row.modulate = Color(1, 1, 1, 0.55)
 	b.pressed.connect(func(): _pick_build("place", id))
 	row.add_child(b)
 	_build_list.add_child(row)
@@ -903,8 +1129,13 @@ func _refresh_station() -> void:
 			head += "  · Defensa +%d%%" % int(rd["armor"])
 		if rd.has("bag_slots"):
 			head += "  · +%d huecos" % int(rd["bag_slots"])
-		if not unlocked:
-			head += "  — requiere nivel %d" % int(r.get("level", 1))
+		var need_lv := DB.recipe_unlock(r)
+		var lv_ok := GS.level >= need_lv
+		if not lv_ok:
+			head = head + "  — se desbloquea en el nivel %d" % need_lv
+			unlocked = false
+		elif not unlocked:
+			head += "  — requiere %s de nivel %d" % [DB.station_name(station.id).to_lower(), int(r.get("level", 1))]
 		lbl.text = head
 		var col := VBoxContainer.new()
 		col.size_flags_horizontal = Control.SIZE_EXPAND_FILL
@@ -918,6 +1149,8 @@ func _refresh_station() -> void:
 		b.text = "Fabricar"
 		b.custom_minimum_size = Vector2(150, 56)
 		b.disabled = not unlocked or not station.job.is_empty() or not GS.can_craft(r)
+		if not lv_ok:
+			b.text = "Nivel %d" % need_lv
 		var rid := str(r["id"])
 		b.pressed.connect(func():
 			var why: String = station.start(rid)
@@ -1532,5 +1765,18 @@ func _update_map_info() -> void:
 		var cost := DB.travel_cost(location, _map_selected)
 		txt += "\n\nViaje: comida -%d, agua -%d" % [int(cost["food"]), int(cost["water"])]
 		can = true
+		var need_lv := DB.map_unlock(_map_selected)
+		if GS.level < need_lv:
+			txt += "\nBloqueado: necesitas nivel %d." % need_lv
+			can = false
+		var key := str(DB.maps[_map_selected].get("key_item", ""))
+		if key != "":
+			var has_key := false
+			for alt in key.split("|"):
+				if GS.count(alt) > 0:
+					has_key = true
+			txt += "\n%s %s." % ["Llevas" if has_key else "Bloqueado: tienes que llevar", str(DB.maps[_map_selected].get("key_text", key))]
+			if not has_key:
+				can = false
 	_map_info.text = txt
 	_map_travel.disabled = not can

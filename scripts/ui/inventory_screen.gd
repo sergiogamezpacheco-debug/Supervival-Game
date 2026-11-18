@@ -41,6 +41,9 @@ var _d_icon: TextureRect
 var _d_name: Label
 var _d_qty: Label
 var _d_desc: Label
+var _d_weight: Label
+var load_label: Label
+var _load_bar: ProgressBar
 var _d_stats: Label
 var _d_actions: VBoxContainer
 
@@ -316,6 +319,10 @@ func _build_right() -> void:
 	_d_qty.add_theme_font_size_override("font_size", 20)
 	_d_qty.add_theme_color_override("font_color", GOLD)
 	nrow.add_child(_d_qty)
+	_d_weight = Label.new()
+	_d_weight.add_theme_font_size_override("font_size", 19)
+	_d_weight.add_theme_color_override("font_color", MUT)
+	nrow.add_child(_d_weight)
 	info.add_child(nrow)
 	_d_desc = Label.new()
 	_d_desc.autowrap_mode = TextServer.AUTOWRAP_WORD
@@ -326,6 +333,23 @@ func _build_right() -> void:
 	_d_stats.add_theme_font_size_override("font_size", 17)
 	_d_stats.add_theme_color_override("font_color", Color("f6d27e"))
 	info.add_child(_d_stats)
+	# Carga total: peso que llevas / lo que aguantas
+	var lrow := HBoxContainer.new()
+	lrow.add_theme_constant_override("separation", 10)
+	load_label = Label.new()
+	load_label.add_theme_font_size_override("font_size", 18)
+	lrow.add_child(load_label)
+	_load_bar = ProgressBar.new()
+	_load_bar.custom_minimum_size = Vector2(120, 10)
+	_load_bar.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	_load_bar.show_percentage = false
+	_load_bar.max_value = 1.0
+	var lbg := StyleBoxFlat.new()
+	lbg.bg_color = Color(0, 0, 0, 0.45)
+	lbg.set_corner_radius_all(4)
+	_load_bar.add_theme_stylebox_override("background", lbg)
+	lrow.add_child(_load_bar)
+	info.add_child(lrow)
 	_d_actions = VBoxContainer.new()
 	_d_actions.add_theme_constant_override("separation", 8)
 	det.add_child(_d_actions)
@@ -457,7 +481,28 @@ func refresh() -> void:
 	_refresh_detail()
 
 
+func _kg(w: float) -> String:
+	return ("%.1f kg" % w).replace(".", ",")
+
+
+## Línea de carga total (siempre visible en la ficha).
+func _refresh_load() -> void:
+	var w := GS.carry_weight()
+	var cap := GS.carry_capacity()
+	var r := w / maxf(cap, 1.0)
+	var col := Color("9fd36a") if r <= 0.5 else (Color("e8b84a") if r <= 1.0 else Color("e0705a"))
+	load_label.text = "Carga total: %s / %s%s" % [_kg(w), _kg(cap), "" if r <= 1.0 else " · sobrecarga"]
+	load_label.add_theme_color_override("font_color", col)
+	_load_bar.value = minf(r, 1.0)
+	var fill := StyleBoxFlat.new()
+	fill.bg_color = col
+	fill.set_corner_radius_all(4)
+	_load_bar.add_theme_stylebox_override("fill", fill)
+
+
 func _refresh_detail() -> void:
+	_refresh_load()
+	_d_weight.text = ""
 	for c in _d_actions.get_children():
 		c.queue_free()
 	action_buttons = []
@@ -485,7 +530,11 @@ func _refresh_detail() -> void:
 			stats.append(k[1] % int(data[k[0]]))
 	if data.has("durability") and it.has("dur"):
 		stats.append("Estado %d/%d" % [int(it["dur"]), int(data["durability"])])
+	if data.has("carry"):
+		stats.append("Carga +%d kg" % int(data["carry"]))
 	_show(DB.item_icon(id), DB.item_name(id), str(data.get("desc", "")), " · ".join(stats), "x%d" % int(it["qty"]) if int(it.get("qty", 1)) > 1 else "")
+	var q := int(it.get("qty", 1))
+	_d_weight.text = ("   %s" % _kg(DB.weight(id))) if q <= 1 else ("   %s c/u · %s" % [_kg(DB.weight(id)), _kg(DB.weight(id) * q)])
 	var acts: Array = []
 	if sel_kind == "eq":
 		acts = [["Guardar" if sel_slot == "arma" else "Quitar", func():

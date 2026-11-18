@@ -1,14 +1,103 @@
 {
-  "cimiento": { "name": "Cimiento", "kind": "foundation", "tiers": [
-    { "name": "Cimiento de madera", "cost": { "madera": 8 },          "hp": 300,  "color": "8b6a45" },
-    { "name": "Cimiento de piedra", "cost": { "bloque_piedra": 6 },   "hp": 800,  "color": "8d8d88" },
-    { "name": "Cimiento de metal",  "cost": { "lingote_hierro": 4 },  "hp": 1600, "color": "6f7a82" } ] },
-  "pared": { "name": "Pared", "kind": "wall", "tiers": [
-    { "name": "Pared de madera", "cost": { "tablon": 5 },                       "hp": 400,  "color": "9a7148" },
-    { "name": "Pared de piedra", "cost": { "bloque_piedra": 6, "tablon": 1 },   "hp": 1000, "color": "9b9a94" },
-    { "name": "Pared de metal",  "cost": { "lingote_hierro": 5 },               "hp": 2000, "color": "7b8790" } ] },
-  "puerta": { "name": "Puerta", "kind": "door", "tiers": [
-    { "name": "Puerta de madera", "cost": { "tablon": 6 },                      "hp": 350,  "color": "7a5230" },
-    { "name": "Puerta de piedra", "cost": { "bloque_piedra": 4, "tablon": 2 },  "hp": 900,  "color": "85847e" },
-    { "name": "Puerta de metal",  "cost": { "lingote_hierro": 5 },              "hp": 1800, "color": "66727b" } ] }
+  "cimiento": {
+    "name": "Cimiento",
+    "kind": "foundation",
+    "tiers": [
+      {
+        "name": "Cimiento de madera",
+        "cost": {
+          "madera": 8
+        },
+        "hp": 300,
+        "color": "8b6a45",
+        "unlock": 1
+      },
+      {
+        "name": "Cimiento de piedra",
+        "cost": {
+          "bloque_piedra": 6
+        },
+        "hp": 800,
+        "color": "8d8d88",
+        "unlock": 7
+      },
+      {
+        "name": "Cimiento de metal",
+        "cost": {
+          "lingote_hierro": 4
+        },
+        "hp": 1600,
+        "color": "6f7a82",
+        "unlock": 20
+      }
+    ]
+  },
+  "pared": {
+    "name": "Pared",
+    "kind": "wall",
+    "tiers": [
+      {
+        "name": "Pared de madera",
+        "cost": {
+          "tablon": 5
+        },
+        "hp": 400,
+        "color": "9a7148",
+        "unlock": 1
+      },
+      {
+        "name": "Pared de piedra",
+        "cost": {
+          "bloque_piedra": 6,
+          "tablon": 1
+        },
+        "hp": 1000,
+        "color": "9b9a94",
+        "unlock": 7
+      },
+      {
+        "name": "Pared de metal",
+        "cost": {
+          "lingote_hierro": 5
+        },
+        "hp": 2000,
+        "color": "7b8790",
+        "unlock": 20
+      }
+    ]
+  },
+  "puerta": {
+    "name": "Puerta",
+    "kind": "door",
+    "tiers": [
+      {
+        "name": "Puerta de madera",
+        "cost": {
+          "tablon": 6
+        },
+        "hp": 350,
+        "color": "7a5230",
+        "unlock": 1
+      },
+      {
+        "name": "Puerta de piedra",
+        "cost": {
+          "bloque_piedra": 4,
+          "tablon": 2
+        },
+        "hp": 900,
+        "color": "85847e",
+        "unlock": 7
+      },
+      {
+        "name": "Puerta de metal",
+        "cost": {
+          "lingote_hierro": 5
+        },
+        "hp": 1800,
+        "color": "66727b",
+        "unlock": 20
+      }
+    ]
+  }
 }

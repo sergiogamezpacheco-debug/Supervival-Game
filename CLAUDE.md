@@ -32,4 +32,7 @@
   En tests, `world._process` copia el joystick a `player.move_input`: usar `process_frame` o fijarlo a mano.
 - Mapas en `data/maps.json`; criaturas genéricas en `scripts/world/creature.gd` (aggressive/neutral/passive).
 - Construcción: `scripts/world/base.gd` (cuadrícula 2 m; claves "i,j" casillas, "i,j,d" bordes).
+- Niveles: `data/levels.json` + `"unlock"` en recetas, estaciones, estructuras y mapas (`docs/niveles.md`).
+  `GS.add_xp(n)`; con `GS.testing` se empieza en el nivel 100 (los tests de bloqueos fijan `GS.level`).
+- Peso: `"weight"` en cada objeto (un test lo exige); `GS.carry_weight()`, `GS.carry_capacity()`, `GS.load_ratio()`.
 - Hoja de ruta y estado: `README.md`.

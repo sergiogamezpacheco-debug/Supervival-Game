@@ -12,6 +12,7 @@ var creatures: Dictionary = {}
 var maps: Dictionary = {}
 var containers: Dictionary = {}
 var world_map: Dictionary = {}
+var levels: Dictionary = {}
 
 
 func _init() -> void:
@@ -29,6 +30,7 @@ func reload() -> void:
 	maps = _load_json("res://data/maps.json", {})
 	containers = _load_json("res://data/containers.json", {})
 	world_map = _load_json("res://data/world_map.json", {})
+	levels = _load_json("res://data/levels.json", {})
 
 
 func _load_json(path: String, fallback: Variant) -> Variant:
@@ -101,6 +103,73 @@ func recipes_for(station: String) -> Array:
 
 func station_name(id: String) -> String:
 	return str(stations.get(id, {}).get("name", id))
+
+
+# ------------------------------------------------------------ niveles
+
+func max_level() -> int:
+	return int(levels.get("max_level", 100))
+
+
+## Experiencia para pasar del nivel L al L+1.
+func xp_to_next(lv: int) -> int:
+	var c: Dictionary = levels.get("curve", {})
+	var v := float(c.get("base", 30)) + float(c.get("mult", 14)) * pow(float(maxi(lv - 1, 0)), float(c.get("exp", 1.85)))
+	if (lv + 1) % 10 == 0:
+		v *= float(c.get("round_bonus", 0.85))
+	return maxi(5, int(round(v / 5.0)) * 5)
+
+
+func xp_value(key: String, fallback: float = 0.0) -> float:
+	return float(levels.get("xp", {}).get(key, fallback))
+
+
+func recipe_unlock(r: Dictionary) -> int:
+	return int(r.get("unlock", 1))
+
+
+func station_unlock(id: String) -> int:
+	return int(stations.get(id, {}).get("unlock", 1))
+
+
+func tier_unlock(id: String, tier: int) -> int:
+	return int(structure_tier(id, tier).get("unlock", 1))
+
+
+func map_unlock(id: String) -> int:
+	return int(maps.get(id, {}).get("unlock", 1))
+
+
+## Lo que se desbloquea justo al llegar a ese nivel (nombres para enseñar).
+func unlocks_at(lv: int) -> Array:
+	var out: Array = []
+	for id in maps:
+		if map_unlock(id) == lv and lv > 1:
+			out.append("Viaje: %s" % maps[id].get("name", id))
+	for id in stations:
+		if station_unlock(id) == lv:
+			out.append(str(stations[id].get("name", id)))
+	for id in structures:
+		var tiers: Array = structures[id].get("tiers", [])
+		for t in tiers.size():
+			if int(tiers[t].get("unlock", 1)) == lv and lv > 1:
+				out.append(str(tiers[t].get("name", id)))
+	for r in recipes:
+		if recipe_unlock(r) == lv and not out.has(item_name(str(r["result"]))):
+			out.append(item_name(str(r["result"])))
+	return out
+
+
+## Próximo nivel en el que se desbloquea algo (o 0).
+func next_unlock_level(lv: int) -> int:
+	for l in range(lv + 1, max_level() + 1):
+		if not unlocks_at(l).is_empty():
+			return l
+	return 0
+
+
+func weight(id: String) -> float:
+	return float(item(id).get("weight", 0.5))
 
 
 func structure_tier(id: String, tier: int) -> Dictionary:
