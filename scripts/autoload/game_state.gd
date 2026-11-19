@@ -768,9 +768,14 @@ func max_stamina() -> float:
 	return float(DB.bal("stamina_base", 100)) + float(physique["resistencia"]) * float(DB.bal("stamina_per_resistencia", 60))
 
 
-## Aguante que se gasta por segundo corriendo: más cuanto más peso llevas.
+## Aguante que se gasta por segundo corriendo: más cuanto más peso llevas, y con
+## sobrecarga se dispara (cada 10 % de más, un 15 % más de gasto).
 func stamina_drain() -> float:
-	return float(DB.bal("stamina_drain", 5.0)) * (1.0 + float(DB.bal("stamina_drain_load", 1.2)) * load_ratio()) * (1.0 - float(physique["resistencia"]) * 0.45)
+	var r := load_ratio()
+	var d := float(DB.bal("stamina_drain", 5.0)) * (1.0 + float(DB.bal("stamina_drain_load", 1.2)) * r)
+	if r > 1.0:
+		d *= 1.0 + (r - 1.0) * float(DB.bal("overload_run_mult", 1.5))
+	return d * (1.0 - float(physique["resistencia"]) * 0.45)
 
 
 ## Velocidad relativa: a partir de media carga vas más lento, y mucho más con sobrecarga.

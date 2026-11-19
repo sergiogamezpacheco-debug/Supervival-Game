@@ -125,9 +125,9 @@ func _update_stamina(dir: Vector2, delta: float) -> void:
 		_exhausted = true
 	elif _exhausted and GS.stamina >= mx * 0.25:
 		_exhausted = false
-	# Con sobrecarga no se puede correr, y andar también cansa
+	# Con sobrecarga se puede correr (más lento y gastando mucha más energía) y andar también cansa
 	var over := GS.overloaded()
-	running = wants and not _exhausted and not over
+	running = wants and not _exhausted
 	if running:
 		GS.stamina = maxf(GS.stamina - GS.stamina_drain() * delta, 0.0)
 		GS.exercise("resistencia", float(DB.bal("fitness_run_gain", 0.00025)) * delta * (0.4 + minf(GS.load_ratio(), 1.0)))

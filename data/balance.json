@@ -64,5 +64,6 @@
   "stamina_drain_load": 1.2,
   "carry_base": 35.0,
   "carry_per_fuerza": 15.0,
-  "overload_walk_drain": 3.0
+  "overload_walk_drain": 3.0,
+  "overload_run_mult": 1.5
 }

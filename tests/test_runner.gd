@@ -765,8 +765,11 @@ func test_levels_weight() -> void:
 	world.player.move_input = Vector2(1, 0)
 	world.hud.joystick.value = Vector2(1, 0)
 	GS.stamina = GS.max_stamina()
-	await _frames(3)
-	check(not world.player.running, "sobrecargado no puedes correr")
+	await _pframes(3)
+	check(world.player.running, "sobrecargado también puedes correr")
+	var heavy := GS.stamina_drain()
+	check(heavy > float(DB.bal("stamina_drain", 5.0)) * 2.2 * 1.5, "pero gastas mucha más energía (%.1f/s)" % heavy)
+	check(GS.speed_factor() < 0.75, "y vas más lento")
 	world.hud.joystick.value = Vector2.ZERO
 	world.player.move_input = Vector2.ZERO
 	# Ficha del inventario: peso del objeto y carga total

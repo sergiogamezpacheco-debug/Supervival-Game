@@ -111,6 +111,7 @@ La referencia de carga es 35 kg + 15 por cada punto de fuerza; la mochila no la 
 Lo puesto y el arma de la mano también pesan.
 
 - Hasta media carga vas a velocidad normal; de media carga a carga llena, hasta un 25 % más lento.
-- Con sobrecarga (más de lo que aguantas) no puedes correr, vas aún más lento y andar cansa.
+- Con sobrecarga (más de la referencia) puedes correr, pero vas aún más lento, correr gasta mucha
+  más energía (cada 10 % de más, un 15 % más de gasto) y andar también cansa.
 - Correr gasta 5 de energía por segundo sin carga y hasta 11 con la carga llena (la resistencia lo baja).
 - En el inventario: peso del objeto junto al nombre y carga total debajo.
