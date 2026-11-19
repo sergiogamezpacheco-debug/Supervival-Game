@@ -38,5 +38,7 @@
 - Minimapa: `scripts/ui/minimap.gd` (cámara cenital propia; criaturas y jugador en la capa 2 para que
   salgan como iconos de `assets/icons/minimap/`, recortados con `tools/iconos/minimapa.py`).
 - Ajustes: `scripts/ui/settings_screen.gd` (diseño `docs/diseno_ajustes.jpg`); valores en `SFX.settings`
-  (`SFX.DEFAULTS`), gráficos con `apply_graphics(world)`. Redes, soporte y textos legales en `data/info.json`.
+  (`SFX.DEFAULTS`), gráficos con `apply_graphics(world)`. Los cambios se aplican al momento pero solo se guardan con
+  GUARDAR (`save()`). Zoom de cámara: `world.zoom()`/`set_zoom()` (ajuste `zoom`, pellizco con dos dedos).
+  Redes, soporte y textos legales en `data/info.json`.
 - Hoja de ruta y estado: `README.md`.

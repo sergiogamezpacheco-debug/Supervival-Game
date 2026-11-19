@@ -1517,6 +1517,9 @@ func test_dodge_audio() -> void:
 	check(AudioServer.is_bus_mute(AudioServer.get_bus_index("Musica")), "música a 0 la silencia")
 	check(absf(AudioServer.get_bus_volume_db(AudioServer.get_bus_index("Efectos")) - linear_to_db(0.5)) < 0.1, "el volumen de efectos se aplica")
 	hud.settings_controls["vibration"].button_pressed = false
+	check(hud._settings_panel.dirty and not hud._settings_panel.save_btn.disabled, "con cambios se puede guardar")
+	hud._settings_panel.save_btn.pressed.emit()
+	check(not hud._settings_panel.dirty and hud._settings_panel.save_btn.text == "GUARDADO", "al guardar queda guardado")
 	SFX.settings = {"music": 0.6, "sfx": 0.8, "vibration": true}
 	SFX.load_settings()
 	check(is_equal_approx(float(SFX.settings["sfx"]), 0.5) and SFX.settings["vibration"] == false, "los ajustes se guardan")
@@ -1531,6 +1534,52 @@ func test_dodge_audio() -> void:
 	st._tab_buttons["graficos"].pressed.emit()
 	await _pframes(2)
 	check(st.tab == "graficos" and st._pill_label.text == "Gráficos" and st.controls.has("shadows"), "pestaña de gráficos")
+	# Cámara: más cerca por defecto, con límites y pellizco con dos dedos
+	check(is_equal_approx(world.zoom(), 0.85), "la cámara empieza más cerca que antes")
+	world.set_zoom(5.0)
+	check(is_equal_approx(world.zoom(), world.ZOOM_MAX), "no se aleja más del límite")
+	world.set_zoom(0.0)
+	check(is_equal_approx(world.zoom(), world.ZOOM_MIN), "ni se acerca más del límite")
+	world.set_zoom(0.85)
+	st.controls["zoom"].value = 1.1
+	check(is_equal_approx(world.zoom(), 1.1), "la distancia se cambia en ajustes")
+	st.close_screen()
+	check(st.visible and st._close_btn.text == "?", "cerrar con cambios sin guardar avisa")
+	st.close_screen()
+	check(not st.visible and is_equal_approx(world.zoom(), 0.85), "cerrar otra vez los descarta")
+	hud.settings_btn.pressed.emit()
+	await _pframes(2)
+	st.select_tab("graficos")
+	await _pframes(2)
+	hud.close_panels()
+	await _pframes(1)
+	var vpc := get_viewport().get_visible_rect().size
+	var tr := get_tree().root.get_final_transform()
+	for idx in [0, 1]:
+		var t := InputEventScreenTouch.new()
+		t.index = idx
+		t.pressed = true
+		t.position = tr * Vector2(vpc.x * 0.5 + (idx * 2 - 1) * 60.0, vpc.y * 0.45)
+		Input.parse_input_event(t)
+	await _pframes(2)
+	for k in 6:
+		var dr := InputEventScreenDrag.new()
+		dr.index = 1
+		dr.position = tr * Vector2(vpc.x * 0.5 + 60.0 + 20.0 * (k + 1), vpc.y * 0.45)
+		Input.parse_input_event(dr)
+		await _pframes(1)
+	for idx in [0, 1]:
+		var t := InputEventScreenTouch.new()
+		t.index = idx
+		t.pressed = false
+		Input.parse_input_event(t)
+	await _pframes(2)
+	check(world.zoom() < 0.7, "separar dos dedos acerca la cámara (%.2f)" % world.zoom())
+	world.set_zoom(0.85)
+	hud.settings_btn.pressed.emit()
+	await _pframes(2)
+	st.select_tab("graficos")
+	await _pframes(2)
 	st.controls["shadows"].button_pressed = false
 	check(SFX.settings["shadows"] == false and not world._sun.shadow_enabled, "quitar sombras se aplica")
 	st.controls["quality"].item_selected.emit(0)
@@ -1541,7 +1590,7 @@ func test_dodge_audio() -> void:
 	check(not world.hud.minimap.visible, "se puede ocultar el minimapa")
 	st.controls["damage_numbers"].button_pressed = false
 	check(SFX.settings["damage_numbers"] == false, "se pueden quitar los números de daño")
-	for k in ["quality", "shadows", "fps", "minimap", "damage_numbers"]:
+	for k in ["quality", "shadows", "fps", "minimap", "damage_numbers", "zoom"]:
 		SFX.set_setting(k, SFX.DEFAULTS[k])
 	st.apply_graphics(world)
 	st._tab_buttons["audio"].pressed.emit()

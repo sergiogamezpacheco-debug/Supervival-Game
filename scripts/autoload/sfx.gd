@@ -9,7 +9,7 @@ const DEFAULTS := {
 	"master": 1.0, "music": 0.6, "sfx": 0.8, "ambience": 0.7, "mute": false, "vibration": true,
 	"language": "es", "notifications": true,
 	"quality": "medio", "shadows": true, "fps": 60, "render_scale": 1.0, "brightness": 1.0,
-	"damage_numbers": true, "show_fps": false, "minimap": true,
+	"damage_numbers": true, "show_fps": false, "minimap": true, "zoom": 0.85,
 	"player_id": "", "last_access": 0.0,
 }
 var settings := DEFAULTS.duplicate()

@@ -30,7 +30,8 @@
 | HUD con iconos: barras con porcentaje, botones redondos y acción con borde de estado | ✅ |
 | Mapa del Valle en papel antiguo dentro del juego, esquivar, sonido (efectos, ambiente, música) y ajustes | ✅ |
 | Pinos y rocas facetados; 9 tipos de infectado con habilidades (docs/infectados.md), coloso como jefe | ✅ |
-| 761 tests y APK automático | ✅ |
+| 770 tests y APK automático | ✅ |
+| Zoom de cámara con dos dedos y botón Guardar en ajustes | ✅ |
 | Pantalla de ajustes según el diseño: general, gráficos, audio, sistema y redes (scripts/ui/settings_screen.gd) | ✅ |
 | Minimapa redondo según el diseño (scripts/ui/minimap.gd) | ✅ |
 | Niveles 1-100 con desbloqueos y peso de la carga (docs/niveles.md) | ✅ |

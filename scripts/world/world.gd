@@ -96,7 +96,7 @@ func _ready() -> void:
 		spawn_bag(player.global_position + Vector3(1.2, 0, 0.6), GS.pending_drop, true)
 		GS.pending_drop = []
 		GS.message.emit("Ahora llevas 8 bolsillos: lo que no cabía está en una bolsa a tu lado")
-	camera.global_position = player.global_position + Vector3(0, 13.0, 8.5)
+	camera.global_position = player.global_position + CAM_OFF * zoom()
 	_update_camera(1.0)
 	GS.message.emit(str(map.get("name", "")))
 	GS.visit(map_id)
@@ -346,10 +346,54 @@ func find_target() -> Node3D:
 	return best_enemy if best_enemy != null else best
 
 
+## Distancia de la cámara (1 = la de antes). Se cambia pellizcando con dos dedos o en Ajustes.
+const CAM_OFF := Vector3(0, 13.0, 8.5)
+const ZOOM_MIN := 0.55
+const ZOOM_MAX := 1.3
+var _pinch := {}       # dedo -> posición (solo los que no llevan el joystick)
+var _pinch_d := 0.0
+
+
+func zoom() -> float:
+	return clampf(float(SFX.settings.get("zoom", 0.85)), ZOOM_MIN, ZOOM_MAX)
+
+
+func set_zoom(z: float) -> void:
+	SFX.settings["zoom"] = clampf(z, ZOOM_MIN, ZOOM_MAX)
+
+
+func _unhandled_input(ev: InputEvent) -> void:
+	if hud == null or hud.any_panel_open():
+		_pinch.clear()
+		return
+	if ev is InputEventScreenTouch:
+		if ev.pressed and ev.index != hud.joystick._touch:
+			_pinch[ev.index] = ev.position
+		else:
+			_pinch.erase(ev.index)
+		_pinch_d = 0.0
+	elif ev is InputEventScreenDrag and _pinch.has(ev.index):
+		_pinch[ev.index] = ev.position
+		if _pinch.size() == 2:
+			var p: Array = _pinch.values()
+			var d: float = (p[0] as Vector2).distance_to(p[1])
+			if _pinch_d > 0.0 and d > 1.0:
+				set_zoom(zoom() * _pinch_d / d)   # separar los dedos acerca
+			_pinch_d = d
+	elif ev is InputEventMagnifyGesture:
+		set_zoom(zoom() / ev.factor)
+	elif ev is InputEventMouseButton and ev.pressed:
+		if ev.button_index == MOUSE_BUTTON_WHEEL_UP:
+			set_zoom(zoom() * 0.92)
+		elif ev.button_index == MOUSE_BUTTON_WHEEL_DOWN:
+			set_zoom(zoom() * 1.08)
+
+
 func _update_camera(delta: float) -> void:
-	var want := player.global_position + Vector3(0, 13.0, 8.5)
+	var off := CAM_OFF * zoom()
+	var want := player.global_position + off
 	camera.global_position = camera.global_position.lerp(want, clampf(delta * 6.0, 0.0, 1.0))
-	camera.look_at(camera.global_position + Vector3(0, -13.0, -8.5), Vector3.UP)
+	camera.look_at(camera.global_position - off, Vector3.UP)
 	if player.shake > 0.0:
 		var k: float = player.shake * 0.6
 		camera.global_position += Vector3(randf_range(-k, k), randf_range(-k, k) * 0.5, randf_range(-k, k))
@@ -628,7 +672,7 @@ func _respawn_player() -> void:
 			get_tree().change_scene_to_file.call_deferred("res://scenes/main.tscn")
 		return
 	player.global_position = SPAWN
-	camera.global_position = SPAWN + Vector3(0, 13.0, 8.5)
+	camera.global_position = SPAWN + CAM_OFF * zoom()
 
 
 func _on_creature_killed(c: Node3D) -> void:

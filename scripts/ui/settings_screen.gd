@@ -31,6 +31,10 @@ var _wipe_btn: Button
 var _legal: PanelContainer
 var _cond: FontVariation
 var _knob: ImageTexture
+var _saved := {}                 # ajustes tal como están guardados (para descartar)
+var dirty := false               # hay cambios sin guardar
+var save_btn: Button
+var _close_btn: Button
 
 
 func _init() -> void:
@@ -56,6 +60,9 @@ func _ready() -> void:
 	select_tab("general")
 	visibility_changed.connect(func():
 		if visible:
+			# Lo guardado en el archivo; si algo cambió fuera (zoom con los dedos), se puede guardar
+			_saved = _stored()
+			_set_dirty(_differs())
 			_refresh_system()
 			select_tab(tab)
 		_wipe_btn.text = "BORRAR\nDATOS"
@@ -182,8 +189,66 @@ func _build_header() -> void:
 	close.add_theme_stylebox_override("normal", _box(Color(0.03, 0.03, 0.03, 0.95), Color("3a3a36"), 12, 2))
 	close.add_theme_color_override("font_color", Color.WHITE)
 	close.position = Vector2(1190, 20)
-	close.pressed.connect(func(): visible = false)
+	close.pressed.connect(close_screen)
 	add_child(close)
+	_close_btn = close
+	# Guardar: deja fijados los ajustes (también la distancia de la cámara)
+	save_btn = _btn("GUARDAR", 23, 150, 58, true)
+	save_btn.position = Vector2(540, 22)
+	save_btn.pressed.connect(save)
+	add_child(save_btn)
+	controls["save"] = save_btn
+
+
+func _stored() -> Dictionary:
+	var out: Dictionary = SFX.settings.duplicate()
+	if FileAccess.file_exists(SFX.settings_path):
+		var d = JSON.parse_string(FileAccess.get_file_as_string(SFX.settings_path))
+		if d is Dictionary:
+			for k in d:
+				out[k] = d[k]
+	return out
+
+
+func _differs() -> bool:
+	for k in SFX.settings:
+		if k == "last_access":
+			continue
+		if not _saved.has(k) or str(_saved[k]) != str(SFX.settings[k]):
+			return true
+	return false
+
+
+func save() -> void:
+	SFX.save_settings()
+	_saved = SFX.settings.duplicate()
+	_set_dirty(false)
+	GS.message.emit("Ajustes guardados")
+
+
+## Cerrar: si hay cambios sin guardar, el primer toque avisa y el segundo los descarta.
+func close_screen() -> void:
+	if dirty and _close_btn.text != "?":
+		_close_btn.text = "?"
+		GS.message.emit("Hay cambios sin guardar: pulsa GUARDAR o X otra vez para descartarlos")
+		return
+	if dirty:
+		SFX.settings = _saved.duplicate()
+		SFX.apply()
+		apply_graphics(world)
+		GS.message.emit("Cambios descartados")
+	_set_dirty(false)
+	visible = false
+
+
+func _set_dirty(d: bool) -> void:
+	dirty = d
+	if _close_btn:
+		_close_btn.text = "X"
+	if save_btn:
+		save_btn.disabled = not d
+		save_btn.text = "GUARDAR" if d else "GUARDADO"
+		save_btn.modulate = Color.WHITE if d else Color(1, 1, 1, 0.55)
 
 
 func select_tab(t: String) -> void:
@@ -399,11 +464,13 @@ func _fill_list() -> void:
 			_toggle_row("Vibración al recibir golpes", "vibration")
 			_account_row()
 			_option_row("Calidad gráfica", "quality", QUALITY)
+			_slider_row("Distancia de la cámara", "zoom", 0.55, 1.3)
 			_slider_row("Volumen música", "music")
 			_slider_row("Volumen efectos", "sfx")
 			_look_row()
 		"graficos":
 			_option_row("Calidad gráfica", "quality", QUALITY)
+			_slider_row("Distancia de la cámara", "zoom", 0.55, 1.3)
 			_toggle_row("Sombras", "shadows")
 			_option_row("Límite de FPS", "fps", [30, 60])
 			_slider_row("Resolución", "render_scale", 0.5, 1.0)
@@ -419,9 +486,12 @@ func _fill_list() -> void:
 			_slider_row("Volumen ambiente", "ambience")
 
 
+## Se aplica al momento pero no se guarda hasta pulsar GUARDAR.
 func _change(key: String, value: Variant) -> void:
-	SFX.set_setting(key, value)
+	SFX.settings[key] = value
+	SFX.apply()
 	apply_graphics(world)
+	_set_dirty(true)
 
 
 func _id_row() -> void:
