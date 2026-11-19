@@ -269,7 +269,7 @@ func test_world() -> void:
 			found = true
 	check(found, "tu mochila queda donde caíste")
 	world._death_timer = 0.0
-	await _frames(3)
+	await _pframes(4)
 	check(not GS.dead and is_equal_approx(GS.health, 100.0), "reapareces con la vida llena")
 
 	# Guardado del mundo (mochila incluida).
@@ -491,20 +491,15 @@ func test_shelter_structures() -> void:
 	check(gen._visual.has_meta("en_obra"), "se ve con andamio mientras está en obra")
 	check(gen.add_phase() == "Faltan materiales", "sin materiales no avanza")
 	world.hud.open_station(gen)
-	await _frames(2)
-	var add_btn: Button = null
-	for row in world.hud._station_list.get_children():
-		for c in row.get_children():
-			if c is Button and c.text == "Añadir":
-				add_btn = c
-	check(add_btn != null and add_btn.disabled, "el panel muestra la siguiente fase con su botón")
+	await _pframes(2)
+	var scr: Control = world.hud._station_panel
+	var add_btn: Button = scr.action_btn
+	check(scr.selected == 1 and add_btn.text == "AÑADIR" and add_btn.disabled, "el panel muestra la siguiente fase con su botón")
+	check(scr._title.text == "GENERADOR" and scr._level_label.text == "En obra 1/3", "cabecera de la obra")
 	_give(DB.station_phases("generador")[1]["cost"])
 	world.hud._refresh_station()
-	await _frames(1)
-	for row in world.hud._station_list.get_children():
-		for c in row.get_children():
-			if c is Button and c.text == "Añadir":
-				add_btn = c
+	await _pframes(1)
+	check(not add_btn.disabled, "con materiales se puede añadir")
 	add_btn.pressed.emit()
 	check(gen.stage == 2, "Añadir paga la fase 2")
 	_give(DB.station_phases("generador")[2]["cost"])
@@ -680,12 +675,23 @@ func test_levels_weight() -> void:
 	check(bench.start("garrote") == "", "en el nivel 2 ya se fabrica")
 	world.hud.open_station(bench)
 	await _pframes(2)
-	var locked_btn := false
-	for row in world.hud._station_list.get_children():
-		for c in row.get_children():
-			if c is Button and str(c.text).begins_with("Nivel "):
-				locked_btn = true
-	check(locked_btn, "las recetas bloqueadas dicen en qué nivel salen")
+	var bs: Control = world.hud._station_panel
+	var locked_i := -1
+	for i in bs.entries.size():
+		if bs.entries[i]["kind"] == "recipe" and DB.recipe_unlock(bs.entries[i]["r"]) > GS.level:
+			locked_i = i
+	if locked_i < 0:
+		for t in bs.tabs:
+			if locked_i >= 0:
+				break
+			bs.tab = t
+			bs.refresh()
+			for i in bs.entries.size():
+				if locked_i < 0 and bs.entries[i]["kind"] == "recipe" and DB.recipe_unlock(bs.entries[i]["r"]) > GS.level:
+					locked_i = i
+	bs._select(locked_i)
+	bs.tick()
+	check(locked_i >= 0 and bs.action_btn.text.begins_with("NIVEL ") and bs.action_btn.disabled, "las recetas bloqueadas dicen en qué nivel salen")
 	world.hud.close_panels()
 	_creatures_away()
 	check(world.travel_to("bosque") == "Necesitas nivel 3 para ir allí", "al bosque desde el nivel 3")
@@ -1399,13 +1405,38 @@ func test_night_stealth() -> void:
 		GS.add_item(k, 15)
 	var bench: Node3D = world.base.place("banco_trabajo", Vector2i(-4, -4), 0, 0, player.global_position)
 	world.hud.open_station(bench)
-	await _frames(2)
-	var rep_btn := false
-	for row in world.hud._station_list.get_children():
-		for c in row.get_children():
-			if c is Button and c.text == "Reparar":
-				rep_btn = true
-	check(rep_btn, "el panel del banco de trabajo tiene «Reparar»")
+	await _pframes(2)
+	var ws: Control = world.hud._station_panel
+	check(ws.tabs.has("Reparar"), "el panel del banco de trabajo tiene la pestaña «Reparar»")
+	ws.tab = "Reparar"
+	ws.refresh()
+	for i in ws.entries.size():
+		if ws.entries[i]["ref"]["where"] == "hand":
+			ws._select(i)
+	_give(ws.entries[ws.selected]["cost"])
+	ws.tick()
+	check(ws.action_btn.text == "REPARAR" and not ws.action_btn.disabled, "y su botón repara (%s)" % ws.action_btn.text)
+	ws.action_btn.pressed.emit()
+	check(GS.hand["dur"] == int(DB.item(str(GS.hand["id"]))["durability"]), "el arma queda como nueva")
+	# Pantalla nueva: categorías, cantidad y fabricar varias
+	ws.tab = "Armas"
+	ws.refresh()
+	check(ws.tabs.size() >= 2 and ws._title.text == "BANCO DE TRABAJO", "pestañas por categoría (%s)" % str(ws.tabs))
+	for i in ws.entries.size():
+		if ws.entries[i]["kind"] == "recipe" and ws.entries[i]["r"]["id"] == "garrote":
+			ws._select(i)
+	GS.add_item("madera", 12)
+	GS.add_item("cuerda", 2)
+	ws.set_qty(2)
+	check(ws.qty == 2 and ws._qty_label.text == "2", "se elige cuántas fabricar")
+	var hachas := GS.count("garrote")
+	ws.action_btn.pressed.emit()
+	check(bench.job.get("count", 1) == 2, "fabrica 2 de una vez")
+	GS.time_offset += float(bench.job["time"]) + 1.0
+	ws.tick()
+	check(ws.action_btn.text == "RECOGER", "cuando acaba, el botón recoge")
+	ws.action_btn.pressed.emit()
+	check(GS.count("garrote") == hachas + 2, "se recogen las 2")
 	world.hud.close_panels()
 	world.queue_free()
 	await _frames(2)

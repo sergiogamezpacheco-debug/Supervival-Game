@@ -171,7 +171,7 @@ func _ready() -> void:
 	var bench: Node3D = world.base.place("banco_trabajo", Vector2i(2, -2), 0, 0, Vector3(-30, 0, -30))
 	world.hud.open_station(bench)
 	await _wait(6)
-	world.hud._station_list.get_parent().scroll_vertical = 2000
+	world.hud._station_panel._scroll.scroll_vertical = 2000
 	await _wait(4)
 	await _shot("reparar")
 	DirAccess.remove_absolute(ProjectSettings.globalize_path(GS.save_path))

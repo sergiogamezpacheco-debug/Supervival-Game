@@ -380,7 +380,7 @@ func load_list(list: Array) -> void:
 			s.fuel = float(e.get("fuel", 0.0))
 			var job: Dictionary = e.get("job", {})
 			if not job.is_empty():
-				s.job = {"recipe": str(job["recipe"]), "end": float(job["end"]), "time": float(job.get("time", DB.recipe(str(job["recipe"])).get("time", 1)))}
+				s.job = {"recipe": str(job["recipe"]), "end": float(job["end"]), "time": float(job.get("time", DB.recipe(str(job["recipe"])).get("time", 1))), "count": int(job.get("count", 1))}
 			var st: Array = e.get("storage", [])
 			for i in mini(st.size(), s.storage.size()):
 				var it = st[i]

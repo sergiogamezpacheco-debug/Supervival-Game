@@ -239,7 +239,26 @@ func recipe_unlocked(r: Dictionary) -> bool:
 	return int(r.get("level", 1)) <= level
 
 
-func start(recipe_id: String) -> String:
+## Coste de fabricar "count" veces una receta.
+static func cost_times(r: Dictionary, count: int) -> Dictionary:
+	var out := {}
+	var c: Dictionary = r.get("cost", {})
+	for k in c:
+		out[k] = int(c[k]) * maxi(count, 1)
+	return out
+
+
+## Cuántas veces se puede fabricar con lo que llevas (máx. 10).
+static func max_times(r: Dictionary) -> int:
+	var n := 10
+	var c: Dictionary = r.get("cost", {})
+	for k in c:
+		n = mini(n, GS.count(str(k)) / maxi(int(c[k]), 1))
+	return n
+
+
+func start(recipe_id: String, count := 1) -> String:
+	count = maxi(count, 1)
 	if is_chest():
 		return "Esto es un cofre"
 	if not is_built():
@@ -253,7 +272,7 @@ func start(recipe_id: String) -> String:
 		return "Receta no disponible aquí"
 	if not recipe_unlocked(r):
 		return "Mejora la estación a nivel %d" % int(r.get("level", 1))
-	var t := recipe_time(r)
+	var t := recipe_time(r) * count
 	var gen: Node3D = null
 	if needs_power():
 		gen = _generator()
@@ -261,11 +280,11 @@ func start(recipe_id: String) -> String:
 			return "Necesita un generador terminado"
 		if gen.fuel < t:
 			return "Al generador le falta combustible"
-	if not GS.pay(r.get("cost", {})):
+	if not GS.pay(cost_times(r, count)):
 		return "Faltan materiales"
 	if gen:
 		gen.fuel -= t
-	job = {"recipe": recipe_id, "end": GS.now() + t, "time": t}
+	job = {"recipe": recipe_id, "end": GS.now() + t, "time": t, "count": count}
 	return ""
 
 
@@ -291,7 +310,8 @@ func collect() -> bool:
 		return false
 	var r := DB.recipe(str(job["recipe"]))
 	var result := str(r["result"])
-	var qty := int(r.get("qty", 1))
+	var times := int(job.get("count", 1))
+	var qty := int(r.get("qty", 1)) * times
 	var left := GS.add_item(result, qty)
 	if left == qty:
 		GS.message.emit("Inventario lleno")
@@ -300,7 +320,7 @@ func collect() -> bool:
 		GS.message.emit("Inventario lleno: parte se ha perdido")
 	job = {}
 	GS.message.emit("+%d %s" % [qty - left, DB.item_name(result)])
-	GS.add_xp(GS.craft_xp(r))
+	GS.add_xp(GS.craft_xp(r) * times)
 	return true
 
 
