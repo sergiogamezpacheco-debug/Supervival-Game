@@ -733,6 +733,32 @@ func test_levels_weight() -> void:
 	await _pframes(2)
 	check(world.hud._levelup.visible and world.hud._levelup_title.text == "¡NIVEL 11!", "aviso grande al subir de nivel")
 
+	# Minimapa
+	var mm: Control = world.hud.minimap
+	check(mm != null and mm.world == world, "hay minimapa en el HUD")
+	var c0: Variant = mm.to_map(world.player.global_position)
+	check(c0 != null and (c0 as Vector2).distance_to(Vector2(mm.SIZE, mm.SIZE) / 2.0) < 3.0, "el jugador va en el centro del minimapa")
+	var east: Variant = mm.to_map(world.player.global_position + Vector3(5, 0, 0))
+	var north: Variant = mm.to_map(world.player.global_position + Vector3(0, 0, -5))
+	check(east != null and (east as Vector2).x > (c0 as Vector2).x + 20.0, "el este sale a la derecha")
+	check(north != null and (north as Vector2).y < (c0 as Vector2).y - 15.0, "el norte sale arriba")
+	check(mm.to_map(world.player.global_position + Vector3(60, 0, 0)) == null, "lo lejano no sale")
+	check(mm._icon_for(wolf) == "zorro" if is_instance_valid(wolf) else true, "los animales salen en marrón")
+	var inf: Node3D = world.CreatureScript.new()
+	inf.setup("infectado")
+	inf.home = world.player.global_position + Vector3(3, 0, 0)
+	inf.position = inf.home
+	world.add_child(inf)
+	await _pframes(35)
+	check(mm._icon_for(inf) == "infectado", "los infectados salen en rojo")
+	var hidden := true
+	for n in inf.find_children("*", "VisualInstance3D", true, false):
+		if (n as VisualInstance3D).layers != mm.HIDE_LAYER:
+			hidden = false
+	check(hidden, "las criaturas no se pintan en la vista del minimapa (van como icono)")
+	for k in ["infectado", "zorro", "ciervo", "caja", "jugador", "norte"]:
+		check(mm._icons[k] != null, "icono de minimapa: %s" % k)
+
 	# Partidas antiguas sin nivel empiezan en el 12
 	var old := GS.to_dict()
 	old.erase("level")

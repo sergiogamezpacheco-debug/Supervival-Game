@@ -73,6 +73,7 @@ func _ready() -> void:
 	player = PlayerScript.new()
 	player.position = SPAWN
 	add_child(player)
+	hud.add_minimap(self)
 
 	var base_half := float(map.get("base_half", 0))
 	if base_half > 0.0:

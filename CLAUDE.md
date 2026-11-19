@@ -35,4 +35,6 @@
 - Niveles: `data/levels.json` + `"unlock"` en recetas, estaciones, estructuras y mapas (`docs/niveles.md`).
   `GS.add_xp(n)`; con `GS.testing` se empieza en el nivel 100 (los tests de bloqueos fijan `GS.level`).
 - Peso: `"weight"` en cada objeto (un test lo exige); `GS.carry_weight()`, `GS.carry_capacity()`, `GS.load_ratio()`.
+- Minimapa: `scripts/ui/minimap.gd` (cámara cenital propia; criaturas y jugador en la capa 2 para que
+  salgan como iconos de `assets/icons/minimap/`, recortados con `tools/iconos/minimapa.py`).
 - Hoja de ruta y estado: `README.md`.

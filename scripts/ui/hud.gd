@@ -34,6 +34,7 @@ var _levelup_title: Label
 var _levelup_text: Label
 var _levels_panel: PanelContainer
 var _levels_list: VBoxContainer
+var minimap: Control
 var _msg: Label
 var _msg_timer := 0.0
 var _pcts: Dictionary = {}
@@ -263,6 +264,15 @@ func _refresh_stats() -> void:
 		_pcts[k].text = "%d" % roundi(100.0 * _bars[k].value / maxf(_bars[k].max_value, 1.0))
 	_refresh_stamina()
 	_refresh_level()
+
+
+## Minimapa redondo bajo las barras (necesita el mundo para la cámara cenital).
+func add_minimap(world: Node3D) -> void:
+	minimap = load("res://scripts/ui/minimap.gd").new()
+	minimap.position = Vector2(18, 228)
+	_root.add_child(minimap)
+	_root.move_child(minimap, 1)
+	minimap.setup(world)
 
 
 func _refresh_level() -> void:

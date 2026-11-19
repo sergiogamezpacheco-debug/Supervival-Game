@@ -30,7 +30,8 @@
 | HUD con iconos: barras con porcentaje, botones redondos y acción con borde de estado | ✅ |
 | Mapa del Valle en papel antiguo dentro del juego, esquivar, sonido (efectos, ambiente, música) y ajustes | ✅ |
 | Pinos y rocas facetados; 9 tipos de infectado con habilidades (docs/infectados.md), coloso como jefe | ✅ |
-| 732 tests y APK automático | ✅ |
+| 748 tests y APK automático | ✅ |
+| Minimapa redondo según el diseño (scripts/ui/minimap.gd) | ✅ |
 | Niveles 1-100 con desbloqueos y peso de la carga (docs/niveles.md) | ✅ |
 | Estructuras de la lámina: banco de armas, recolector de agua, secadero, huerto, mesa médica, generador y recicladora; obra por fases (docs/estructuras.md) | ✅ |
 | Iconos recortados de los diseños del usuario | ✅ |
