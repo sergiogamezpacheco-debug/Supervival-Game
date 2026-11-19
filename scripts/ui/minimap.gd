@@ -5,7 +5,7 @@ extends Control
 
 const RADIUS_M := 12.0          # metros del centro al borde
 const TILT := 0.42              # inclinación de la cámara (rad): árboles y rocas se ven en 3D
-const SIZE := 214.0             # diámetro en píxeles (lienzo 1280x720)
+const SIZE := 190.0             # diámetro en píxeles (lienzo 1280x720)
 const TEX := 256                # resolución de la vista
 const UPDATE_EVERY := 3         # se repinta 1 de cada 3 fotogramas (ahorra batería)
 const VIEW_LAYER := 1           # capa que ve la cámara: sin criaturas ni jugador (van como iconos)
@@ -82,8 +82,8 @@ func to_map(pos: Vector3) -> Variant:
 	if _cam == null or not _cam.is_inside_tree():
 		return null
 	var uv := _cam.unproject_position(pos) / float(TEX)   # 0..1 en la vista
-	var d := (uv - Vector2(0.5, 0.5)) * 2.0 * (SIZE / 2.0 - 12.0)
-	if d.length() > SIZE / 2.0 - 22.0:
+	var d := (uv - Vector2(0.5, 0.5)) * 2.0 * (SIZE / 2.0 - 7.0)
+	if d.length() > SIZE / 2.0 - 17.0:
 		return null
 	return Vector2(SIZE / 2.0, SIZE / 2.0) + d
 
@@ -99,7 +99,7 @@ func _icon_for(c: Node3D) -> String:
 func _draw() -> void:
 	var c := Vector2(SIZE, SIZE) / 2.0
 	var r := SIZE / 2.0
-	var inner := r - 12.0
+	var inner := r - 7.0
 	# Vista recortada en círculo
 	if _vp:
 		var pts := PackedVector2Array()
@@ -108,7 +108,7 @@ func _draw() -> void:
 			var a := TAU * float(i) / 48.0
 			var v := Vector2(cos(a), sin(a))
 			pts.append(c + v * inner)
-			uvs.append(Vector2(0.5, 0.5) + v * 0.5 * (inner / (r - 12.0)))
+			uvs.append(Vector2(0.5, 0.5) + v * 0.5)
 		draw_colored_polygon(pts, Color.WHITE, uvs, _vp.get_texture())
 	# Rosa de los vientos tenue
 	var faint := Color(0.95, 0.92, 0.7, 0.13)
@@ -145,14 +145,14 @@ func _draw() -> void:
 		_icon("jugador", Vector2.ZERO, 26.0)
 		draw_set_transform(Vector2.ZERO, 0.0, Vector2.ONE)
 	# Aro
-	draw_arc(c, r - 6.0, 0.0, TAU, 64, Color("2b2b29"), 12.0, true)
-	draw_arc(c, r - 0.5, 0.0, TAU, 64, Color("121211"), 2.0, true)
-	draw_arc(c, inner, 0.0, TAU, 64, Color("161614"), 2.0, true)
+	draw_arc(c, r - 3.5, 0.0, TAU, 64, Color("2b2b29"), 6.0, true)
+	draw_arc(c, r - 0.5, 0.0, TAU, 64, Color("121211"), 1.5, true)
+	draw_arc(c, inner, 0.0, TAU, 64, Color("161614"), 1.5, true)
 	# Norte
-	_icon("norte", Vector2(c.x, 30.0), 30.0)
+	_icon("norte", Vector2(c.x, 26.0), 28.0)
 	# Escala: 10 m
 	var px := 5.0 / RADIUS_M * inner
-	var y := SIZE - 28.0
+	var y := SIZE - 22.0
 	var x0 := c.x - px / 2.0
 	var col := Color("e6d9a8")
 	draw_line(Vector2(x0, y), Vector2(x0 + px, y), col, 2.0)

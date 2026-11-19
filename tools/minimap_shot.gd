@@ -10,7 +10,8 @@ func _ready() -> void:
 	DirAccess.remove_absolute(ProjectSettings.globalize_path(GS.save_path))
 	get_window().size = Vector2i(1280, 720)
 	GS.new_game()
-	GS.current_map = "bosque"
+	var args := OS.get_cmdline_user_args()
+	GS.current_map = args[1] if args.size() > 1 else "bosque"
 	var world: Node3D = load("res://scenes/main.tscn").instantiate()
 	add_child(world)
 	for i in 10:
@@ -30,10 +31,5 @@ func _ready() -> void:
 	for i in 30:
 		await get_tree().process_frame
 	await RenderingServer.frame_post_draw
-	get_viewport().get_texture().get_image().save_png(out + "/minimapa.png")
-	var img := get_viewport().get_texture().get_image()
-	img.get_region(Rect2i(0, 200, 280, 280)).resize(560, 560, Image.INTERPOLATE_LANCZOS)
-	var crop := img.get_region(Rect2i(8, 218, 236, 236))
-	crop.resize(472, 472, Image.INTERPOLATE_LANCZOS)
-	crop.save_png(out + "/minimapa_zoom.png")
+	get_viewport().get_texture().get_image().save_png(out + "/minimapa_%s.png" % GS.current_map)
 	get_tree().quit()

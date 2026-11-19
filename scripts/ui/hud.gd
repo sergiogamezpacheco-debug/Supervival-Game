@@ -269,7 +269,13 @@ func _refresh_stats() -> void:
 ## Minimapa redondo bajo las barras (necesita el mundo para la cámara cenital).
 func add_minimap(world: Node3D) -> void:
 	minimap = load("res://scripts/ui/minimap.gd").new()
-	minimap.position = Vector2(18, 228)
+	# Esquina superior derecha; los botones del lateral van debajo
+	minimap.anchor_left = 1.0
+	minimap.anchor_right = 1.0
+	minimap.offset_left = -16.0 - minimap.SIZE
+	minimap.offset_right = -16.0
+	minimap.offset_top = 12.0
+	minimap.offset_bottom = 12.0 + minimap.SIZE
 	_root.add_child(minimap)
 	_root.move_child(minimap, 1)
 	minimap.setup(world)
@@ -448,10 +454,10 @@ func _build_controls() -> void:
 	action_button.anchor_right = 1.0
 	action_button.anchor_top = 1.0
 	action_button.anchor_bottom = 1.0
-	action_button.offset_left = -230
-	action_button.offset_right = -40
-	action_button.offset_top = -230
-	action_button.offset_bottom = -40
+	action_button.offset_left = -236
+	action_button.offset_right = -46
+	action_button.offset_top = -216
+	action_button.offset_bottom = -26
 	_root.add_child(action_button)
 
 	# Agacharse: más lento y silencioso; golpe por sorpresa x3
@@ -555,9 +561,9 @@ func _build_controls() -> void:
 	side.anchor_left = 1.0
 	side.anchor_right = 1.0
 	side.offset_left = -200
-	side.offset_right = -20
-	side.offset_top = 14
-	side.add_theme_constant_override("separation", 10)
+	side.offset_right = -24
+	side.offset_top = 214   # debajo del minimapa
+	side.add_theme_constant_override("separation", 6)
 	_root.add_child(side)
 	inv_btn = _make_inv_button()
 	side.add_child(inv_btn)
@@ -578,7 +584,7 @@ func _build_controls() -> void:
 func _big_button(icon_name: String, tip: String) -> Button:
 	var b := Button.new()
 	b.tooltip_text = tip
-	b.custom_minimum_size = Vector2(84, 84)
+	b.custom_minimum_size = Vector2(70, 70)
 	b.size_flags_horizontal = Control.SIZE_SHRINK_END
 	b.icon = DB.ui_icon(icon_name)   # lo dibuja el propio botón, centrado
 	var empty := StyleBoxEmpty.new()
@@ -813,7 +819,7 @@ func _select(i: int) -> void:
 ## Botón del HUD: icono de mochila con un anillo que se llena con la carga.
 func _make_inv_button() -> Button:
 	var b := Button.new()
-	b.custom_minimum_size = Vector2(96, 96)
+	b.custom_minimum_size = Vector2(80, 80)
 	b.size_flags_horizontal = Control.SIZE_SHRINK_END
 	b.tooltip_text = "Inventario"
 	var empty := StyleBoxEmpty.new()
