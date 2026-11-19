@@ -420,6 +420,8 @@ func revive() -> void:
 
 ## Número de daño que sube y se desvanece (dorado y más grande si es crítico).
 func _show_damage(dmg: float, crit: bool, blocked := false) -> void:
+	if not bool(SFX.settings.get("damage_numbers", true)):
+		return
 	var l := Label3D.new()
 	l.text = "%d" % roundi(dmg)
 	l.billboard = BaseMaterial3D.BILLBOARD_ENABLED

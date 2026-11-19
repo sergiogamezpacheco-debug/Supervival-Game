@@ -13,6 +13,7 @@ var maps: Dictionary = {}
 var containers: Dictionary = {}
 var world_map: Dictionary = {}
 var levels: Dictionary = {}
+var info: Dictionary = {}
 
 
 func _init() -> void:
@@ -31,6 +32,7 @@ func reload() -> void:
 	containers = _load_json("res://data/containers.json", {})
 	world_map = _load_json("res://data/world_map.json", {})
 	levels = _load_json("res://data/levels.json", {})
+	info = _load_json("res://data/info.json", {})
 
 
 func _load_json(path: String, fallback: Variant) -> Variant:

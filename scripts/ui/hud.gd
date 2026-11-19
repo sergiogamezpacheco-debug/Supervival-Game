@@ -44,8 +44,8 @@ var inv_btn: Button
 var crouch_button: Control
 var dodge_button: Control
 var settings_btn: Button
-var _settings_panel: PanelContainer
-var _newgame_btn: Button
+var _settings_panel: Control
+var fps_label: Label
 var settings_controls: Dictionary = {}
 var _clock_icon: TextureRect
 var location_label: Label
@@ -143,6 +143,7 @@ func _ready() -> void:
 	# El inventario ocupa toda la pantalla: va encima de todo (salvo los avisos).
 	_root.move_child(_map_panel, -1)
 	_root.move_child(_inv_panel, -1)
+	_root.move_child(_settings_panel, -1)
 	_root.move_child(_levelup, -1)
 	_root.move_child(_msg, -1)
 	GS.stats_changed.connect(_refresh_stats)
@@ -268,6 +269,7 @@ func _refresh_stats() -> void:
 
 ## Minimapa redondo bajo las barras (necesita el mundo para la cámara cenital).
 func add_minimap(world: Node3D) -> void:
+	_settings_panel.world = world
 	minimap = load("res://scripts/ui/minimap.gd").new()
 	# Esquina superior derecha; los botones del lateral van debajo
 	minimap.anchor_left = 1.0
@@ -279,6 +281,7 @@ func add_minimap(world: Node3D) -> void:
 	_root.add_child(minimap)
 	_root.move_child(minimap, 1)
 	minimap.setup(world)
+	_settings_panel.apply_graphics.call_deferred(world)
 
 
 func _refresh_level() -> void:
@@ -658,6 +661,9 @@ func _process(delta: float) -> void:
 	_refresh_stamina()
 	var inv_open := _inv_panel != null and _inv_panel.visible
 	inv_open = inv_open or (_map_panel != null and _map_panel.visible)
+	inv_open = inv_open or (_settings_panel != null and _settings_panel.visible)
+	if fps_label and fps_label.visible:
+		fps_label.text = "%d FPS" % Engine.get_frames_per_second()
 	joystick.visible = not inv_open
 	action_button.visible = not inv_open
 	crouch_button.visible = not inv_open
@@ -740,59 +746,21 @@ func _refresh_inventory() -> void:
 # ---------------------------------------------------------------- ajustes
 
 func _build_settings() -> void:
-	var parts := _panel("Ajustes", Vector2(330, 250))
-	_settings_panel = parts[0]
-	var v: VBoxContainer = parts[1]
-	for d in [["music", "Música"], ["sfx", "Efectos"]]:
-		var row := HBoxContainer.new()
-		row.add_theme_constant_override("separation", 14)
-		var l := Label.new()
-		l.text = d[1]
-		l.custom_minimum_size = Vector2(130, 0)
-		row.add_child(l)
-		var sl := HSlider.new()
-		sl.min_value = 0.0
-		sl.max_value = 1.0
-		sl.step = 0.05
-		sl.value = float(SFX.settings[d[0]])
-		sl.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-		sl.custom_minimum_size = Vector2(0, 44)
-		var key: String = d[0]
-		sl.value_changed.connect(func(val: float): SFX.set_setting(key, val))
-		row.add_child(sl)
-		v.add_child(row)
-		settings_controls[key] = sl
-	var vib := CheckButton.new()
-	vib.text = "Vibración al recibir golpes"
-	vib.button_pressed = bool(SFX.settings["vibration"])
-	vib.toggled.connect(func(on: bool): SFX.set_setting("vibration", on))
-	v.add_child(vib)
-	settings_controls["vibration"] = vib
-	var look := Button.new()
-	look.text = "Cambiar aspecto del superviviente"
-	look.custom_minimum_size = Vector2(0, 56)
-	look.pressed.connect(func():
+	_settings_panel = load("res://scripts/ui/settings_screen.gd").new()
+	_root.add_child(_settings_panel)
+	settings_controls = _settings_panel.controls
+	_settings_panel.edit_look_requested.connect(func():
 		close_panels()
 		edit_look_requested.emit())
-	v.add_child(look)
-	_newgame_btn = Button.new()
-	_newgame_btn.text = "Empezar partida nueva"
-	_newgame_btn.custom_minimum_size = Vector2(0, 56)
-	_newgame_btn.add_theme_color_override("font_color", Color("ff8a80"))
-	_newgame_btn.pressed.connect(func():
-		# Dos toques: el primero avisa
-		if _newgame_btn.text.begins_with("¿Seguro"):
-			new_game_requested.emit()
-		else:
-			_newgame_btn.text = "¿Seguro? Se borra todo. Toca otra vez")
-	v.add_child(_newgame_btn)
-	_settings_panel.visibility_changed.connect(func():
-		_newgame_btn.text = "Empezar partida nueva")
-	var ver := Label.new()
-	ver.text = "Supervival · Lost Anarchy Games"
-	ver.modulate = Color(1, 1, 1, 0.5)
-	ver.add_theme_font_size_override("font_size", 15)
-	v.add_child(ver)
+	_settings_panel.new_game_requested.connect(func(): new_game_requested.emit())
+	# Contador de FPS (se activa en Ajustes > Gráficos)
+	fps_label = Label.new()
+	fps_label.position = Vector2(560, 100)
+	fps_label.add_theme_font_size_override("font_size", 18)
+	fps_label.add_theme_color_override("font_outline_color", Color.BLACK)
+	fps_label.add_theme_constant_override("outline_size", 5)
+	fps_label.visible = false
+	_root.add_child(fps_label)
 
 
 func set_clock(text: String, night: bool, rain: bool) -> void:

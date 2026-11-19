@@ -8,7 +8,7 @@ const TILT := 0.42              # inclinación de la cámara (rad): árboles y r
 const SIZE := 190.0             # diámetro en píxeles (lienzo 1280x720)
 const EXTRA := 64.0             # sitio a la izquierda para el arco con tiempo, temperatura y hora
 const TEX := 256                # resolución de la vista
-const UPDATE_EVERY := 3         # se repinta 1 de cada 3 fotogramas (ahorra batería)
+var update_every := 3           # se repinta 1 de cada N fotogramas (según la calidad gráfica)
 const VIEW_LAYER := 1           # capa que ve la cámara: sin criaturas ni jugador (van como iconos)
 const HIDE_LAYER := 1 << 1
 
@@ -56,7 +56,7 @@ func _process(_delta: float) -> void:
 	if world == null or not is_instance_valid(world) or world.player == null:
 		return
 	_frame += 1
-	if _frame % UPDATE_EVERY != 0:
+	if _frame % update_every != 0:
 		return
 	var p: Vector3 = world.player.global_position
 	_cam.global_position = p + Vector3(0.0, cos(TILT), sin(TILT)) * 60.0
@@ -64,7 +64,7 @@ func _process(_delta: float) -> void:
 	_vp.render_target_update_mode = SubViewport.UPDATE_ONCE
 	# Criaturas y jugador fuera de la vista (se dibujan como iconos); se repasa a menudo
 	# porque los modelos cambian (ropa, heridas, recién aparecidos)
-	if _frame % (UPDATE_EVERY * 10) == 0 or _frame <= UPDATE_EVERY:
+	if _frame % (update_every * 10) == 0 or _frame <= update_every:
 		_set_layers(world.player)
 		for c in get_tree().get_nodes_in_group("creature"):
 			_set_layers(c)

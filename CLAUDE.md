@@ -37,4 +37,6 @@
 - Peso: `"weight"` en cada objeto (un test lo exige); `GS.carry_weight()`, `GS.carry_capacity()`, `GS.load_ratio()`.
 - Minimapa: `scripts/ui/minimap.gd` (cámara cenital propia; criaturas y jugador en la capa 2 para que
   salgan como iconos de `assets/icons/minimap/`, recortados con `tools/iconos/minimapa.py`).
+- Ajustes: `scripts/ui/settings_screen.gd` (diseño `docs/diseno_ajustes.jpg`); valores en `SFX.settings`
+  (`SFX.DEFAULTS`), gráficos con `apply_graphics(world)`. Redes, soporte y textos legales en `data/info.json`.
 - Hoja de ruta y estado: `README.md`.

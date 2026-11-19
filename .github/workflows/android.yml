@@ -84,6 +84,7 @@ jobs:
           code=${{ github.run_number }}
           sed -i "s/^version\/code=.*/version\/code=${code}/" export_presets.cfg
           sed -i "s/^version\/name=.*/version\/name=\"0.1.${code}\"/" export_presets.cfg
+          sed -i "s/^config\/version=.*/config\/version=\"0.1.${code}\"/" project.godot
           mkdir -p build
           godot --headless --export-release "Android" build/Supervival.apk 2>&1 | tee export.log
           test -s build/Supervival.apk || { echo "No se generó el APK"; exit 1; }

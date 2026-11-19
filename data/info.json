@@ -1,0 +1,29 @@
+{
+  "_doc": "Datos de la pantalla de ajustes: redes sociales del estudio, contacto y textos legales. Una url vacía muestra 'Próximamente'.",
+  "studio": "Lost Anarchy Games",
+  "support_email": "",
+  "server": "Local · sin conexión",
+  "redes": [
+    {
+      "id": "instagram",
+      "name": "Instagram",
+      "url": ""
+    },
+    {
+      "id": "tiktok",
+      "name": "TikTok",
+      "url": ""
+    },
+    {
+      "id": "youtube",
+      "name": "YouTube",
+      "url": ""
+    },
+    {
+      "id": "discord",
+      "name": "Discord",
+      "url": ""
+    }
+  ],
+  "legal": "TÉRMINOS DE SERVICIO\n\nSupervival es un juego de Lost Anarchy Games en fase beta. Puedes jugarlo gratis para uso personal. El contenido del juego (nombres, modelos, iconos y textos) pertenece al estudio.\n\nPOLÍTICA DE PRIVACIDAD\n\n· El juego funciona sin conexión: tu partida y tus ajustes se guardan solo en este dispositivo.\n· No pedimos datos personales, no hay cuentas obligatorias y no hay publicidad.\n· El ID de jugador es un número aleatorio creado en tu móvil; sirve para identificarte si contactas con soporte.\n· Si en el futuro se añaden partidas en línea o vinculación con Google Play Games, esta política se actualizará antes y se te avisará en el juego.\n· «Borrar datos» elimina la partida guardada de este dispositivo."
+}

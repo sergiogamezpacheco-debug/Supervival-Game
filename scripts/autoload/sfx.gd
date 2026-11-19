@@ -1,11 +1,19 @@
 extends Node
 ## Sonido: efectos, ambiente (viento, grillos, lluvia) y música. También guarda
-## los ajustes del jugador (volúmenes y vibración) en user://settings.json.
+## todos los ajustes del jugador (sonido, gráficos, cuenta…) en user://settings.json.
 
 const PATH := "res://assets/audio/%s.wav"
 const LOOPS := ["viento", "grillos", "lluvia", "musica"]
 
-var settings := {"music": 0.6, "sfx": 0.8, "vibration": true}
+const DEFAULTS := {
+	"master": 1.0, "music": 0.6, "sfx": 0.8, "ambience": 0.7, "mute": false, "vibration": true,
+	"language": "es", "notifications": true,
+	"quality": "medio", "shadows": true, "fps": 60, "render_scale": 1.0, "brightness": 1.0,
+	"damage_numbers": true, "show_fps": false, "minimap": true,
+	"player_id": "", "last_access": 0.0,
+}
+var settings := DEFAULTS.duplicate()
+var previous_access := 0.0     # último acceso anterior a esta sesión (unix)
 var settings_path := "user://settings.json"
 var played: Array = []          # últimos efectos (para los tests)
 var _streams: Dictionary = {}
@@ -17,11 +25,15 @@ var _t := 0.0
 
 func _ready() -> void:
 	process_mode = Node.PROCESS_MODE_ALWAYS
-	for bus in ["Musica", "Efectos"]:
+	for bus in ["Musica", "Efectos", "Ambiente"]:
 		if AudioServer.get_bus_index(bus) < 0:
 			AudioServer.add_bus()
 			AudioServer.set_bus_name(AudioServer.bus_count - 1, bus)
 	load_settings()
+	# Último acceso (el ID de jugador lo crea load_settings)
+	previous_access = float(settings.get("last_access", 0.0))
+	settings["last_access"] = Time.get_unix_time_from_system()
+	save_settings()
 	for i in 8:
 		var p := AudioStreamPlayer.new()
 		p.bus = "Efectos"
@@ -36,7 +48,7 @@ func _ready() -> void:
 		lp.loop_end = int(lp.get_length() * lp.mix_rate)
 		var p := AudioStreamPlayer.new()
 		p.stream = lp
-		p.bus = "Musica" if id == "musica" else "Efectos"
+		p.bus = "Musica" if id == "musica" else "Ambiente"
 		p.volume_db = -60.0
 		add_child(p)
 		_loops[id] = p
@@ -109,10 +121,13 @@ func _fade(id: String, db: float) -> void:
 # ------------------------------------------------------------- ajustes
 
 func apply() -> void:
-	for d in [["Musica", "music"], ["Efectos", "sfx"]]:
+	for d in [["Master", "master"], ["Musica", "music"], ["Efectos", "sfx"], ["Ambiente", "ambience"]]:
 		var i := AudioServer.get_bus_index(d[0])
+		if i < 0:
+			continue
 		var v := clampf(float(settings[d[1]]), 0.0, 1.0)
-		AudioServer.set_bus_mute(i, v <= 0.01)
+		var off: bool = v <= 0.01 or (d[0] == "Master" and bool(settings["mute"]))
+		AudioServer.set_bus_mute(i, off)
 		AudioServer.set_bus_volume_db(i, linear_to_db(maxf(v, 0.01)))
 
 
@@ -130,9 +145,25 @@ func save_settings() -> void:
 
 func load_settings() -> void:
 	if not FileAccess.file_exists(settings_path):
+		for k in DEFAULTS:
+			if not settings.has(k):
+				settings[k] = DEFAULTS[k]
+		if str(settings.get("player_id", "")) == "":
+			var rng := RandomNumberGenerator.new()
+			rng.randomize()
+			settings["player_id"] = "SUPERVIVIENTE#%06d" % rng.randi_range(0, 999999)
 		return
 	var d = JSON.parse_string(FileAccess.get_file_as_string(settings_path))
 	if d is Dictionary:
 		for k in settings:
 			if d.has(k):
 				settings[k] = d[k]
+	for k in DEFAULTS:
+		if not settings.has(k):
+			settings[k] = DEFAULTS[k]
+	# ID de jugador: se crea una vez y se guarda
+	if str(settings.get("player_id", "")) == "":
+		var rng := RandomNumberGenerator.new()
+		rng.randomize()
+		settings["player_id"] = "SUPERVIVIENTE#%06d" % rng.randi_range(0, 999999)
+		save_settings()

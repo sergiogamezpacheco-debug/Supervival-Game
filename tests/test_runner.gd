@@ -1523,13 +1523,47 @@ func test_dodge_audio() -> void:
 	SFX.set_setting("music", 0.6)
 	SFX.set_setting("sfx", 0.8)
 	SFX.set_setting("vibration", true)
+	# Pantalla de ajustes del diseño: pestañas, sistema, gráficos y audio
+	var st: Control = hud._settings_panel
+	check(str(SFX.settings["player_id"]).begins_with("SUPERVIVIENTE#"), "hay ID de jugador (%s)" % SFX.settings["player_id"])
+	check(st._sys_values["version"].text.begins_with("v") and st._sys_values["access"].text != "", "sistema: versión y último acceso")
+	check(st.access_text(Time.get_unix_time_from_system() - 300.0) == "Hace 5 min" and st.access_text(0.0) == "Primera vez", "último acceso en texto")
+	st._tab_buttons["graficos"].pressed.emit()
+	await _pframes(2)
+	check(st.tab == "graficos" and st._pill_label.text == "Gráficos" and st.controls.has("shadows"), "pestaña de gráficos")
+	st.controls["shadows"].button_pressed = false
+	check(SFX.settings["shadows"] == false and not world._sun.shadow_enabled, "quitar sombras se aplica")
+	st.controls["quality"].item_selected.emit(0)
+	check(SFX.settings["quality"] == "bajo" and world.hud.minimap.update_every == 5, "calidad baja: el minimapa se repinta menos")
+	st.controls["fps"].item_selected.emit(0)
+	check(Engine.max_fps == 30, "límite de 30 FPS")
+	st.controls["minimap"].button_pressed = false
+	check(not world.hud.minimap.visible, "se puede ocultar el minimapa")
+	st.controls["damage_numbers"].button_pressed = false
+	check(SFX.settings["damage_numbers"] == false, "se pueden quitar los números de daño")
+	for k in ["quality", "shadows", "fps", "minimap", "damage_numbers"]:
+		SFX.set_setting(k, SFX.DEFAULTS[k])
+	st.apply_graphics(world)
+	st._tab_buttons["audio"].pressed.emit()
+	await _pframes(2)
+	st.controls["mute"].button_pressed = true
+	check(AudioServer.is_bus_mute(AudioServer.get_bus_index("Master")), "silenciar todo")
+	st.controls["mute"].button_pressed = false
+	st.controls["ambience"].value = 0.3
+	check(absf(AudioServer.get_bus_volume_db(AudioServer.get_bus_index("Ambiente")) - linear_to_db(0.3)) < 0.1, "volumen de ambiente")
+	SFX.set_setting("ambience", 0.7)
+	st._tab_buttons["general"].pressed.emit()
+	await _pframes(2)
+	check(st.controls.has("music") and st.controls.has("copy_id") and st.controls.has("rrss_instagram"), "general: ID, volúmenes y redes")
+	hud.settings_controls = st.controls
 	for i in GS.slots.size():
 		GS.slots[i] = null
 	GS.add_item("madera", 7)
 	GS.created = true
-	hud._newgame_btn.pressed.emit()
-	check(GS.count("madera") == 7 and hud._newgame_btn.text.begins_with("¿Seguro"), "partida nueva pide confirmación (%d, %s)" % [GS.count("madera"), hud._newgame_btn.text])
-	hud._newgame_btn.pressed.emit()
+	var wipe: Button = hud._settings_panel.controls["wipe"]
+	wipe.pressed.emit()
+	check(GS.count("madera") == 7 and wipe.text.begins_with("¿SEGURO"), "borrar datos pide confirmación (%d, %s)" % [GS.count("madera"), wipe.text])
+	wipe.pressed.emit()
 	check(GS.count("madera") == 0 and not GS.created, "al confirmar se borra la partida")
 	world.queue_free()
 	await _frames(2)
