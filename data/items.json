@@ -387,8 +387,7 @@
     "model": "mochila",
     "bag_slots": 8,
     "desc": "8 huecos más. Con saco de dormir.",
-    "weight": 0.8,
-    "carry": 10
+    "weight": 0.8
   },
   "mochila_excursion": {
     "name": "Mochila de excursión",
@@ -398,8 +397,7 @@
     "model": "mochila_excursion",
     "bag_slots": 16,
     "desc": "16 huecos más. Bolsillos laterales.",
-    "weight": 1.2,
-    "carry": 20
+    "weight": 1.2
   },
   "mochila_tactica": {
     "name": "Mochila táctica",
@@ -409,7 +407,6 @@
     "model": "mochila_tactica",
     "bag_slots": 24,
     "desc": "24 huecos más. Cinchas y placas.",
-    "weight": 1.6,
-    "carry": 30
+    "weight": 1.6
   }
 }

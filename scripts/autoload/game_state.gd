@@ -352,13 +352,10 @@ func carry_weight() -> float:
 	return w
 
 
-## Lo que puedes llevar sin ir sobrecargado: base, fuerza y mochila.
+## Peso que aguantas sin ir sobrecargado: base + fuerza. La mochila no cuenta
+## (la mochila solo da huecos; el peso solo frena y cansa).
 func carry_capacity() -> float:
-	var c := float(DB.bal("carry_base", 30.0)) + float(physique["fuerza"]) * float(DB.bal("carry_per_fuerza", 15.0))
-	for k in worn:
-		if worn[k] != null:
-			c += float(DB.item(str(worn[k]["id"])).get("carry", 0))
-	return c
+	return float(DB.bal("carry_base", 35.0)) + float(physique["fuerza"]) * float(DB.bal("carry_per_fuerza", 15.0))
 
 
 func overloaded() -> bool:

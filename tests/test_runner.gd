@@ -759,7 +759,7 @@ func test_levels_weight() -> void:
 		if GS.slots[i] != null and GS.slots[i]["id"] == "mochila":
 			mi = i
 	GS.wear_slot(mi)
-	check(is_equal_approx(GS.carry_capacity(), 45.0), "la mochila deja llevar 10 kg más")
+	check(is_equal_approx(GS.carry_capacity(), 35.0) and GS.free_slots() >= 15, "la mochila da huecos, no aguante de peso")
 	GS.add_item("piedra", 100)
 	check(GS.overloaded(), "con 150 piedras vas sobrecargado")
 	world.player.move_input = Vector2(1, 0)

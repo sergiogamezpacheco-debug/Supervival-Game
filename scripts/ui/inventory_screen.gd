@@ -530,8 +530,6 @@ func _refresh_detail() -> void:
 			stats.append(k[1] % int(data[k[0]]))
 	if data.has("durability") and it.has("dur"):
 		stats.append("Estado %d/%d" % [int(it["dur"]), int(data["durability"])])
-	if data.has("carry"):
-		stats.append("Carga +%d kg" % int(data["carry"]))
 	_show(DB.item_icon(id), DB.item_name(id), str(data.get("desc", "")), " · ".join(stats), "x%d" % int(it["qty"]) if int(it.get("qty", 1)) > 1 else "")
 	var q := int(it.get("qty", 1))
 	_d_weight.text = ("   %s" % _kg(DB.weight(id))) if q <= 1 else ("   %s c/u · %s" % [_kg(DB.weight(id)), _kg(DB.weight(id) * q)])

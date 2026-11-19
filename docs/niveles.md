@@ -105,8 +105,9 @@ bloqueos fijan `GS.level` a mano.
 
 # Peso
 
-Cada objeto tiene `"weight"` (kg por unidad) en `items.json`; las mochilas tienen `"carry"`.
-Aguantas 35 kg + 15 por cada punto de fuerza + la mochila (lona 10, excursión 20, táctica 30).
+Cada objeto tiene `"weight"` (kg por unidad) en `items.json`. El peso no limita lo que llevas
+(eso lo deciden los huecos de la mochila): solo frena el movimiento y gasta la energía.
+La referencia de carga es 35 kg + 15 por cada punto de fuerza; la mochila no la cambia.
 Lo puesto y el arma de la mano también pesan.
 
 - Hasta media carga vas a velocidad normal; de media carga a carga llena, hasta un 25 % más lento.
