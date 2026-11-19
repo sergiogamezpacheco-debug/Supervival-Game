@@ -177,22 +177,7 @@ func _draw_weather_arc(c: Vector2, r: float) -> void:
 	var w := 40.0
 	var rad := r + w / 2.0 + 1.0
 	var span := 0.78
-	# Banda del mismo color que el aro, con los extremos cortados en bisel
-	var band := Color("2b2b29")
-	var pts := PackedVector2Array()
-	var n := 32
-	for i in n + 1:
-		var a := PI - span + 2.0 * span * float(i) / float(n)
-		pts.append(c + Vector2(cos(a), sin(a)) * (r - 1.0))
-	for i in n + 1:
-		var a := PI + span - 0.12 - 2.0 * (span - 0.12) * float(i) / float(n)
-		pts.append(c + Vector2(cos(a), sin(a)) * (r + w))
-	draw_colored_polygon(pts, band)
-	var edge := PackedVector2Array()
-	for i in n + 1:
-		var a := PI + span - 0.12 - 2.0 * (span - 0.12) * float(i) / float(n)
-		edge.append(c + Vector2(cos(a), sin(a)) * (r + w))
-	draw_polyline(edge, Color("121211"), 1.5, true)
+	# Sin fondo: solo los iconos y textos (con contorno) siguiendo el aro
 	var col := Color("f3ead2")
 	# Tiempo
 	var weather := "lluvia" if GS.raining() else ("luna" if GS.is_night() else "sol")
@@ -205,7 +190,9 @@ func _draw_weather_arc(c: Vector2, r: float) -> void:
 	var temp := GS.temperature()
 	var tcol := Color("7fc4e8") if temp <= 8 else (Color("f0a050") if temp >= 24 else col)
 	_text_centered("%d°" % temp, pt + Vector2(4, 7), 19, tcol)
-	draw_line(pt + Vector2(-15, -9), pt + Vector2(-15, 5), Color(0.9, 0.9, 0.9, 0.8), 3.0)
+	draw_line(pt + Vector2(-15, -9), pt + Vector2(-15, 5), Color(0, 0, 0, 0.6), 5.5)
+	draw_circle(pt + Vector2(-15, 7), 5.0, Color(0, 0, 0, 0.6))
+	draw_line(pt + Vector2(-15, -9), pt + Vector2(-15, 5), Color(0.95, 0.95, 0.95), 2.5)
 	draw_circle(pt + Vector2(-15, 7), 3.5, tcol)
 	# Hora
 	var ph := c + Vector2(cos(PI - 0.52), sin(PI - 0.52)) * rad
