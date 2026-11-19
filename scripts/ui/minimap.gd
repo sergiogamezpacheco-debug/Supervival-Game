@@ -6,6 +6,7 @@ extends Control
 const RADIUS_M := 12.0          # metros del centro al borde
 const TILT := 0.42              # inclinación de la cámara (rad): árboles y rocas se ven en 3D
 const SIZE := 190.0             # diámetro en píxeles (lienzo 1280x720)
+const EXTRA := 64.0             # sitio a la izquierda para el arco con tiempo, temperatura y hora
 const TEX := 256                # resolución de la vista
 const UPDATE_EVERY := 3         # se repinta 1 de cada 3 fotogramas (ahorra batería)
 const VIEW_LAYER := 1           # capa que ve la cámara: sin criaturas ni jugador (van como iconos)
@@ -20,8 +21,8 @@ var _font: Font
 
 
 func _init() -> void:
-	custom_minimum_size = Vector2(SIZE, SIZE)
-	size = Vector2(SIZE, SIZE)
+	custom_minimum_size = Vector2(SIZE + EXTRA, SIZE)
+	size = Vector2(SIZE + EXTRA, SIZE)
 	mouse_filter = Control.MOUSE_FILTER_IGNORE
 	for k in ["infectado", "zorro", "ciervo", "caja", "jugador", "norte"]:
 		_icons[k] = load("res://assets/icons/minimap/%s.png" % k)
@@ -85,7 +86,12 @@ func to_map(pos: Vector3) -> Variant:
 	var d := (uv - Vector2(0.5, 0.5)) * 2.0 * (SIZE / 2.0 - 7.0)
 	if d.length() > SIZE / 2.0 - 17.0:
 		return null
-	return Vector2(SIZE / 2.0, SIZE / 2.0) + d
+	return center() + d
+
+
+## Centro del círculo del mapa dentro del control.
+func center() -> Vector2:
+	return Vector2(EXTRA + SIZE / 2.0, SIZE / 2.0)
 
 
 func _icon_for(c: Node3D) -> String:
@@ -97,7 +103,7 @@ func _icon_for(c: Node3D) -> String:
 
 
 func _draw() -> void:
-	var c := Vector2(SIZE, SIZE) / 2.0
+	var c := center()
 	var r := SIZE / 2.0
 	var inner := r - 7.0
 	# Vista recortada en círculo
@@ -150,6 +156,7 @@ func _draw() -> void:
 	draw_arc(c, inner, 0.0, TAU, 64, Color("161614"), 1.5, true)
 	# Norte
 	_icon("norte", Vector2(c.x, 26.0), 28.0)
+	_draw_weather_arc(c, r)
 	# Escala: 10 m
 	var px := 5.0 / RADIUS_M * inner
 	var y := SIZE - 22.0
@@ -163,6 +170,54 @@ func _draw() -> void:
 		var w := _font.get_string_size(t, HORIZONTAL_ALIGNMENT_LEFT, -1, 14).x
 		draw_string_outline(_font, Vector2(c.x - w / 2.0, y - 6), t, HORIZONTAL_ALIGNMENT_LEFT, -1, 14, 4, Color(0, 0, 0, 0.7))
 		draw_string(_font, Vector2(c.x - w / 2.0, y - 6), t, HORIZONTAL_ALIGNMENT_LEFT, -1, 14, col)
+
+
+## Arco pegado al lado izquierdo del aro: tiempo (sol, luna o lluvia), temperatura y hora.
+func _draw_weather_arc(c: Vector2, r: float) -> void:
+	var w := 40.0
+	var rad := r + w / 2.0 + 1.0
+	var span := 0.78
+	# Banda del mismo color que el aro, con los extremos cortados en bisel
+	var band := Color("2b2b29")
+	var pts := PackedVector2Array()
+	var n := 32
+	for i in n + 1:
+		var a := PI - span + 2.0 * span * float(i) / float(n)
+		pts.append(c + Vector2(cos(a), sin(a)) * (r - 1.0))
+	for i in n + 1:
+		var a := PI + span - 0.12 - 2.0 * (span - 0.12) * float(i) / float(n)
+		pts.append(c + Vector2(cos(a), sin(a)) * (r + w))
+	draw_colored_polygon(pts, band)
+	var edge := PackedVector2Array()
+	for i in n + 1:
+		var a := PI + span - 0.12 - 2.0 * (span - 0.12) * float(i) / float(n)
+		edge.append(c + Vector2(cos(a), sin(a)) * (r + w))
+	draw_polyline(edge, Color("121211"), 1.5, true)
+	var col := Color("f3ead2")
+	# Tiempo
+	var weather := "lluvia" if GS.raining() else ("luna" if GS.is_night() else "sol")
+	var tex: Texture2D = DB.ui_icon(weather)
+	var pw := c + Vector2(cos(PI + 0.52), sin(PI + 0.52)) * rad
+	if tex:
+		draw_texture_rect(tex, Rect2(pw - Vector2(15, 15), Vector2(30, 30)), false)
+	# Temperatura (con un termómetro pequeño)
+	var pt := c + Vector2(-rad, 0.0)
+	var temp := GS.temperature()
+	var tcol := Color("7fc4e8") if temp <= 8 else (Color("f0a050") if temp >= 24 else col)
+	_text_centered("%d°" % temp, pt + Vector2(4, 7), 19, tcol)
+	draw_line(pt + Vector2(-15, -9), pt + Vector2(-15, 5), Color(0.9, 0.9, 0.9, 0.8), 3.0)
+	draw_circle(pt + Vector2(-15, 7), 3.5, tcol)
+	# Hora
+	var ph := c + Vector2(cos(PI - 0.52), sin(PI - 0.52)) * rad
+	_text_centered(GS.clock_text(), ph + Vector2(0, 6), 16, col)
+
+
+func _text_centered(t: String, at: Vector2, fs: int, col: Color) -> void:
+	if _font == null:
+		return
+	var w := _font.get_string_size(t, HORIZONTAL_ALIGNMENT_LEFT, -1, fs).x
+	draw_string_outline(_font, Vector2(at.x - w / 2.0, at.y), t, HORIZONTAL_ALIGNMENT_LEFT, -1, fs, 4, Color(0, 0, 0, 0.75))
+	draw_string(_font, Vector2(at.x - w / 2.0, at.y), t, HORIZONTAL_ALIGNMENT_LEFT, -1, fs, col)
 
 
 func _icon(id: String, at: Vector2, s: float) -> void:

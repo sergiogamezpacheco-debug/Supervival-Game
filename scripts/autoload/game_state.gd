@@ -751,6 +751,17 @@ func set_hour(h: float) -> void:
 	time_offset += fposmod(h - hour(), 24.0) / 24.0 * day
 
 
+## Temperatura del ambiente (°C): sube de día y baja de noche, la lluvia enfría y cada
+## zona tiene su ajuste ("temp" en maps.json).
+func temperature() -> int:
+	var h := hour()
+	var t := 14.0 + 7.0 * sin(TAU * (h - 9.0) / 24.0)
+	if raining():
+		t -= 5.0
+	t += float(DB.maps.get(current_map, {}).get("temp", 0))
+	return roundi(t)
+
+
 func clock_text() -> String:
 	var h := hour()
 	return "%02d:%02d" % [floori(h), floori(fmod(h, 1.0) * 60.0)]

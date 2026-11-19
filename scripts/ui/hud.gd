@@ -272,7 +272,7 @@ func add_minimap(world: Node3D) -> void:
 	# Esquina superior derecha; los botones del lateral van debajo
 	minimap.anchor_left = 1.0
 	minimap.anchor_right = 1.0
-	minimap.offset_left = -16.0 - minimap.SIZE
+	minimap.offset_left = -16.0 - minimap.SIZE - minimap.EXTRA
 	minimap.offset_right = -16.0
 	minimap.offset_top = 12.0
 	minimap.offset_bottom = 12.0 + minimap.SIZE
@@ -501,8 +501,8 @@ func _build_controls() -> void:
 	settings_btn.custom_minimum_size = Vector2(56, 56)
 	settings_btn.anchor_left = 0.5
 	settings_btn.anchor_right = 0.5
-	settings_btn.offset_left = 108
-	settings_btn.offset_right = 164
+	settings_btn.offset_left = -28
+	settings_btn.offset_right = 28
 	settings_btn.offset_top = 6
 	settings_btn.offset_bottom = 62
 	settings_btn.pressed.connect(func(): _toggle(_settings_panel))
@@ -542,6 +542,7 @@ func _build_controls() -> void:
 	_rain_icon.texture = DB.ui_icon("lluvia")
 	ch.add_child(_rain_icon)
 	_root.add_child(clock)
+	clock.visible = false   # la hora, el tiempo y la temperatura van junto al minimapa
 	# Zona en la que estás, debajo del reloj
 	location_label = Label.new()
 	location_label.anchor_left = 0.5

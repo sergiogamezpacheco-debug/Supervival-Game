@@ -737,7 +737,16 @@ func test_levels_weight() -> void:
 	var mm: Control = world.hud.minimap
 	check(mm != null and mm.world == world, "hay minimapa en el HUD")
 	var c0: Variant = mm.to_map(world.player.global_position)
-	check(c0 != null and (c0 as Vector2).distance_to(Vector2(mm.SIZE, mm.SIZE) / 2.0) < 3.0, "el jugador va en el centro del minimapa")
+	check(c0 != null and (c0 as Vector2).distance_to(mm.center()) < 3.0, "el jugador va en el centro del minimapa")
+	GS.forced_hour = 15.0
+	var t_day := GS.temperature()
+	GS.forced_hour = 3.0
+	var t_night := GS.temperature()
+	GS.forced_rain = 1
+	var t_rain := GS.temperature()
+	GS.forced_rain = 0
+	GS.forced_hour = 12.0
+	check(t_day > t_night and t_rain < t_night, "temperatura: más calor de día, menos de noche y con lluvia (%d/%d/%d)" % [t_day, t_night, t_rain])
 	var east: Variant = mm.to_map(world.player.global_position + Vector3(5, 0, 0))
 	var north: Variant = mm.to_map(world.player.global_position + Vector3(0, 0, -5))
 	check(east != null and (east as Vector2).x > (c0 as Vector2).x + 20.0, "el este sale a la derecha")
