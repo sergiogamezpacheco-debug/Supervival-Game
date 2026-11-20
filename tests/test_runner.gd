@@ -1038,6 +1038,21 @@ func test_character() -> void:
 	check(dressed.get_child_count() > 0 and _count_verts(dressed) > _count_verts(bare) + 300, "la ropa añade piezas al personaje")
 	dressed.animate_walk(1.0, 1.0)
 	check(absf(dressed.j["leg_l"].rotation.x) > 0.1, "las piernas se mueven al andar")
+	# relieve muscular: el anillo de los pectorales sale más por delante que por los lados
+	check(CharacterModel._shape(["pec", 0.2], deg_to_rad(240.0)) > 1.1 and is_equal_approx(CharacterModel._shape(["pec", 0.2], 0.0), 1.0), "los pectorales abultan solo por delante")
+	bare.animate_walk(0.0, 0.0)
+	var sp0: float = bare.j["spine"].rotation.x
+	bare.animate_idle(1.0 / 1.7 * PI / 2.0, 1.0)
+	check(bare.j["spine"].rotation.x > sp0 + 0.01, "quieto respira (el pecho se mueve)")
+	bare.animate_walk(0.0, 0.0)
+	bare.animate_swing(0.3)
+	check(bare.j["arm_r"].rotation.x < -2.0 and bare.j["spine"].rotation.y > 0.2, "el golpe carga el brazo por encima del hombro girando el tronco")
+	bare.animate_walk(0.0, 0.0)
+	bare.animate_swing(0.5)
+	check(bare.j["arm_r"].rotation.x > -1.2 and bare.j["spine"].rotation.x > 0.1, "y descarga hacia delante inclinando el cuerpo")
+	bare.animate_walk(0.0, 0.0)
+	bare.animate_swing(1.0)
+	check(is_equal_approx(bare.j["spine"].rotation.y, 0.0), "al acabar el golpe vuelve a la pose normal")
 	dressed.queue_free()
 	bare.queue_free()
 	GS.look["sex"] = "f"

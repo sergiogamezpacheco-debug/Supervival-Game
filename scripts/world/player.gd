@@ -15,6 +15,7 @@ var _walk_amount := 0.0
 var _run_amount := 0.0
 var _vel := Vector3.ZERO
 var _swing_t := -1.0
+var _idle_t := 0.0
 var _hand_item := ""
 var running := false
 var crouching := false            # agachado: lento, silencioso y con golpe crítico por sorpresa
@@ -106,6 +107,8 @@ func _physics_process(delta: float) -> void:
 	_visual.animate_walk(_walk_phase, _walk_amount, _run_amount)
 	_crouch_amount = move_toward(_crouch_amount, 1.0 if crouching else 0.0, delta * 6.0)
 	_visual.animate_crouch(_crouch_amount)
+	_idle_t += delta
+	_visual.animate_idle(_idle_t, (1.0 - _walk_amount) * (1.0 - _crouch_amount))
 	if training > 0.0:
 		_visual.animate_swing(fmod(training, 0.75) / 0.75)
 	if _swing_t >= 0.0:

@@ -27,7 +27,7 @@ func _ready() -> void:
 	we.environment = env
 	vp.add_child(we)
 	var key := DirectionalLight3D.new()
-	key.rotation_degrees = Vector3(-35, 150, 0)
+	key.rotation_degrees = Vector3(-38, 128, 0)
 	key.light_energy = 1.45
 	vp.add_child(key)
 	var fill := DirectionalLight3D.new()
@@ -44,6 +44,8 @@ func _ready() -> void:
 		await _props()
 	elif OS.get_cmdline_user_args().size() > 1 and OS.get_cmdline_user_args()[1] == "inv":
 		await _inventory()
+	elif OS.get_cmdline_user_args().size() > 1 and OS.get_cmdline_user_args()[1] == "ref":
+		await _ref()
 	elif OS.get_cmdline_user_args().size() > 1 and OS.get_cmdline_user_args()[1] == "heads":
 		await _all(true)
 	elif OS.get_cmdline_user_args().size() > 1:
@@ -200,6 +202,31 @@ func _inventory() -> void:
 	cr.animate_crouch(1.0)
 	await _shot("agachado_lado", Vector2i(700, 800), Vector3(-4.2, 0.9, 0.0), Vector3(0, 0.7, 0), 26)
 	await _shot("agachado_frente", Vector2i(700, 800), Vector3(1.5, 1.4, -3.8), Vector3(0, 0.7, 0), 26)
+
+
+## Superviviente básico (como el diseño del inventario): cuerpo, cara, lado y poses.
+func _ref() -> void:
+	var M := {"sex": "m", "skin": 1, "hair": 1, "hair_color": 1, "eyes": 0, "eye_color": 0, "nose": 0, "mouth": 1}
+	_clear()
+	var c := _char(M, {}, {}, Vector3.ZERO, 0.32)
+	await _shot("ref_cuerpo", Vector2i(500, 900), Vector3(0.0, 1.05, -4.6), Vector3(0, 0.9, 0), 26)
+	await _shot("ref_cara", Vector2i(400, 400), Vector3(0.0, 1.72, -1.1), Vector3(0, 1.63, 0), 24)
+	var F := {"sex": "f", "skin": 2, "hair": 1, "hair_color": 0, "eyes": 1, "eye_color": 2, "nose": 0, "mouth": 2}
+	var f := _char(F, {}, {"torso": "camiseta", "piernas": "pantalon_cargo", "pies": "botas"}, Vector3(-0.9, 0, 0), 0.32)
+	var m2 := _char(M, {}, {"torso": "chaqueta_piel", "piernas": "pantalon_cargo", "pies": "botas", "espalda": "mochila"}, Vector3(0.9, 0, 0), 0.32)
+	await _shot("ref_grupo", Vector2i(900, 900), Vector3(0.0, 1.05, -5.6), Vector3(0, 0.9, 0), 30)
+	f.queue_free()
+	m2.queue_free()
+	c.rotation.y = PI / 2.0
+	await _shot("ref_lado", Vector2i(500, 900), Vector3(0.0, 1.05, -4.6), Vector3(0, 0.9, 0), 26)
+	c.rotation.y = 0.0
+	for k in 4:
+		c.animate_walk(k * PI / 2.0 + 0.4, 1.0, 1.0 if k >= 2 else 0.0)
+		await _shot("ref_paso_%d" % k, Vector2i(400, 700), Vector3(-4.2, 1.1, -0.6), Vector3(0, 0.9, 0), 28)
+	for k in 4:
+		c.animate_walk(0.0, 0.0)
+		c.animate_swing([0.3, 0.42, 0.52, 0.8][k])
+		await _shot("ref_golpe_%d" % k, Vector2i(400, 700), Vector3(-4.2, 1.1, -0.6), Vector3(0, 0.9, 0), 28)
 
 
 func _all(only_heads := false) -> void:
