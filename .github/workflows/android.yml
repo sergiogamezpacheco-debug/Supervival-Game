@@ -90,10 +90,14 @@ jobs:
           test -s build/Supervival.apk || { echo "No se generó el APK"; exit 1; }
           ls -la build
 
+      # Copia del APK en la ejecución (solo 2 días: el APK de verdad va a Releases).
+      # Si se llena el cupo de artefactos, no bloquea la publicación.
       - uses: actions/upload-artifact@v4
+        continue-on-error: true
         with:
           name: Supervival-apk
           path: build/Supervival.apk
+          retention-days: 2
 
       - name: Publicar en Releases
         if: github.event_name != 'pull_request'
