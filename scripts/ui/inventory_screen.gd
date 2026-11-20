@@ -55,7 +55,7 @@ func _ready() -> void:
 
 	# Fondo opaco y, encima, el degradado detrás del personaje (el de la propuesta B)
 	var base_bg := ColorRect.new()
-	base_bg.color = Color("0b0e09")
+	base_bg.color = Color(0.043, 0.055, 0.035, 0.55)   # algo transparente: se ve el mundo detrás
 	base_bg.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	base_bg.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	add_child(base_bg)
@@ -73,6 +73,7 @@ func _ready() -> void:
 	gt.height = 144
 	gt.fill = GradientTexture2D.FILL_RADIAL
 	gt.fill_from = Vector2(0.2, 0.58)
+	bg.modulate = Color(1, 1, 1, 0.6)
 	gt.fill_to = Vector2(0.62, 0.58)
 	bg.texture = gt
 	add_child(bg)

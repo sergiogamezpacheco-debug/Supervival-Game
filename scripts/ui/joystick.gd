@@ -18,6 +18,14 @@ func _ready() -> void:
 	_base = _rest
 	_knob = _rest
 	resized.connect(_on_resized)
+	# Si se oculta con el dedo encima (se abre una ventana), se suelta
+	visibility_changed.connect(func():
+		if not is_visible_in_tree():
+			_touch = -1
+			value = Vector2.ZERO
+			_base = _rest
+			_knob = _rest
+			queue_redraw())
 
 
 func _on_resized() -> void:

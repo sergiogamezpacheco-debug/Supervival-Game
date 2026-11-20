@@ -13,6 +13,12 @@ var _touch := -1
 
 
 func _ready() -> void:
+	# Si se oculta con el dedo encima (se abre una ventana), no se queda pulsado
+	visibility_changed.connect(func():
+		if not is_visible_in_tree():
+			_touch = -1
+			if held:
+				_set_held(false))
 	mouse_filter = Control.MOUSE_FILTER_IGNORE
 
 

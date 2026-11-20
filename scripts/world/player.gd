@@ -12,6 +12,8 @@ var _visual: CharacterModel
 var _hand: Node3D
 var _walk_phase := 0.0
 var _walk_amount := 0.0
+var _run_amount := 0.0
+var _vel := Vector3.ZERO
 var _swing_t := -1.0
 var _hand_item := ""
 var running := false
@@ -69,7 +71,13 @@ func _physics_process(delta: float) -> void:
 		speed *= float(DB.bal("run_mult", 1.5))
 	if crouching:
 		speed *= float(DB.bal("crouch_speed", 0.55))
-	velocity = Vector3(dir.x, 0.0, dir.y) * speed
+	# Acelera y frena con suavidad (sin tirones aunque el dedo tiemble en el joystick)
+	var want := Vector3(dir.x, 0.0, dir.y) * speed
+	var acc := float(DB.bal("player_accel", 14.0)) * maxf(speed, 1.0) * 0.35
+	if want.length() < 0.01:
+		acc *= 3.0   # al soltar el joystick frena enseguida
+	_vel = _vel.move_toward(want, acc * delta)
+	velocity = _vel
 	velocity += _push
 	_push = _push.move_toward(Vector3.ZERO, delta * 22.0)
 	_dodge_cd = maxf(_dodge_cd - delta, 0.0)
@@ -84,15 +92,18 @@ func _physics_process(delta: float) -> void:
 	if dir.length() > 0.1:
 		_face(Vector3(dir.x, 0.0, dir.y))
 
-	# Animación de andar y golpe
-	var moving := dir.length() > 0.1
-	_walk_amount = move_toward(_walk_amount, 1.0 if moving else 0.0, delta * 6.0)
+	# Animación de andar y correr: el paso avanza según la velocidad real (sin patinar)
+	var hspeed := Vector2(_vel.x, _vel.z).length()
+	var moving := hspeed > 0.25
+	_walk_amount = move_toward(_walk_amount, clampf(hspeed / 2.0, 0.0, 1.0) if moving else 0.0, delta * 5.0)
+	_run_amount = move_toward(_run_amount, 1.0 if running and moving else 0.0, delta * 4.0)
 	if moving and floori(_walk_phase / PI) != floori(_step_phase / PI) and not crouching:
 		SFX.play("paso", -14.0 if not running else -9.0, 0.15)
 	_step_phase = _walk_phase
 	if moving:
-		_walk_phase += delta * 9.0 * dir.length() * (1.35 if running else 1.0)
-	_visual.animate_walk(_walk_phase, _walk_amount)
+		# zancada de ~1,3 m andando y ~1,8 m corriendo por medio ciclo
+		_walk_phase += delta * hspeed / lerpf(1.3, 1.8, _run_amount) * PI
+	_visual.animate_walk(_walk_phase, _walk_amount, _run_amount)
 	_crouch_amount = move_toward(_crouch_amount, 1.0 if crouching else 0.0, delta * 6.0)
 	_visual.animate_crouch(_crouch_amount)
 	if training > 0.0:
@@ -119,7 +130,10 @@ func _physics_process(delta: float) -> void:
 ## Correr: joystick a fondo (o Shift). Gasta aguante; la resistencia lo alarga
 ## y correr con la mochila cargada es lo que más la entrena.
 func _update_stamina(dir: Vector2, delta: float) -> void:
-	var wants := not crouching and (dir.length() >= float(DB.bal("run_threshold", 0.85)) or (dir.length() > 0.1 and Input.is_key_pressed(KEY_SHIFT)))
+	# Para empezar a correr hay que llevar el joystick casi a fondo; para dejar de correr,
+	# soltarlo algo más (así no salta entre andar y correr con el dedo en el límite)
+	var limit := float(DB.bal("run_release", 0.8)) if running else float(DB.bal("run_threshold", 0.92))
+	var wants := not crouching and (dir.length() >= limit or (dir.length() > 0.1 and Input.is_key_pressed(KEY_SHIFT)))
 	var mx := GS.max_stamina()
 	if GS.stamina <= 0.0:
 		_exhausted = true

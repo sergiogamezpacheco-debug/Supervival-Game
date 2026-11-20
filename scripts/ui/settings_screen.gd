@@ -14,7 +14,7 @@ const ORANGE := Color("e6a83c")
 const INK := Color("1d1912")
 const ROW_BG := Color(0.17, 0.155, 0.125, 0.82)
 const ROW_LINE := Color("5a503e")
-const PANEL_BG := Color(0.1, 0.09, 0.07, 0.86)
+const PANEL_BG := Color(0.1, 0.09, 0.07, 0.8)
 
 const QUALITY := ["bajo", "medio", "alto"]
 const TABS := ["general", "graficos", "audio"]
@@ -50,7 +50,7 @@ func _ready() -> void:
 	_cond.spacing_glyph = -2   # letra estrecha como la del diseño
 	_knob = _circle_tex(26, Color("c9a868"), Color("6d5a35"))
 	var dim := ColorRect.new()
-	dim.color = Color(0.03, 0.025, 0.02, 0.9)
+	dim.color = Color(0.03, 0.025, 0.02, 0.45)
 	dim.set_anchors_preset(Control.PRESET_FULL_RECT)
 	add_child(dim)
 	_build_header()

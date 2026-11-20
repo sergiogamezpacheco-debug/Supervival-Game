@@ -1035,7 +1035,7 @@ func test_character() -> void:
 	var bare := CharacterModel.new({"sex": "f"})
 	add_child(bare)
 	await _frames(1)
-	check(dressed.get_child_count() > 0 and _count_meshes(dressed) > _count_meshes(bare) + 10, "la ropa añade piezas al personaje")
+	check(dressed.get_child_count() > 0 and _count_verts(dressed) > _count_verts(bare) + 300, "la ropa añade piezas al personaje")
 	dressed.animate_walk(1.0, 1.0)
 	check(absf(dressed.j["leg_l"].rotation.x) > 0.1, "las piernas se mueven al andar")
 	dressed.queue_free()
@@ -1175,13 +1175,13 @@ func test_survivor() -> void:
 	await _frames(60)
 	check(GS.stamina > 0.0, "el aguante se recupera descansando")
 	# La ropa se ve en el modelo del jugador
-	var meshes0 := _count_meshes(player._visual)
+	var meshes0 := _count_verts(player._visual)
 	GS.add_item("chaqueta_piel", 1)
 	for i in GS.slots.size():
 		if GS.slots[i] != null and GS.slots[i]["id"] == "chaqueta_piel":
 			GS.wear_slot(i)
 	await _frames(2)
-	check(_count_meshes(player._visual) > meshes0 + 3, "la chaqueta aparece en el superviviente")
+	check(_count_verts(player._visual) > meshes0 + 100, "la chaqueta aparece en el superviviente")
 	world.queue_free()
 	await _frames(2)
 	DirAccess.remove_absolute(ProjectSettings.globalize_path(GS.save_path))
@@ -1330,6 +1330,22 @@ func test_night_stealth() -> void:
 	world.hud.joystick.value = Vector2(1, 0)
 	await _frames(5)
 	check(not player.running, "agachado no se puede correr")
+	world.hud.toggle_crouch()
+	GS.stamina = GS.max_stamina()
+	world.hud.joystick.value = Vector2(1, 0)
+	await _pframes(3)
+	var ran: bool = player.running
+	world.hud.joystick.value = Vector2(0.86, 0)
+	await _pframes(3)
+	check(ran and player.running, "con el dedo un poco por debajo del límite se sigue corriendo (sin saltos)")
+	world.hud.joystick.value = Vector2(0.7, 0)
+	await _pframes(3)
+	check(not player.running, "soltando más, se deja de correr")
+	world.hud.joystick.value = Vector2.ZERO
+	await _pframes(3)
+	world.hud.toggle_crouch()
+	z.aware = false
+	z._lost = 0.0
 	world.hud.joystick.value = Vector2.ZERO
 	await _frames(3)
 	player.global_position = Vector3(0, 0, 0)
@@ -1418,6 +1434,19 @@ func test_night_stealth() -> void:
 	check(ws.action_btn.text == "REPARAR" and not ws.action_btn.disabled, "y su botón repara (%s)" % ws.action_btn.text)
 	ws.action_btn.pressed.emit()
 	check(GS.hand["dur"] == int(DB.item(str(GS.hand["id"]))["durability"]), "el arma queda como nueva")
+	# Al abrir una estación con el botón pulsado, el botón se suelta (si no, se reabre al cerrar)
+	world.hud.close_panels()
+	await _pframes(2)
+	world.hud.action_button._touch = 5
+	world.hud.action_button._set_held(true)
+	world.hud.open_station(bench)
+	await _pframes(2)
+	check(not world.hud.action_button.held, "abrir una ventana suelta el botón de acción")
+	ws.visible = false
+	await _pframes(3)
+	check(not ws.visible, "al cerrar no se vuelve a abrir sola")
+	world.hud.open_station(bench)
+	await _pframes(2)
 	# Iconos de las tarjetas y vistas grandes sacados de los diseños de estaciones
 	check(ws.recipe_icon("lingote_hierro").resource_path.ends_with("recetas/lingote_hierro.png"), "icono de tarjeta del diseño (lingote de hierro)")
 	check(ws.preview_tex("tablon").resource_path.ends_with("preview/tablon.png"), "vista grande del diseño (tablones)")
@@ -1834,9 +1863,16 @@ func test_infected() -> void:
 	var meshes := 0
 	for res in get_tree().get_nodes_in_group("resource"):
 		if res.kind == "pino" or res.kind == "roca":
-			meshes += _count_meshes(res._visual)
+			meshes += _count_verts(res._visual)
 			break
-	check(meshes >= 3, "los pinos y rocas usan los modelos facetados")
+	check(meshes >= 60, "los pinos y rocas usan los modelos facetados")
+	# Menos dibujos para el móvil: las piezas de cada árbol o roca van en una sola malla
+	var one_tree := -1
+	for res in get_tree().get_nodes_in_group("resource"):
+		if res.kind == "pino":
+			one_tree = _count_meshes(res._visual)
+			break
+	check(one_tree == 1 or one_tree == -1, "cada pino se dibuja de una vez (%d mallas)" % one_tree)
 	world.queue_free()
 	await _frames(2)
 	DirAccess.remove_absolute(ProjectSettings.globalize_path(GS.save_path))
@@ -1886,6 +1922,17 @@ func test_creator() -> void:
 	GS.testing = true
 	DirAccess.remove_absolute(ProjectSettings.globalize_path(GS.save_path))
 	GS.new_game()
+
+
+func _count_verts(n: Node) -> int:
+	var v := 0
+	for m in n.find_children("*", "MeshInstance3D", true, false):
+		var mi := m as MeshInstance3D
+		if mi.mesh:
+			for si in mi.mesh.get_surface_count():
+				var arr := mi.mesh.surface_get_arrays(si)
+				v += (arr[Mesh.ARRAY_VERTEX] as PackedVector3Array).size()
+	return v
 
 
 func _count_meshes(n: Node) -> int:

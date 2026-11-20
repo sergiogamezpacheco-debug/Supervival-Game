@@ -1,10 +1,13 @@
 extends Node
 ## Iconos de objetos sin lámina propia: se modelan en 3D imitando los diseños del usuario
-## (mismo low poly y luz) y se renderizan con fondo transparente.
-##   xvfb-run ... res://tools/item_render.tscn -- <dir>
-## Después: python3 tools/iconos/recortar.py --contorno <dir>/*.png  (añade el contorno)
+## (low poly facetado, luz suave, vista 3/4) y se renderizan con fondo transparente.
+##   xvfb-run ... res://tools/item_render.tscn -- <dir> [id ...]
+## Después: python3 tools/iconos/recortar.py --contorno <dir>/*.png  (recorta y pone el contorno)
 
 const M := preload("res://scripts/world/station_models.gd")
+const IDS := ["hacha_hierro", "pico_hierro", "machete", "casco_obra", "chaqueta_piel", "chaleco",
+	"pantalon_cargo", "zapatillas", "botas", "guantes", "fibra", "piel", "baya", "carne_cruda",
+	"carne_asada", "seta", "carbon"]
 
 var vp: SubViewport
 var cam: Camera3D
@@ -12,36 +15,48 @@ var stage: Node3D
 
 
 func _ready() -> void:
-	var out: String = OS.get_cmdline_user_args()[0] if OS.get_cmdline_user_args().size() > 0 else "/tmp"
+	var args := OS.get_cmdline_user_args()
+	var out: String = args[0] if args.size() > 0 else "/tmp"
+	var ids: Array = args.slice(1) if args.size() > 1 else IDS
 	vp = SubViewport.new()
 	vp.size = Vector2i(384, 384)
 	vp.transparent_bg = true
 	vp.msaa_3d = Viewport.MSAA_4X
+	vp.own_world_3d = true
 	add_child(vp)
 	var env := WorldEnvironment.new()
 	env.environment = Environment.new()
 	env.environment.background_mode = Environment.BG_CLEAR_COLOR
 	env.environment.ambient_light_source = Environment.AMBIENT_SOURCE_COLOR
 	env.environment.ambient_light_color = Color(0.62, 0.66, 0.75)
-	env.environment.ambient_light_energy = 0.75
+	env.environment.ambient_light_energy = 0.8
+	env.environment.tonemap_mode = Environment.TONE_MAPPER_FILMIC
 	vp.add_child(env)
 	var sun := DirectionalLight3D.new()
-	sun.rotation_degrees = Vector3(-50, -35, 0)
-	sun.light_energy = 1.25
+	sun.rotation_degrees = Vector3(-52, -40, 0)
+	sun.light_energy = 1.35
 	sun.light_color = Color(1.0, 0.95, 0.88)
 	vp.add_child(sun)
+	var fill := DirectionalLight3D.new()
+	fill.rotation_degrees = Vector3(-20, 150, 0)
+	fill.light_energy = 0.35
+	fill.light_color = Color(0.75, 0.82, 1.0)
+	vp.add_child(fill)
 	cam = Camera3D.new()
 	cam.projection = Camera3D.PROJECTION_ORTHOGONAL
 	vp.add_child(cam)
 	stage = Node3D.new()
 	vp.add_child(stage)
-	for id in ["botiquin", "antidoto"]:
+	for id in ids:
 		for c in stage.get_children():
 			c.queue_free()
+		await get_tree().process_frame
+		if not has_method("_" + id):
+			continue
 		var size := call("_" + id) as float
 		cam.size = size
-		cam.position = Vector3(1.6, 1.5, -1.6) * 3.0
-		cam.look_at(Vector3(0, 0.0, 0), Vector3.UP)
+		cam.position = Vector3(1.6, 1.7, 1.9) * 3.0
+		cam.look_at(Vector3.ZERO, Vector3.UP)
 		vp.render_target_update_mode = SubViewport.UPDATE_ONCE
 		for i in 4:
 			await RenderingServer.frame_post_draw
@@ -50,27 +65,234 @@ func _ready() -> void:
 	get_tree().quit()
 
 
-func _botiquin() -> float:
-	var white := Color("f3f3ef")
-	var red := Color("c8402e")
-	M._p(stage, M._box(Vector3(1.1, 0.55, 0.8)), white, Vector3(0, -0.1, 0))
-	M._p(stage, M._box(Vector3(1.14, 0.16, 0.84)), Color("e6e7e2"), Vector3(0, 0.25, 0))
-	M._p(stage, M._box(Vector3(1.15, 0.12, 0.85)), red, Vector3(0, -0.12, 0))
-	# cruz roja en la tapa
-	M._p(stage, M._box(Vector3(0.42, 0.02, 0.13)), red, Vector3(0, 0.34, 0))
-	M._p(stage, M._box(Vector3(0.13, 0.02, 0.42)), red, Vector3(0, 0.34, 0))
-	# asa
-	M._p(stage, M._box(Vector3(0.36, 0.06, 0.06)), Color("9aa0a4"), Vector3(0, 0.36, 0.3))
+# ------------------------------------------------------------------ piezas
+
+func _p(mesh: Mesh, color: Color, pos := Vector3.ZERO, rot := Vector3.ZERO, scl := Vector3.ONE, parent: Node3D = null) -> MeshInstance3D:
+	return M._p(parent if parent else stage, mesh, color, pos, rot, scl)
+
+
+func _box(s: Vector3) -> Mesh:
+	return M._box(s)
+
+
+func _cyl(t: float, b: float, h: float, seg := 8) -> Mesh:
+	return M._cyl(t, b, h, seg)
+
+
+func _blob(seed_: int, color: Color, pos: Vector3, scl: Vector3, rough := 0.18, parent: Node3D = null) -> MeshInstance3D:
+	return _p(Nature.blob(seed_, rough, 7, 4), color, pos, Vector3(0, seed_ * 41 % 360, 0), scl, parent)
+
+
+func _group(pos := Vector3.ZERO, rot := Vector3.ZERO) -> Node3D:
+	var g := Node3D.new()
+	g.position = pos
+	g.rotation_degrees = rot
+	stage.add_child(g)
+	return g
+
+
+const WOOD := Color("8a5a32")
+const WOOD_D := Color("5e3b1f")
+const STEEL := Color("b7bfc4")
+const STEEL_D := Color("6f777c")
+
+
+# ------------------------------------------------------------ herramientas
+
+func _hacha_hierro() -> float:
+	var g := _group(Vector3.ZERO, Vector3(0, 0, -35))
+	_p(_cyl(0.07, 0.085, 1.9, 7), WOOD, Vector3(0, -0.1, 0), Vector3.ZERO, Vector3.ONE, g)
+	_p(_cyl(0.095, 0.095, 0.3, 7), WOOD_D, Vector3(0, -0.85, 0), Vector3.ZERO, Vector3.ONE, g)
+	# cabeza de acero: cuerpo, cuña y filo claro
+	_p(_box(Vector3(0.24, 0.3, 0.16)), STEEL_D, Vector3(0, 0.66, 0), Vector3.ZERO, Vector3.ONE, g)
+	_p(_box(Vector3(0.52, 0.36, 0.1)), STEEL, Vector3(-0.34, 0.66, 0), Vector3.ZERO, Vector3.ONE, g)
+	_p(_box(Vector3(0.1, 0.58, 0.07)), Color("e3e8ea"), Vector3(-0.62, 0.66, 0), Vector3.ZERO, Vector3.ONE, g)
+	_p(_box(Vector3(0.16, 0.2, 0.12)), STEEL_D, Vector3(0.19, 0.66, 0), Vector3.ZERO, Vector3.ONE, g)
+	return 2.4
+
+
+func _pico_hierro() -> float:
+	var g := _group(Vector3.ZERO, Vector3(0, 0, -35))
+	_p(_cyl(0.07, 0.085, 1.9, 7), WOOD, Vector3(0, -0.1, 0), Vector3.ZERO, Vector3.ONE, g)
+	_p(_cyl(0.095, 0.095, 0.3, 7), WOOD_D, Vector3(0, -0.85, 0), Vector3.ZERO, Vector3.ONE, g)
+	_p(_box(Vector3(0.22, 0.24, 0.18)), STEEL_D, Vector3(0, 0.78, 0), Vector3.ZERO, Vector3.ONE, g)
+	for side in [-1.0, 1.0]:
+		# brazos del pico, curvados y en punta
+		_p(_cyl(0.07, 0.11, 0.42, 5), STEEL, Vector3(side * 0.3, 0.74, 0), Vector3(0, 0, side * -78), Vector3.ONE, g)
+		_p(_cyl(0.0, 0.07, 0.36, 5), Color("dfe5e8"), Vector3(side * 0.66, 0.62, 0), Vector3(0, 0, side * -112), Vector3.ONE, g)
+	return 2.3
+
+
+func _machete() -> float:
+	var g := _group(Vector3.ZERO, Vector3(0, 0, -40))
+	_p(_box(Vector3(0.16, 0.5, 0.12)), Color("2e2a26"), Vector3(0, -0.75, 0), Vector3.ZERO, Vector3.ONE, g)
+	for i in 4:
+		_p(_box(Vector3(0.17, 0.03, 0.13)), Color("5a4a3a"), Vector3(0, -0.92 + i * 0.12, 0), Vector3.ZERO, Vector3.ONE, g)
+	_p(_box(Vector3(0.3, 0.07, 0.15)), STEEL_D, Vector3(0, -0.47, 0), Vector3.ZERO, Vector3.ONE, g)
+	_p(_box(Vector3(0.24, 1.25, 0.03)), STEEL, Vector3(0.02, 0.18, 0), Vector3.ZERO, Vector3.ONE, g)
+	_p(_box(Vector3(0.05, 1.25, 0.032)), Color("e7ecee"), Vector3(-0.1, 0.18, 0), Vector3.ZERO, Vector3.ONE, g)
+	_p(_cyl(0.0, 0.17, 0.32, 4), STEEL, Vector3(0.02, 0.95, 0), Vector3(0, 45, 0), Vector3(1, 1, 0.12), g)
+	return 2.4
+
+
+# ---------------------------------------------------------------- ropa
+
+func _casco_obra() -> float:
+	var y := Color("e8b52f")
+	var hemi := SphereMesh.new()
+	hemi.radius = 0.62
+	hemi.height = 0.62
+	hemi.is_hemisphere = true
+	hemi.radial_segments = 12
+	hemi.rings = 5
+	_p(hemi, y, Vector3(0, 0.0, 0))
+	_p(_cyl(0.78, 0.8, 0.06, 14), y.darkened(0.1), Vector3(0, 0.02, 0.1), Vector3.ZERO, Vector3(1, 1, 1.12))
+	_p(_box(Vector3(0.14, 0.12, 1.1)), y.lightened(0.08), Vector3(0, 0.58, 0))
+	_p(_cyl(0.6, 0.6, 0.05, 12), Color("3a3a36"), Vector3(0, 0.06, 0))
 	return 1.9
 
 
-func _antidoto() -> float:
-	var glass := Color("6f8d82")
-	M._p(stage, M._cyl(0.3, 0.3, 0.8, 8), glass, Vector3(0, -0.2, 0))
-	M._p(stage, M._cyl(0.14, 0.3, 0.22, 8), glass.lightened(0.08), Vector3(0, 0.31, 0))
-	M._p(stage, M._cyl(0.12, 0.12, 0.14, 8), glass, Vector3(0, 0.48, 0))
-	M._p(stage, M._cyl(0.15, 0.15, 0.16, 8), Color("efeee8"), Vector3(0, 0.62, 0))
-	M._p(stage, M._cyl(0.305, 0.305, 0.36, 8), Color("ecdcd6"), Vector3(0, -0.2, 0))
-	M._p(stage, M._box(Vector3(0.16, 0.16, 0.02)), Color("c8402e"), Vector3(0.12, -0.2, -0.29), Vector3(0, -22, 0))
-	M._p(stage, M._cyl(0.31, 0.31, 0.06, 8), Color("3f4a4f"), Vector3(0, -0.58, 0))
-	return 1.75
+func _chaqueta_piel() -> float:
+	var c := Color("7a4b2c")
+	var g := _group()
+	_p(_box(Vector3(0.95, 1.05, 0.42)), c, Vector3(0, 0, 0), Vector3.ZERO, Vector3.ONE, g)
+	for side in [-1.0, 1.0]:
+		_p(_cyl(0.15, 0.13, 0.95, 7), c.darkened(0.05), Vector3(side * 0.62, -0.08, 0), Vector3(0, 0, side * 14), Vector3.ONE, g)
+		_p(_cyl(0.14, 0.14, 0.1, 7), c.darkened(0.3), Vector3(side * 0.73, -0.55, 0), Vector3(0, 0, side * 14), Vector3.ONE, g)
+		_p(_box(Vector3(0.3, 0.22, 0.04)), c.lightened(0.08), Vector3(side * 0.22, 0.48, 0.21), Vector3(0, 0, side * 28), Vector3.ONE, g)
+		_p(_box(Vector3(0.24, 0.16, 0.03)), c.darkened(0.12), Vector3(side * 0.24, -0.25, 0.22), Vector3.ZERO, Vector3.ONE, g)
+	_p(_box(Vector3(0.03, 1.0, 0.03)), Color("c9b48a"), Vector3(0, -0.02, 0.22), Vector3.ZERO, Vector3.ONE, g)
+	_p(_box(Vector3(0.97, 0.1, 0.44)), c.darkened(0.25), Vector3(0, -0.5, 0), Vector3.ZERO, Vector3.ONE, g)
+	return 2.1
+
+
+func _chaleco() -> float:
+	var c := Color("56603d")
+	_p(_box(Vector3(0.9, 1.0, 0.45)), c, Vector3.ZERO)
+	for side in [-1.0, 1.0]:
+		_p(_box(Vector3(0.22, 0.24, 0.06)), c.lightened(0.1), Vector3(side * 0.22, -0.18, 0.24))
+		_p(_box(Vector3(0.18, 0.18, 0.06)), c.lightened(0.06), Vector3(side * 0.24, 0.16, 0.24))
+		_p(_box(Vector3(0.12, 0.3, 0.44)), c.darkened(0.15), Vector3(side * 0.38, 0.52, 0))
+	_p(_box(Vector3(0.92, 0.08, 0.47)), Color("2c2f24"), Vector3(0, -0.36, 0))
+	_p(_box(Vector3(0.92, 0.08, 0.47)), Color("2c2f24"), Vector3(0, 0.0, 0))
+	return 1.8
+
+
+func _pantalon_cargo() -> float:
+	var c := Color("8a7a55")
+	_p(_box(Vector3(0.8, 0.22, 0.38)), c.darkened(0.15), Vector3(0, 0.62, 0))
+	for side in [-1.0, 1.0]:
+		_p(_box(Vector3(0.36, 1.25, 0.34)), c, Vector3(side * 0.2, -0.1, 0), Vector3(0, 0, side * 4))
+		_p(_box(Vector3(0.08, 0.3, 0.26)), c.lightened(0.08), Vector3(side * 0.41, 0.0, 0.0), Vector3(0, 0, side * 4))
+		_p(_box(Vector3(0.38, 0.08, 0.36)), c.darkened(0.25), Vector3(side * 0.24, -0.7, 0), Vector3(0, 0, side * 4))
+	return 2.1
+
+
+func _shoe(pos: Vector3, upper: Color, sole: Color, tall := 0.0, yaw := 0.0) -> void:
+	var g := _group(pos, Vector3(0, yaw, 0))
+	_p(_box(Vector3(0.32, 0.08, 0.78)), sole, Vector3(0, 0.04, 0), Vector3.ZERO, Vector3.ONE, g)
+	_blob(5, upper, Vector3(0, 0.17, 0.08), Vector3(0.3, 0.17, 0.42), 0.08, g)
+	_p(_box(Vector3(0.28, 0.26 + tall, 0.32)), upper.darkened(0.06), Vector3(0, 0.22 + tall / 2.0, -0.2), Vector3.ZERO, Vector3.ONE, g)
+	_p(_box(Vector3(0.2, 0.03, 0.28)), sole.lightened(0.2) if tall == 0.0 else upper.lightened(0.2), Vector3(0, 0.3 + tall * 0.6, 0.12), Vector3(-25, 0, 0), Vector3.ONE, g)
+
+
+func _zapatillas() -> float:
+	_shoe(Vector3(-0.22, 0, 0.05), Color("4f6f9a"), Color("eeeeea"), 0.0, -8)
+	_shoe(Vector3(0.22, 0, -0.08), Color("4f6f9a"), Color("eeeeea"), 0.0, 6)
+	return 1.6
+
+
+func _botas() -> float:
+	_shoe(Vector3(-0.22, 0, 0.05), Color("5a3b24"), Color("2a2522"), 0.45, -8)
+	_shoe(Vector3(0.22, 0, -0.08), Color("5a3b24"), Color("2a2522"), 0.45, 6)
+	return 1.8
+
+
+func _glove(pos: Vector3, yaw: float) -> void:
+	var c := Color("6b4a32")
+	var g := _group(pos, Vector3(-60, yaw, 0))
+	_p(_box(Vector3(0.36, 0.42, 0.13)), c, Vector3.ZERO, Vector3.ZERO, Vector3.ONE, g)
+	_p(_box(Vector3(0.4, 0.14, 0.15)), c.darkened(0.3), Vector3(0, -0.27, 0), Vector3.ZERO, Vector3.ONE, g)
+	for i in 4:
+		_p(_box(Vector3(0.075, 0.3, 0.1)), c.lightened(0.05), Vector3(-0.13 + i * 0.087, 0.34, 0), Vector3.ZERO, Vector3.ONE, g)
+	_p(_box(Vector3(0.08, 0.24, 0.1)), c.lightened(0.05), Vector3(0.24, 0.02, 0), Vector3(0, 0, -40), Vector3.ONE, g)
+
+
+func _guantes() -> float:
+	_glove(Vector3(-0.25, 0, 0), 10)
+	_glove(Vector3(0.25, 0.05, -0.1), -14)
+	return 1.6
+
+
+# --------------------------------------------------------- comida y materiales
+
+func _fibra() -> float:
+	var g := _group(Vector3.ZERO, Vector3(0, 0, -30))
+	for i in 9:
+		var a := float(i) * 0.7
+		var col := Color("9bb54a").lerp(Color("d8c66a"), float(i % 3) / 2.0)
+		_p(_box(Vector3(0.04, 1.6, 0.04)), col, Vector3(cos(a) * 0.08, 0, sin(a) * 0.08), Vector3(sin(a) * 6, 0, cos(a) * 6), Vector3.ONE, g)
+	_p(_cyl(0.16, 0.16, 0.14, 8), Color("8a6a3a"), Vector3(0, -0.15, 0), Vector3.ZERO, Vector3.ONE, g)
+	return 1.9
+
+
+func _piel() -> float:
+	_blob(11, Color("8a5f3c"), Vector3(0, 0, 0), Vector3(0.9, 0.08, 0.7), 0.3)
+	_blob(12, Color("c9a27a"), Vector3(0.05, 0.05, 0.05), Vector3(0.6, 0.05, 0.45), 0.25)
+	for k in 4:
+		var a := float(k) * TAU / 4.0 + 0.6
+		_blob(20 + k, Color("7a5234"), Vector3(cos(a) * 0.82, -0.02, sin(a) * 0.62), Vector3(0.22, 0.05, 0.16), 0.2)
+	return 2.0
+
+
+func _baya() -> float:
+	var pts := [Vector3(0, 0.18, 0), Vector3(0.22, 0.12, 0.08), Vector3(-0.2, 0.1, 0.1), Vector3(0.05, 0.1, 0.25), Vector3(-0.08, 0.05, -0.2), Vector3(0.2, 0.05, -0.15), Vector3(-0.25, 0.0, -0.05)]
+	for i in pts.size():
+		var col := Color("6a2a5a") if i % 2 == 0 else Color("8a2f4a")
+		_blob(30 + i, col, pts[i], Vector3(0.17, 0.17, 0.17), 0.05)
+		_p(_box(Vector3(0.05, 0.05, 0.05)), Color("e9a6c9"), pts[i] + Vector3(0.05, 0.12, 0.08))
+	for k in 3:
+		_p(_box(Vector3(0.36, 0.02, 0.16)), Color("4f7a35"), Vector3(-0.1 + k * 0.12, 0.28, -0.12), Vector3(0, k * 50, 20))
+	return 1.2
+
+
+func _carne_cruda() -> float:
+	_blob(41, Color("f0e2d2"), Vector3(0, -0.02, 0), Vector3(0.82, 0.16, 0.6), 0.12)
+	_blob(42, Color("b8333a"), Vector3(0, 0.03, 0), Vector3(0.74, 0.18, 0.52), 0.12)
+	_blob(43, Color("d8545a"), Vector3(-0.15, 0.1, 0.05), Vector3(0.35, 0.08, 0.25), 0.15)
+	_p(_cyl(0.08, 0.08, 0.3, 6), Color("efe8da"), Vector3(0.62, 0.0, 0.1), Vector3(0, 0, 90))
+	return 1.9
+
+
+func _carne_asada() -> float:
+	_blob(51, Color("7a3e1e"), Vector3(-0.1, 0.0, 0), Vector3(0.55, 0.4, 0.45), 0.12)
+	_blob(52, Color("a8592a"), Vector3(-0.2, 0.15, 0.12), Vector3(0.28, 0.14, 0.2), 0.2)
+	_p(_cyl(0.07, 0.07, 0.6, 6), Color("efe8da"), Vector3(0.45, 0.0, 0), Vector3(0, 0, 90))
+	_blob(53, Color("f3ecdf"), Vector3(0.78, 0.0, 0), Vector3(0.13, 0.16, 0.16), 0.1)
+	for k in 3:
+		_p(_box(Vector3(0.35, 0.02, 0.04)), Color("3a1a0c"), Vector3(-0.2, 0.36, -0.1 + k * 0.12), Vector3(0, 20, 0))
+	return 1.9
+
+
+func _seta() -> float:
+	var cap := SphereMesh.new()
+	cap.radius = 0.5
+	cap.height = 0.5
+	cap.is_hemisphere = true
+	cap.radial_segments = 10
+	cap.rings = 4
+	_p(_cyl(0.14, 0.18, 0.55, 8), Color("efe6d2"), Vector3(0, -0.25, 0))
+	_p(cap, Color("c43a2e"), Vector3(0, 0.02, 0))
+	_p(_cyl(0.5, 0.5, 0.03, 10), Color("e8d9bd"), Vector3(0, 0.02, 0))
+	for k in 6:
+		var a := float(k) * TAU / 6.0
+		_p(_box(Vector3(0.09, 0.05, 0.09)), Color("f6efe2"), Vector3(cos(a) * 0.3, 0.3, sin(a) * 0.3), Vector3(0, k * 20, 0))
+	_p(_box(Vector3(0.1, 0.05, 0.1)), Color("f6efe2"), Vector3(0, 0.5, 0))
+	return 1.4
+
+
+func _carbon() -> float:
+	var pts := [Vector3(0, 0, 0), Vector3(0.38, -0.05, 0.12), Vector3(-0.32, -0.06, 0.15), Vector3(0.05, -0.06, -0.33), Vector3(0.1, 0.25, 0.05)]
+	for i in pts.size():
+		_blob(60 + i, Color("2b2b2d").lightened(0.05 * (i % 2)), pts[i], Vector3(0.3, 0.24, 0.27), 0.3)
+	return 1.5

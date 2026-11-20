@@ -204,6 +204,7 @@ func _rebuild() -> void:
 	_visual = Builder.station_mesh(id, level)
 	if not is_built():
 		_visual = StationModels.under_construction(_visual, stage, phases().size(), SIZES.get(id, Vector3(1.4, 1.0, 1.0)))
+	_visual = Builder.merge(_visual)
 	_visual.rotation_degrees.y = rot * 90.0
 	add_child(_visual)
 

@@ -193,6 +193,7 @@ static func dress(c: CharacterModel) -> void:
 			var s := 1.3 if kind == "acorazado" else 1.0
 			for d in [[Vector3(0.06, 0.3, zf), Vector3(0.05, 0.07, 0.012)], [Vector3(0.02, 0.2, zf - 0.004), Vector3(0.03, 0.05, 0.012)], [Vector3(-0.09, 0.14, zf + 0.003), Vector3(0.035, 0.03, 0.012)]]:
 				_blob(sp, 40 + int(d[0].y * 100.0), BLOOD, d[0], d[1] * s)
+	c.merge_parts()   # unir también los añadidos de cada tipo
 
 
 ## Postura y animación: phase/amount del paso, attack 0..1 (golpe),

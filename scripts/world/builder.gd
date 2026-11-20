@@ -6,6 +6,94 @@ extends RefCounted
 static var _mats: Dictionary = {}
 
 
+# ------------------------------------------------- unir mallas (menos dibujos)
+
+static var _merged_mats := {}
+
+
+## Une en una sola malla todas las piezas opacas y sin brillo propio que cuelgan de
+## "root" (con el color de cada una pasado a los vértices). Se ve igual, pero el móvil
+## lo dibuja de una vez en lugar de pieza a pieza. Luces, fuego y transparencias se quedan aparte.
+## Si "direct" es true, solo une los hijos directos (para modelos con articulaciones).
+static func merge(root: Node3D, direct := false) -> Node3D:
+	var parts: Array = []
+	var nodes: Array = root.get_children() if direct else root.find_children("*", "MeshInstance3D", true, false)
+	for n in nodes:
+		var mi := n as MeshInstance3D
+		if mi == null or mi.mesh == null or not mi.visible or mi.get_child_count() > 0:
+			continue
+		var m := mi.material_override as StandardMaterial3D
+		if m == null and mi.mesh.get_surface_count() > 0:
+			m = mi.mesh.surface_get_material(0) as StandardMaterial3D
+		if m == null or m.emission_enabled or m.transparency != BaseMaterial3D.TRANSPARENCY_DISABLED or m.albedo_texture != null:
+			continue
+		if mi.material_overlay != null:
+			continue
+		parts.append([mi, m])
+	if parts.size() < 2:
+		return root
+	var groups := {}
+	for pm in parts:
+		var mi: MeshInstance3D = pm[0]
+		var m: StandardMaterial3D = pm[1]
+		var key := "%d_%.2f" % [m.cull_mode, m.roughness]
+		if not groups.has(key):
+			groups[key] = {"v": PackedVector3Array(), "n": PackedVector3Array(), "c": PackedColorArray(), "i": PackedInt32Array(), "cull": m.cull_mode, "rough": m.roughness}
+		var g: Dictionary = groups[key]
+		# transformación de la pieza respecto a root
+		var t := mi.transform
+		var par := mi.get_parent()
+		while par != null and par != root:
+			if par is Node3D:
+				t = (par as Node3D).transform * t
+			par = par.get_parent()
+		var nb := t.basis.inverse().transposed()
+		for si in mi.mesh.get_surface_count():
+			var arr := mi.mesh.surface_get_arrays(si)
+			var verts: PackedVector3Array = arr[Mesh.ARRAY_VERTEX]
+			var norms: PackedVector3Array = arr[Mesh.ARRAY_NORMAL] if arr[Mesh.ARRAY_NORMAL] != null else PackedVector3Array()
+			var cols: PackedColorArray = arr[Mesh.ARRAY_COLOR] if arr[Mesh.ARRAY_COLOR] != null else PackedColorArray()
+			var idx: PackedInt32Array = arr[Mesh.ARRAY_INDEX] if arr[Mesh.ARRAY_INDEX] != null else PackedInt32Array()
+			var base: int = (g["v"] as PackedVector3Array).size()
+			var use_vc := m.vertex_color_use_as_albedo and cols.size() == verts.size()
+			for k in verts.size():
+				g["v"].append(t * verts[k])
+				g["n"].append((nb * norms[k]).normalized() if k < norms.size() else Vector3.UP)
+				g["c"].append(m.albedo_color * cols[k] if use_vc else m.albedo_color)
+			if idx.is_empty():
+				for k in verts.size():
+					g["i"].append(base + k)
+			else:
+				for k in idx:
+					g["i"].append(base + k)
+		mi.get_parent().remove_child(mi)
+		mi.queue_free()
+	for key in groups:
+		var g: Dictionary = groups[key]
+		var arr := []
+		arr.resize(Mesh.ARRAY_MAX)
+		arr[Mesh.ARRAY_VERTEX] = g["v"]
+		arr[Mesh.ARRAY_NORMAL] = g["n"]
+		arr[Mesh.ARRAY_COLOR] = g["c"]
+		arr[Mesh.ARRAY_INDEX] = g["i"]
+		var am := ArrayMesh.new()
+		am.add_surface_from_arrays(Mesh.PRIMITIVE_TRIANGLES, arr)
+		var mk: String = str(key)
+		if not _merged_mats.has(mk):
+			var mm := StandardMaterial3D.new()
+			mm.vertex_color_use_as_albedo = true
+			mm.albedo_color = Color.WHITE
+			mm.roughness = float(g["rough"])
+			mm.cull_mode = int(g["cull"])
+			_merged_mats[mk] = mm
+		var out := MeshInstance3D.new()
+		out.name = "unida"
+		out.mesh = am
+		out.material_override = _merged_mats[mk]
+		root.add_child(out)
+	return root
+
+
 static func mat(color: Color, emission := 0.0) -> StandardMaterial3D:
 	var key := "%s_%s" % [color.to_html(), emission]
 	if _mats.has(key):

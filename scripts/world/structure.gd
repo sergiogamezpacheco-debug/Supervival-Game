@@ -50,7 +50,7 @@ func set_tier(t: int) -> void:
 func _rebuild() -> void:
 	if _visual:
 		_visual.queue_free()
-	_visual = Builder.structure_mesh(kind, Color(str(tier_data().get("color", "888888"))))
+	_visual = Builder.merge(Builder.structure_mesh(kind, Color(str(tier_data().get("color", "888888")))))
 	add_child(_visual)
 	hp = float(tier_data().get("hp", 100))
 	_apply_door()

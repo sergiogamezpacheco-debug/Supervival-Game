@@ -12,9 +12,9 @@ const ORANGE := Color("e6a83c")
 const INK := Color("1d1912")
 const RED := Color("e0705a")
 const DESC := Color("e8a95a")
-const ROW_BG := Color(0.13, 0.12, 0.095, 0.92)
+const ROW_BG := Color(0.13, 0.12, 0.095, 0.84)
 const ROW_LINE := Color("4d4536")
-const PANEL_BG := Color(0.07, 0.065, 0.05, 0.9)
+const PANEL_BG := Color(0.07, 0.065, 0.05, 0.8)
 const W := 1280.0
 const TAB_ORDER := ["Obra", "Herramientas", "Armas", "Ropa", "Mochilas", "Comida", "Medicinas", "Recursos", "Combustible", "Agua", "Reparar"]
 
@@ -72,7 +72,7 @@ func _ready() -> void:
 	_cond.variation_transform = Transform2D(Vector2(0.88, 0), Vector2(0, 1), Vector2.ZERO)
 	_cond.spacing_glyph = -2
 	var dim := ColorRect.new()
-	dim.color = Color(0.03, 0.03, 0.02, 0.88)
+	dim.color = Color(0.03, 0.03, 0.02, 0.4)   # un poco transparente: se ve si te atacan
 	dim.set_anchors_preset(Control.PRESET_FULL_RECT)
 	add_child(dim)
 	_content = Control.new()

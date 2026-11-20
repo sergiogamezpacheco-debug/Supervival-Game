@@ -30,7 +30,8 @@
 | HUD con iconos: barras con porcentaje, botones redondos y acción con borde de estado | ✅ |
 | Mapa del Valle en papel antiguo dentro del juego, esquivar, sonido (efectos, ambiente, música) y ajustes | ✅ |
 | Pinos y rocas facetados; 9 tipos de infectado con habilidades (docs/infectados.md), coloso como jefe | ✅ |
-| 779 tests y APK automático | ✅ |
+| 787 tests y APK automático | ✅ |
+| Rendimiento: árboles, rocas, estructuras y personajes unidos en menos mallas (≈3,4× menos dibujos) | ✅ |
 | Pantalla de estaciones según los diseños (vista 3D, pestañas, cantidad, energía) | ✅ |
 | Zoom de cámara con dos dedos y botón Guardar en ajustes | ✅ |
 | Pantalla de ajustes según el diseño: general, gráficos, audio, sistema y redes (scripts/ui/settings_screen.gd) | ✅ |

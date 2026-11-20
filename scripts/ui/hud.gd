@@ -35,6 +35,8 @@ var _levelup_text: Label
 var _levels_panel: PanelContainer
 var _levels_list: VBoxContainer
 var minimap: Control
+var _stats_box: Control
+var _side_box: Control
 var _msg: Label
 var _msg_timer := 0.0
 var _pcts: Dictionary = {}
@@ -155,6 +157,7 @@ func _ready() -> void:
 
 func _build_bars() -> void:
 	var box := VBoxContainer.new()
+	_stats_box = box
 	box.position = Vector2(20, 16)
 	box.add_theme_constant_override("separation", 6)
 	_root.add_child(box)
@@ -558,6 +561,7 @@ func _build_controls() -> void:
 	_root.add_child(location_label)
 
 	var side := VBoxContainer.new()
+	_side_box = side
 	side.anchor_left = 1.0
 	side.anchor_right = 1.0
 	side.offset_left = -200
@@ -665,6 +669,12 @@ func _process(delta: float) -> void:
 	action_button.visible = not inv_open
 	crouch_button.visible = not inv_open
 	dodge_button.visible = not inv_open
+	# Con una ventana abierta solo se ve el mundo detrás (sin barras ni minimapa encima)
+	for n in [_stats_box, _side_box, settings_btn, location_label]:
+		if n:
+			n.visible = not inv_open
+	if minimap:
+		minimap.visible = not inv_open and bool(SFX.settings.get("minimap", true))
 	if _gym_panel and _gym_panel.visible:
 		_station_refresh -= delta
 		if _station_refresh <= 0.0:
@@ -694,7 +704,7 @@ func _panel(title: String, half := Vector2(390, 280)) -> Array:
 	panel.offset_top = -half.y
 	panel.offset_bottom = half.y
 	var style := StyleBoxFlat.new()
-	style.bg_color = Color(0.1, 0.11, 0.1, 0.94)
+	style.bg_color = Color(0.1, 0.11, 0.1, 0.84)
 	style.set_corner_radius_all(14)
 	style.set_content_margin_all(16)
 	panel.add_theme_stylebox_override("panel", style)

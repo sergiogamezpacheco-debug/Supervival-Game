@@ -16,7 +16,7 @@ func setup(p_kind: String) -> void:
 	hits_left = int(data["hits"])
 	add_to_group("interactable")
 	add_to_group("resource")
-	_visual = Builder.resource_mesh(kind)
+	_visual = Builder.merge(Builder.resource_mesh(kind))
 	add_child(_visual)
 	var r := float(data.get("radius", 0.0))
 	if r > 0.0:

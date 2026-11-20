@@ -144,11 +144,27 @@ func call_to(seconds: float) -> void:
 	_called = maxf(_called, seconds)
 
 
+var _lod_acc := 0.0
+var _lod_skip := 0
+
+
 func _physics_process(delta: float) -> void:
 	if hp <= 0.0:
 		return
 	if _player == null or not is_instance_valid(_player):
 		_player = get_tree().get_first_node_in_group("player") as Node3D
+	# Lejos y sin enterarse de ti: se piensa 1 de cada 6 fotogramas (ahorra mucho en el móvil)
+	if _player and not aware and provoked <= 0.0 and _called <= 0.0:
+		var far := global_position.distance_squared_to(_player.global_position) > 35.0 * 35.0
+		if far:
+			_lod_acc += delta
+			_lod_skip = (_lod_skip + 1) % 6
+			if _lod_skip != 0:
+				return
+			delta = _lod_acc
+			_lod_acc = 0.0
+		else:
+			_lod_acc = 0.0
 	_attack_cd = maxf(_attack_cd - delta, 0.0)
 	provoked = maxf(provoked - delta, 0.0)
 	_called = maxf(_called - delta, 0.0)

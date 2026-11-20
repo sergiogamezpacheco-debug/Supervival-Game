@@ -316,6 +316,22 @@ func rebuild() -> void:
 
 	_build_underwear(d)
 	_build_outfit(d)
+	merge_parts()
+
+
+## Une las piezas de cada articulación en una malla (mucho menos trabajo para el móvil).
+## La mano del arma ("Hand") se deja aparte porque el arma cambia.
+func merge_parts() -> void:
+	var todo: Array = [self]
+	while not todo.is_empty():
+		var n: Node = todo.pop_back()
+		if n.name == "Hand":
+			continue
+		if n is Node3D:
+			Builder.merge(n, true)
+		for c in n.get_children():
+			if c is Node3D and not (c is MeshInstance3D):
+				todo.append(c)
 
 
 func _build_hand(h: Node3D, side: int, skin: Color) -> void:
@@ -636,19 +652,48 @@ func _build_outfit(d: Dictionary) -> void:
 # ============================================================== animación
 
 ## Paso de andar: phase avanza con la velocidad, amount 0..1.
-func animate_walk(phase: float, amount: float) -> void:
+## Paso (amount 0..1 = quieto..andando) con mezcla de carrera (run 0..1).
+## Ciclo completo cada 2π: pierna que avanza con la rodilla doblada al pasar, pie
+## que rueda, cadera que sube y baja dos veces por ciclo y se balancea, tronco que
+## gira al contrario que la cadera, brazos con el codo más doblado al correr.
+func animate_walk(phase: float, amount: float, run := 0.0) -> void:
 	if j.is_empty():
 		return
-	var s := sin(phase) * 0.55 * amount
-	j["leg_l"].rotation.x = s
-	j["leg_r"].rotation.x = -s
-	j["knee_l"].rotation.x = maxf(0.0, -sin(phase)) * 0.75 * amount
-	j["knee_r"].rotation.x = maxf(0.0, sin(phase)) * 0.75 * amount
-	j["arm_l"].rotation.x = -s * 0.7
-	j["arm_r"].rotation.x = s * 0.7
-	j["spine"].rotation.y = s * 0.1
 	var d := dims()
-	j["hips"].position.y = float(d["thigh"]) + float(d["shin"]) + float(d["ankle"]) + 0.06 + absf(cos(phase)) * 0.02 * amount
+	var a := clampf(amount, 0.0, 1.0)
+	var r := clampf(run, 0.0, 1.0)
+	var stride := lerpf(0.5, 0.78, r) * a
+	var sw := sin(phase)
+	var cw := cos(phase)
+	for side in [1.0, -1.0]:
+		var tag := "l" if side > 0.0 else "r"
+		var ph := phase if side > 0.0 else phase + PI
+		var s := sin(ph)
+		var c := cos(ph)
+		# muslo adelante/atrás; la rodilla se dobla al recoger la pierna (cuando va hacia delante)
+		j["leg_" + tag].rotation.x = s * stride
+		var lift := maxf(0.0, c) * lerpf(0.85, 1.5, r) + maxf(0.0, -s) * 0.15
+		j["knee_" + tag].rotation.x = lift * a
+		if j.has("foot_" + tag):
+			# talón al apoyar, punta al despegar
+			j["foot_" + tag].rotation.x = (-0.25 * maxf(0.0, s) + 0.35 * maxf(0.0, -s) * maxf(0.0, -c)) * a
+		# brazos al contrario que las piernas; el codo se dobla más al correr
+		var arm_swing := -s * lerpf(0.45, 0.8, r) * a
+		j["arm_" + tag].rotation.x = arm_swing + 0.05 * a
+		if j.has("elbow_" + tag):
+			j["elbow_" + tag].rotation.x = -0.12 - lerpf(0.18, 0.95, r) * a - maxf(0.0, s) * 0.2 * a
+	# tronco: gira con los hombros, se inclina al correr y se mece de lado
+	j["spine"].rotation.y = sw * lerpf(0.12, 0.2, r) * a
+	j["spine"].rotation.x = lerpf(0.03, 0.2, r) * a   # hacia delante, más al correr
+	j["spine"].rotation.z = cw * 0.03 * a
+	j["hips"].rotation.y = -sw * 0.08 * a
+	j["hips"].rotation.z = -cw * 0.04 * a
+	if j.has("head"):
+		j["head"].rotation.y = -sw * 0.06 * a   # la cabeza compensa y mira al frente
+		j["head"].rotation.x = -lerpf(0.0, 0.12, r) * a   # levanta la vista al inclinarse
+	# sube y baja dos veces por ciclo (más al correr)
+	var bob := (1.0 - absf(sw)) * lerpf(0.022, 0.05, r) * a
+	j["hips"].position.y = float(d["thigh"]) + float(d["shin"]) + float(d["ankle"]) + 0.06 + bob - 0.015 * r * a
 
 
 ## Agachado (0..1): se suma a la pose de andar.

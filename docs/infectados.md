@@ -6,7 +6,7 @@ habilidades en `scripts/world/creature.gd` (`_special_ai`) y efectos en `scripts
 | Tipo | Vida | Vel. | Daño | Habilidad | Dónde |
 |---|---|---|---|---|---|
 | Infectado común | 45 | 2,3 | 8 / 1,2 s | Da la alarma a los infectados a 7 m al verte. | Refugio, bosque, noche |
-| Corredora | 28 | 5,3 | 6 / 0,7 s | Te ve desde 13 m y embiste al acercarse. | Bosque, refugio, noche (bosque) |
+| Corredora | 28 | 4,0 | 6 / 0,7 s | Te ve desde 13 m y embiste al acercarse. | Bosque, refugio, noche (bosque) |
 | Hinchado | 170 | 1,6 | 20 / 2 s | Golpe que te lanza hacia atrás; la sorpresa solo hace x1,5. | Cantera |
 | Minero | 60 | 2,2 | 10 / 1,3 s | Casco: sorpresa x2. Avisa a su cuadrilla (6 m). | Cantera, noche (cantera) |
 | Gritona | 30 | 3,2 | — | No ataca. Grita cada 9 s y llama a todos los infectados a 22 m; huye si te acercas. | Bosque, cantera |
