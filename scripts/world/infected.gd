@@ -216,10 +216,11 @@ static func pose(c: CharacterModel, phase: float, amount: float, attack := 0.0, 
 			j["elbow_r"].rotation.x = 0.6
 			if kind == "coloso" and special > 0.0:   # pisotón: brazos arriba y caída
 				var up := sin(special * PI)
-				j["arm_l"].rotation = Vector3(-2.4 * up, 0, -0.5)
-				j["arm_r"].rotation = Vector3(-2.4 * up, 0, 0.5)
+				j["arm_l"].rotation = Vector3(2.6 * up, 0, -0.5)
+				j["arm_r"].rotation = Vector3(2.6 * up, 0, 0.5)
 				j["spine"].rotation.x = 0.15 * up - 0.35 * (1.0 - up) * float(special > 0.5)
-				j["leg_r"].rotation.x = -0.8 * up
+				j["leg_r"].rotation.x = 0.8 * up
+				j["knee_r"].rotation.x = -0.9 * up
 		"purulento":   # tambaleo con los brazos separados de la tripa
 			j["spine"].rotation = Vector3(0.08, 0, sway * 2.0)
 			j["head"].rotation = Vector3(0.2, 0.15, 0.25)

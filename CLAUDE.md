@@ -48,4 +48,9 @@
   Iconos de tarjeta y vistas grandes de los diseños de estaciones: `assets/icons/recetas/` y
   `assets/icons/preview/` (`tools/iconos/recetas.py`). Iconos de cabecera en `assets/icons/estaciones/` (recortes `tools/iconos/estaciones.py` o render
   `tools/station_icons.tscn`).
+- Personaje (`character_model.gd`): piezas por articulación que `merge_parts()` convierte en UNA malla con
+  `Skeleton3D` (piel continua); las animaciones mueven los Node3D de `j` y `_sync_pose()` los copia al esqueleto.
+  Signos (frente = -Z): muslo/brazo `+x` = hacia delante, rodilla siempre `<= 0`, codo siempre `>= 0`,
+  tronco `-x` = inclinarse hacia delante, cabeza `+x` = mirar arriba, pie `+x` = punta arriba.
+  Capturas de revisión: `tools/character_sheet.tscn -- <dir> ref`.
 - Hoja de ruta y estado: `README.md`.

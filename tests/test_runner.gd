@@ -1038,6 +1038,18 @@ func test_character() -> void:
 	check(dressed.get_child_count() > 0 and _count_verts(dressed) > _count_verts(bare) + 300, "la ropa añade piezas al personaje")
 	dressed.animate_walk(1.0, 1.0)
 	check(absf(dressed.j["leg_l"].rotation.x) > 0.1, "las piernas se mueven al andar")
+	# articulaciones lógicas: rodillas solo hacia atrás, codos solo hacia delante, al correr se inclina adelante
+	var ok_knees := true
+	for k in 16:
+		bare.animate_walk(k * TAU / 16.0, 1.0, float(k % 2))
+		for sd in ["l", "r"]:
+			if bare.j["knee_" + sd].rotation.x > 0.001 or bare.j["elbow_" + sd].rotation.x < 0.0:
+				ok_knees = false
+	check(ok_knees, "al andar y correr las rodillas y los codos se doblan hacia el lado natural")
+	bare.animate_walk(1.0, 1.0, 1.0)
+	check(bare.j["spine"].rotation.x < -0.1, "al correr el tronco se inclina hacia delante")
+	var skel: Skeleton3D = bare._skel
+	check(skel != null and skel.get_bone_count() == bare.j.size() and _count_meshes(bare) <= 2, "el cuerpo es una sola malla con esqueleto (sin huecos en las articulaciones)")
 	# relieve muscular: el anillo de los pectorales sale más por delante que por los lados
 	check(CharacterModel._shape(["pec", 0.2], deg_to_rad(240.0)) > 1.1 and is_equal_approx(CharacterModel._shape(["pec", 0.2], 0.0), 1.0), "los pectorales abultan solo por delante")
 	bare.animate_walk(0.0, 0.0)
@@ -1046,10 +1058,10 @@ func test_character() -> void:
 	check(bare.j["spine"].rotation.x > sp0 + 0.01, "quieto respira (el pecho se mueve)")
 	bare.animate_walk(0.0, 0.0)
 	bare.animate_swing(0.3)
-	check(bare.j["arm_r"].rotation.x < -2.0 and bare.j["spine"].rotation.y > 0.2, "el golpe carga el brazo por encima del hombro girando el tronco")
+	check(bare.j["arm_r"].rotation.x > 2.0 and bare.j["spine"].rotation.y > 0.2, "el golpe carga el brazo por encima del hombro girando el tronco")
 	bare.animate_walk(0.0, 0.0)
 	bare.animate_swing(0.5)
-	check(bare.j["arm_r"].rotation.x > -1.2 and bare.j["spine"].rotation.x > 0.1, "y descarga hacia delante inclinando el cuerpo")
+	check(bare.j["arm_r"].rotation.x < 1.2 and bare.j["spine"].rotation.x < -0.1, "y descarga hacia delante inclinando el cuerpo")
 	bare.animate_walk(0.0, 0.0)
 	bare.animate_swing(1.0)
 	check(is_equal_approx(bare.j["spine"].rotation.y, 0.0), "al acabar el golpe vuelve a la pose normal")
