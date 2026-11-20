@@ -44,6 +44,7 @@
 - Estaciones: `scripts/ui/station_screen.gd` (diseños `docs/diseno_est_*.jpg`): pestañas por categoría
   (`"cat"` en la receta o según el tipo), cantidad (`station.start(id, n)`), obras por fases, generador,
   recolector y reparar. Posiciones fijas: no usar HFlowContainer (sospechoso de colgar el móvil).
-  Iconos de cabecera en `assets/icons/estaciones/` (recortes `tools/iconos/estaciones.py` o render
+  Iconos de tarjeta y vistas grandes de los diseños de estaciones: `assets/icons/recetas/` y
+  `assets/icons/preview/` (`tools/iconos/recetas.py`). Iconos de cabecera en `assets/icons/estaciones/` (recortes `tools/iconos/estaciones.py` o render
   `tools/station_icons.tscn`).
 - Hoja de ruta y estado: `README.md`.

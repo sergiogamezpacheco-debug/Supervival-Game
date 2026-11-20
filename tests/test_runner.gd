@@ -1418,6 +1418,10 @@ func test_night_stealth() -> void:
 	check(ws.action_btn.text == "REPARAR" and not ws.action_btn.disabled, "y su botón repara (%s)" % ws.action_btn.text)
 	ws.action_btn.pressed.emit()
 	check(GS.hand["dur"] == int(DB.item(str(GS.hand["id"]))["durability"]), "el arma queda como nueva")
+	# Iconos de las tarjetas y vistas grandes sacados de los diseños de estaciones
+	check(ws.recipe_icon("lingote_hierro").resource_path.ends_with("recetas/lingote_hierro.png"), "icono de tarjeta del diseño (lingote de hierro)")
+	check(ws.preview_tex("tablon").resource_path.ends_with("preview/tablon.png"), "vista grande del diseño (tablones)")
+	check(ws.recipe_icon("garrote") == DB.item_icon("garrote"), "sin diseño de estación, el icono del objeto")
 	# Pantalla nueva: categorías, cantidad y fabricar varias
 	ws.tab = "Armas"
 	ws.refresh()

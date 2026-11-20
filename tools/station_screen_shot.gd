@@ -26,9 +26,9 @@ func _ready() -> void:
 		GS.add_item(id, 12)
 	var base: Node3D = world.base
 	var pp := Vector3(30, 0, 30)
-	var spots := [Vector2i(-6, 2), Vector2i(-2, 2), Vector2i(2, 2), Vector2i(6, 2), Vector2i(-6, 6), Vector2i(-2, 6)]
+	var spots := [Vector2i(-6, 2), Vector2i(-2, 2), Vector2i(2, 2), Vector2i(6, 2), Vector2i(-6, 6), Vector2i(-2, 6), Vector2i(2, 6), Vector2i(6, 6), Vector2i(-6, -2)]
 	var made := {}
-	for id in ["carpinteria", "horno", "banco_trabajo", "mesa_costura", "generador", "recicladora"]:
+	for id in ["carpinteria", "horno", "banco_trabajo", "mesa_costura", "generador", "recicladora", "mesa_medica"]:
 		for c in spots:
 			if not made.has(id) and base.check_place(id, c, 0, pp) == "":
 				for ph in DB.station_phases(id):
@@ -41,8 +41,6 @@ func _ready() -> void:
 				spots.erase(c)
 				break
 	var carp: Node3D = made["carpinteria"]
-	carp.start("tablon")
-	GS.time_offset += 5.0
 	world.hud.open_station(carp)
 	await _shot(out + "/estacion_carpinteria.png")
 	world.hud.open_station(made["horno"])
@@ -56,7 +54,15 @@ func _ready() -> void:
 	sc.refresh()
 	await _shot(out + "/estacion_reparar.png")
 	world.hud.open_station(made["mesa_costura"])
+	sc.tab = "Ropa"
+	sc.refresh()
 	await _shot(out + "/estacion_costura.png")
+	world.hud.open_station(made["mesa_medica"])
+	await _shot(out + "/estacion_mesa_medica.png")
+	for i in sc.entries.size():
+		if sc.entries[i].get("icon", "") == "antidoto":
+			sc._select(i)
+	await _shot(out + "/estacion_antidoto.png")
 	world.hud.open_station(made["generador"])
 	await _shot(out + "/estacion_obra.png")
 	var g: Node3D = made["generador"]

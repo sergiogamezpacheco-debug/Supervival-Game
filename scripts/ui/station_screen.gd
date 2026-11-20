@@ -342,6 +342,18 @@ func open(s: Node3D) -> void:
 	refresh()
 
 
+## Icono de la tarjeta: el de los diseños de estaciones si lo hay, si no el del objeto.
+func recipe_icon(id: String) -> Texture2D:
+	var t := _tex("res://assets/icons/recetas/%s.png" % id)
+	return t if t else DB.item_icon(id)
+
+
+## Imagen grande de la izquierda: la del diseño si la hay, si no el icono de la tarjeta.
+func preview_tex(id: String) -> Texture2D:
+	var t := _tex("res://assets/icons/preview/%s.png" % id)
+	return t if t else recipe_icon(id)
+
+
 func _station_icon(id: String) -> Texture2D:
 	return _tex("res://assets/icons/estaciones/%s.png" % id)
 
@@ -503,7 +515,7 @@ func _build_rows() -> void:
 		ic.size = Vector2(72, 72)
 		ic.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		var icon_id := str(e.get("icon", ""))
-		ic.texture = DB.item_icon(icon_id) if icon_id != "" else (_station_icon(station.id) if e["kind"] != "water" else DB.ui_icon("agua"))
+		ic.texture = recipe_icon(icon_id) if icon_id != "" else (_station_icon(station.id) if e["kind"] != "water" else DB.ui_icon("agua"))
 		row.add_child(ic)
 		var ok := GS.has_cost(e["cost"]) and _locked_text(e) == ""
 		var name_col := PAPER if ok or e.get("done", false) else RED
@@ -589,9 +601,10 @@ func _show_preview(e: Dictionary) -> void:
 		m.scale = Vector3.ONE * k
 		_model_holder.add_child(m)
 	else:
-		_item.texture = DB.item_icon(icon_id)
+		_item.texture = preview_tex(icon_id)
 		var tw := float(_item.texture.get_width()) if _item.texture else 128.0
-		_item.pixel_size = 1.45 / maxf(tw, 1.0)
+		var big := ResourceLoader.exists("res://assets/icons/preview/%s.png" % icon_id)
+		_item.pixel_size = (1.75 if big else 1.45) / maxf(tw, 1.0)
 
 
 func _max_qty() -> int:
