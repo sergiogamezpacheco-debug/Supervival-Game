@@ -52,5 +52,11 @@
   `Skeleton3D` (piel continua); las animaciones mueven los Node3D de `j` y `_sync_pose()` los copia al esqueleto.
   Signos (frente = -Z): muslo/brazo `+x` = hacia delante, rodilla siempre `<= 0`, codo siempre `>= 0`,
   tronco `-x` = inclinarse hacia delante, cabeza `+x` = mirar arriba, pie `+x` = punta arriba.
-  Capturas de revisión: `tools/character_sheet.tscn -- <dir> ref`.
+  Capturas de revisión: `tools/character_sheet.tscn -- <dir> ref` (y `clips <nombre...>` para ver animaciones).
+  Medidas del hombre sacadas de `docs/diseno_personaje.jpg` (frente/perfil); su piel, pelo y bóxer llevan la
+  textura `assets/characters/superviviente.png` (`tools/iconos/personaje.py`: sombras y cara del dibujo como
+  factor sobre el color elegido). Los infectados no la usan (`design = false`).
+- Animaciones: captura de la Universal Animation Library (Quaternius, CC0, `third_party/ual/`) pasada a nuestras
+  articulaciones con `godot --headless -s res://tools/bake_anims.gd` -> `assets/characters/animaciones.res`
+  (46 clips). `CharacterModel.pose(clip, t, peso, solo_estas)`; andar/correr/agacharse/golpe/reposo las mezclan.
 - Hoja de ruta y estado: `README.md`.

@@ -178,6 +178,8 @@ func _p(parent: Node3D, mesh: Mesh, color: Color, pos := Vector3.ZERO, rot := Ve
 	mi.position = pos
 	mi.rotation = rot
 	mi.scale = scl
+	if _tag >= 0:
+		mi.set_meta("capa", _tag)
 	parent.add_child(mi)
 	return mi
 
@@ -369,6 +371,7 @@ func rebuild() -> void:
 
 	var hip_h: float = float(d["thigh"]) + float(d["shin"]) + float(d["ankle"]) + 0.06
 	var hips := _joint(self, "hips", Vector3(0, hip_h, 0))
+	_tag = 0 if _proj() else -1
 	_p(hips, loft(_pelvis(d), 9), skin)
 
 	for side in [-1, 1]:
@@ -404,8 +407,14 @@ func rebuild() -> void:
 			hand.position = Vector3(0, -0.06, -0.015)
 			h.add_child(hand)
 
+	if _tag >= 0:
+		_tag = 2
 	_build_underwear(d)
+	_tag = -1
 	_build_outfit(d)
+	_rest_q.clear()
+	for jn in j:
+		_rest_q[jn] = (j[jn] as Node3D).quaternion
 	merge_parts()
 
 
@@ -415,6 +424,19 @@ func rebuild() -> void:
 ## [y del punto de unión con el padre, ancho de la mezcla, 1 = la pieza crece hacia arriba]
 const BLEND := {"leg": [0.0, 0.07, 0], "knee": [0.0, 0.06, 0], "foot": [0.0, 0.035, 0], "arm": [0.0, 0.06, 0],
 	"elbow": [0.0, 0.05, 0], "hand": [0.0, 0.03, 0], "spine": [0.0, 0.06, 1], "head": [-0.13, 0.04, 1]}
+
+## Textura del diseño (tools/iconos/personaje.py): cada triángulo de piel, pelo y ropa
+## interior toma las sombras y la cara del dibujo de frente/perfil del usuario.
+const DESIGN_TEX := "res://assets/characters/superviviente.png"
+const DESIGN_ATLAS := Vector2(2430, 1240)
+const DESIGN_LAYER := 810.0
+const DESIGN_FRONT := [130.0, 30.0, 2.0]          # columna, fila, escala
+const DESIGN_SIDE := [680.0, 30.0, 1.5, 540.0]
+const DESIGN_PX := 0.003017                      # metros por píxel del dibujo
+const DESIGN_CX := [266.47, -0.003, 765.69, -0.0038]   # centro del dibujo / del modelo (frente, perfil)
+var design := true    # los infectados lo desactivan
+var _tag := -1        # capa de la pieza que se está creando (0 piel, 1 pelo, 2 ropa interior)
+static var _design_mat: StandardMaterial3D
 
 var _parts: Array = []      # [nombre de articulación, malla, transform local, color]
 var _skel: Skeleton3D
@@ -446,7 +468,7 @@ func _collect(jn: String, n: Node3D, xf: Transform3D) -> void:
 		if not (m is StandardMaterial3D) or m.emission_enabled or m.transparency != BaseMaterial3D.TRANSPARENCY_DISABLED:
 			c.set_meta("rigid", true)   # brillos y transparencias: se quedan como pieza aparte
 			continue
-		_parts.append([jn, c.mesh, xf * c.transform, (m as StandardMaterial3D).albedo_color])
+		_parts.append([jn, c.mesh, xf * c.transform, (m as StandardMaterial3D).albedo_color, int(c.get_meta("capa", -1))])
 		n.remove_child(c)
 		c.free()
 
@@ -482,12 +504,15 @@ func _build_skin() -> void:
 		bi[String(_bones[b].name)] = b
 	var st := SurfaceTool.new()
 	st.begin(Mesh.PRIMITIVE_TRIANGLES)
+	var any_proj := false
 	for part in _parts:
 		var jn: String = part[0]
 		var b: int = bi[jn]
 		var rest: Transform3D = _rest_global(_bones[b])
 		var lx: Transform3D = part[2]
 		var col: Color = part[3]
+		var layer: int = part[4] if _proj() else -1
+		any_proj = any_proj or layer >= 0
 		var arr: Array = (part[1] as Mesh).surface_get_arrays(0)
 		var vs: PackedVector3Array = arr[Mesh.ARRAY_VERTEX]
 		var ns: PackedVector3Array = arr[Mesh.ARRAY_NORMAL]
@@ -496,24 +521,75 @@ func _build_skin() -> void:
 		var order: PackedInt32Array = ids if ids != null and ids.size() > 0 else PackedInt32Array(range(vs.size()))
 		var nb := (lx.basis).inverse().transposed()
 		var gb := rest.basis.inverse().transposed()
-		for vi in order:
-			var lp := lx * vs[vi]
-			var w := _weights(jn, lp, bi)
-			st.set_bones(w[0])
-			st.set_weights(w[1])
-			var vc: Color = col if cs == null or cs.size() == 0 else col * cs[vi]
-			st.set_color(Color(vc.r, vc.g, vc.b, 1.0))
-			st.set_normal((gb * (nb * ns[vi])).normalized())
-			st.add_vertex(rest * lp)
+		for t in range(0, order.size() - 2, 3):
+			var gp: Array = []
+			for q in 3:
+				gp.append(rest * (lx * vs[order[t + q]]))
+			var fn := Vector3.ZERO
+			for q in 3:
+				fn += gb * (nb * ns[order[t + q]])
+			# ¿el triángulo mira hacia delante? -> vista de frente; si no, de perfil
+			var front := fn.normalized().z < -0.3
+			for q in 3:
+				var vi: int = order[t + q]
+				var lp := lx * vs[vi]
+				var w := _weights(jn, lp, bi)
+				st.set_bones(w[0])
+				st.set_weights(w[1])
+				var vc: Color = col if cs == null or cs.size() == 0 else col * cs[vi]
+				st.set_color(Color(vc.r, vc.g, vc.b, 1.0))
+				st.set_normal((gb * (nb * ns[vi])).normalized())
+				st.set_uv(_design_uv(gp[q], front, layer))
+				st.add_vertex(gp[q])
 	var mesh := st.commit()
 	_skin_mi.mesh = mesh
-	_skin_mi.material_override = mat(Color.WHITE)
+	_skin_mi.material_override = _design_material() if any_proj else mat(Color.WHITE)
 	var sk := Skin.new()
 	for b in _bones.size():
 		sk.add_bind(b, _rest_global(_bones[b]).affine_inverse())
 	_skin_mi.skin = sk
 	_skin_mi.skeleton = NodePath("..")
 	_sync_pose()
+
+
+func _proj() -> bool:
+	return design and look.get("sex", "m") == "m"
+
+
+## Punto del dibujo donde cae un vértice (en reposo): vista de frente o de perfil.
+static func _design_uv(p: Vector3, front: bool, layer: int) -> Vector2:
+	var neutral := Vector2(1.0 - 1.5 / DESIGN_ATLAS.x, 1.0 - 1.5 / DESIGN_ATLAS.y)
+	if layer < 0:
+		return neutral
+	var row := 640.0 - p.y / DESIGN_PX
+	var u: float
+	var v: float
+	var lo: float
+	var hi: float
+	if front:
+		var col := float(DESIGN_CX[0]) + (-p.x - float(DESIGN_CX[1])) / DESIGN_PX
+		u = (col - float(DESIGN_FRONT[0])) * float(DESIGN_FRONT[2])
+		v = (row - float(DESIGN_FRONT[1])) * float(DESIGN_FRONT[2])
+		lo = 0.0
+		hi = float(DESIGN_SIDE[3])
+	else:
+		var col := float(DESIGN_CX[2]) + (-p.z - float(DESIGN_CX[3])) / DESIGN_PX
+		u = float(DESIGN_SIDE[3]) + (col - float(DESIGN_SIDE[0])) * float(DESIGN_SIDE[2])
+		v = (row - float(DESIGN_SIDE[1])) * float(DESIGN_SIDE[2])
+		lo = float(DESIGN_SIDE[3])
+		hi = DESIGN_LAYER
+	if u < lo or u >= hi - 1.0 or v < 0.0 or v >= DESIGN_ATLAS.y - 1.0:
+		return neutral
+	return Vector2((float(layer) * DESIGN_LAYER + u) / DESIGN_ATLAS.x, v / DESIGN_ATLAS.y)
+
+
+static func _design_material() -> StandardMaterial3D:
+	if _design_mat == null:
+		_design_mat = mat(Color.WHITE).duplicate() as StandardMaterial3D
+		_design_mat.albedo_texture = load(DESIGN_TEX)
+		_design_mat.albedo_color = Color(2.0, 2.0, 2.0)   # la textura guarda la mitad del factor
+		_design_mat.texture_filter = BaseMaterial3D.TEXTURE_FILTER_LINEAR_WITH_MIPMAPS
+	return _design_mat
 
 
 ## Transformación de reposo de una articulación respecto al personaje.
@@ -575,7 +651,15 @@ func _weights(jn: String, lp: Vector3, bi: Dictionary) -> Array:
 	return [bones, ws]
 
 
-func _process(_delta: float) -> void:
+var auto_idle := false   # vistas previas (inventario, creación): respira solo
+var _idle_clock := 0.0
+
+
+func _process(delta: float) -> void:
+	if auto_idle:
+		_idle_clock += delta
+		animate_walk(0.0, 0.0)
+		animate_idle(_idle_clock, 1.0)
 	_sync_pose()
 
 
@@ -622,7 +706,8 @@ func _build_head(head: Node3D, skin: Color) -> void:
 	# Ojos: pequeños y oscuros
 	var ec: Color = EYE_COLORS[clampi(int(look["eye_color"]), 0, 4)]
 	var es := int(look["eyes"])
-	for side in [-1, 1]:
+	var painted := _proj()   # ojos, cejas y boca ya vienen en la textura del diseño
+	for side in ([] if painted else [-1, 1]):
 		var x: float = side * 0.032
 		var w := 0.02
 		var hgt := 0.009
@@ -677,7 +762,7 @@ func _build_head(head: Node3D, skin: Color) -> void:
 		lip = skin.darkened(0.2).lerp(Color("a8524e"), 0.55)
 	var my := -0.052
 	var mz := -0.103
-	match int(look["mouth"]):
+	match (-1 if painted else int(look["mouth"])):
 		0:
 			_p(head, box(Vector3(0.036, 0.006, 0.006)), lip, Vector3(0, my, mz))
 		1:
@@ -694,7 +779,11 @@ func _build_head(head: Node3D, skin: Color) -> void:
 				_p(head, box(Vector3(0.01, 0.005, 0.006)), lip.darkened(0.2), Vector3(side * 0.021, my - 0.003, mz), Vector3(0, 0, side * -0.5))
 	if not male and int(look["mouth"]) != 2:
 		_p(head, box(Vector3(0.024, 0.0055, 0.007)), lip.lightened(0.08), Vector3(0, my - 0.0065, mz + 0.001))
+	var t0 := _tag
+	if t0 >= 0:
+		_tag = 1
 	_build_hair(head, rings, hc, male)
+	_tag = t0
 
 
 ## Pelo de mujer: flequillo ladeado y mechones a los lados de la cara.
@@ -727,13 +816,13 @@ func _spikes(head: Node3D, hc: Color, count: int, front_bias: float, seed_: int,
 		if messy:
 			# despeinado: de punta y hacia fuera; delante cae sobre la frente
 			var jit := Vector3(rng.randf_range(-0.3, 0.3), rng.randf_range(-0.1, 0.2), rng.randf_range(-0.3, 0.3))
-			out = (dir * 0.7 + Vector3(0.0, -0.05, -0.3) + jit).normalized()   # caen hacia delante y a los lados
+			out = (dir * 0.75 + Vector3(0.0, -0.2, -0.25) + jit * 0.8).normalized()   # mechones gruesos que caen hacia delante y a los lados
 			if dir.z < -0.2:   # mechones que caen sobre la frente
 				out = (dir * 0.4 + Vector3(dir.x * 0.5, -0.25, -0.75) + jit * 0.5).normalized()
 			ln = length * rng.randf_range(0.75, 1.3)
 		var basis := Basis.looking_at(out, Vector3.UP if absf(out.y) < 0.95 else Vector3.FORWARD)
 		holder.basis = basis * Basis(Vector3.RIGHT, -PI / 2.0)
-		var bw := 1.45 if messy else 1.0
+		var bw := 2.1 if messy else 1.0
 		_p(holder, loft([[0.0, 0.026 * bw, 0.014 * bw], [ln * 0.6, 0.016 * bw, 0.01 * bw], [ln, 0.003, 0.003]], 4), hc.darkened(rng.randf() * 0.12).lightened(rng.randf() * 0.06))
 
 
@@ -744,7 +833,7 @@ func _build_hair(head: Node3D, rings: Array, hc: Color, male: bool) -> void:
 		_p(head, loft(grow(slice(rings, 0.2, from_y), g, g * 1.02), 12), hc)
 		# nuca: media vuelta trasera para que el pelo baje por detrás
 		_p(head, loft(grow(slice(rings, from_y + 0.001, -0.04), g, g * 1.02), 12, false, 0.5, 0.0), hc)
-	if male and style != 4:
+	if male and style != 4 and not _proj():
 		_stubble(head, rings, hc)
 	if male:
 		match style:
@@ -752,7 +841,7 @@ func _build_hair(head: Node3D, rings: Array, hc: Color, male: bool) -> void:
 				cap.call(1.015, 0.05)
 			1:
 				cap.call(1.05, 0.045)
-				_spikes(head, hc, 44, 1.0, 11, 0.046, true)
+				_spikes(head, hc, 30, 1.0, 11, 0.07, true)
 			2:
 				cap.call(1.04, 0.05)
 				_spikes(head, hc, 12, 0.3, 21, 0.05)
@@ -938,118 +1027,113 @@ func _build_outfit(d: Dictionary) -> void:
 
 # ============================================================== animación
 
-## Paso de andar: phase avanza con la velocidad, amount 0..1.
-## Paso (amount 0..1 = quieto..andando) con mezcla de carrera (run 0..1).
-## Ciclo completo cada 2π: pierna que avanza con la rodilla doblada al pasar, pie
-## que rueda, cadera que sube y baja dos veces por ciclo y se balancea, tronco que
-## gira al contrario que la cadera, brazos con el codo más doblado al correr.
+# ============================================================ animaciones
+# Animaciones de captura de la Universal Animation Library (Quaternius, CC0) pasadas a
+# nuestras articulaciones con tools/bake_anims.gd. Las funciones de siempre (andar,
+# agacharse, golpe, reposo) mezclan esos clips.
+
+const ANIMS := "res://assets/characters/animaciones.res"
+const UPPER := ["spine", "head", "arm_l", "elbow_l", "hand_l", "arm_r", "elbow_r", "hand_r"]
+static var _anims: AnimSet
+var _phase := 0.0
+var _move := 0.0
+
+
+static func anims() -> AnimSet:
+	if _anims == null:
+		_anims = load(ANIMS)
+	return _anims
+
+
+static func clip_length(clip: String) -> float:
+	var c: Dictionary = anims().clips.get(clip, {})
+	return 0.0 if c.is_empty() else float(int(c["frames"]) - 1) / float(c["fps"])
+
+
+var _rest_q := {}   # giro de reposo de cada articulación
+
+
+## Pone (o mezcla con peso w) la pose del clip en el instante t (segundos).
+func pose(clip: String, t: float, w := 1.0, only: Array = [], loop := true) -> void:
+	if j.is_empty() or w <= 0.001:
+		return
+	var c: Dictionary = anims().clips.get(clip, {})
+	if c.is_empty():
+		return
+	var n: int = c["frames"]
+	var ft := t * float(c["fps"])
+	ft = fposmod(ft, float(n - 1)) if loop else clampf(ft, 0.0, float(n - 1))
+	var i0 := int(ft)
+	var i1 := mini(i0 + 1, n - 1)
+	var fr := ft - float(i0)
+	var rot: Dictionary = c["rot"]
+	for jn in rot:
+		if not only.is_empty() and not only.has(jn):
+			continue
+		var a: PackedFloat32Array = rot[jn]
+		var q0 := Quaternion(a[i0 * 4], a[i0 * 4 + 1], a[i0 * 4 + 2], a[i0 * 4 + 3])
+		var q1 := Quaternion(a[i1 * 4], a[i1 * 4 + 1], a[i1 * 4 + 2], a[i1 * 4 + 3])
+		var q := q0.slerp(q1, fr)
+		if jn == "spine" and not only.is_empty() and not only.has("hips"):
+			# solo de cintura para arriba: el tronco conserva su giro respecto al mundo
+			var h: PackedFloat32Array = rot["hips"]
+			var hq := Quaternion(h[i0 * 4], h[i0 * 4 + 1], h[i0 * 4 + 2], h[i0 * 4 + 3]).slerp(Quaternion(h[i1 * 4], h[i1 * 4 + 1], h[i1 * 4 + 2], h[i1 * 4 + 3]), fr)
+			q = (j["hips"].quaternion as Quaternion).inverse() * hq * q
+		var node: Node3D = j[jn]
+		node.quaternion = q if w >= 0.999 else node.quaternion.slerp(q, w)
+	if only.is_empty() or only.has("hips"):
+		var hy: PackedFloat32Array = c["hy"]
+		var base := _hip_h()
+		var off := lerpf(hy[i0], hy[i1], fr)
+		j["hips"].position.y = lerpf(j["hips"].position.y, base + off, w)
+
+
+func _hip_h() -> float:
+	var d := dims()
+	return float(d["thigh"]) + float(d["shin"]) + float(d["ankle"]) + 0.06
+
+
+## Andar/correr: phase avanza con la velocidad (TAU = un ciclo de dos pasos), amount 0..1
+## (0 = quieto), run 0..1 de andar a correr. Siempre es lo primero de cada fotograma.
 func animate_walk(phase: float, amount: float, run := 0.0) -> void:
 	if j.is_empty():
 		return
-	var d := dims()
-	var a := clampf(amount, 0.0, 1.0)
-	var r := clampf(run, 0.0, 1.0)
-	var stride := lerpf(0.42, 0.66, r) * a
-	var sw := sin(phase)
-	var cw := cos(phase)
-	for side in [1.0, -1.0]:
-		var tag := "l" if side > 0.0 else "r"
-		var ph := phase if side > 0.0 else phase + PI
-		var s := sin(ph)
-		var c := cos(ph)
-		# muslo adelante/atrás; la rodilla se dobla al recoger la pierna (cuando va hacia delante)
-		j["leg_" + tag].rotation.x = s * stride
-		var lift := maxf(0.0, c) * lerpf(0.85, 1.5, r) + maxf(0.0, -s) * 0.15
-		j["knee_" + tag].rotation.x = -lift * a   # negativo: la espinilla va hacia atrás
-		if j.has("foot_" + tag):
-			# talón al apoyar, punta al despegar
-			j["foot_" + tag].rotation.x = (0.15 * maxf(0.0, s) - 0.4 * maxf(0.0, -s) * maxf(0.0, -c)) * a
-		# brazos al contrario que las piernas; el codo se dobla más al correr
-		var arm_swing := -s * lerpf(0.45, 0.62, r) * a
-		j["arm_" + tag].rotation.x = arm_swing + 0.05 * a
-		if j.has("elbow_" + tag):
-			j["elbow_" + tag].rotation.x = 0.12 + lerpf(0.18, 1.3, r) * a + maxf(0.0, -s) * 0.25 * a
-	# tronco: gira con los hombros, se inclina al correr y se mece de lado
-	j["spine"].rotation.y = sw * lerpf(0.12, 0.2, r) * a
-	j["spine"].rotation.x = -lerpf(0.04, 0.2, r) * a   # negativo = hacia delante, más al correr
-	j["spine"].rotation.z = cw * 0.03 * a
-	j["hips"].rotation.y = -sw * 0.08 * a
-	j["hips"].rotation.z = -cw * 0.04 * a
-	if j.has("head"):
-		j["head"].rotation.y = -sw * 0.06 * a   # la cabeza compensa y mira al frente
-		j["head"].rotation.x = lerpf(0.0, 0.14, r) * a   # levanta la vista al inclinarse
-	# sube y baja dos veces por ciclo (más al correr)
-	var bob := (1.0 - absf(sw)) * lerpf(0.022, 0.05, r) * a
-	j["hips"].position.y = float(d["thigh"]) + float(d["shin"]) + float(d["ankle"]) + 0.06 + bob - 0.015 * r * a
+	_phase = phase
+	_move = clampf(amount, 0.0, 1.0)
+	j["hips"].position = Vector3(0, _hip_h(), 0)
+	pose("Idle_Loop", 0.0)
+	if _move > 0.001:
+		var u := fposmod(phase, TAU) / TAU
+		pose("Walk_Loop", u * clip_length("Walk_Loop"), _move)
+		if run > 0.001:
+			pose("Jog_Fwd_Loop", u * clip_length("Jog_Fwd_Loop"), _move * clampf(run, 0.0, 1.0))
 
 
-## Agachado (0..1): se suma a la pose de andar.
+## Agachado (sigilo): quieto o andando agachado.
 func animate_crouch(amount: float) -> void:
-	if j.is_empty():
+	if j.is_empty() or amount <= 0.001:
 		return
-	var d := dims()
-	j["hips"].position.y -= 0.3 * float(d["s"]) * amount
-	for side in ["l", "r"]:
-		j["leg_" + side].rotation.x += 1.05 * amount
-		j["knee_" + side].rotation.x -= 1.7 * amount
-		if j.has("foot_" + side):
-			j["foot_" + side].rotation.x = 0.65 * amount
-	j["spine"].rotation.x = -0.38 * amount
-	j["arm_l"].rotation.x += 0.45 * amount
-	j["arm_r"].rotation.x += 0.45 * amount
+	pose("Crouch_Idle_Loop", 0.0, amount * (1.0 - _move))
+	if _move > 0.001:
+		var u := fposmod(_phase, TAU) / TAU
+		pose("Crouch_Fwd_Loop", u * clip_length("Crouch_Fwd_Loop"), amount * _move)
 
 
-## Valor de una curva de claves [[t, v], ...] con tramos suavizados.
-static func _keys(k: Array, t: float) -> float:
-	if t <= float(k[0][0]):
-		return float(k[0][1])
-	for i in k.size() - 1:
-		var a: Array = k[i]
-		var b: Array = k[i + 1]
-		if t <= float(b[0]):
-			var u := smoothstep(0.0, 1.0, (t - float(a[0])) / (float(b[0]) - float(a[0])))
-			return lerpf(float(a[1]), float(b[1]), u)
-	return float(k.back()[1])
-
-
-## Golpe con el brazo derecho (0..1): carga por encima del hombro con el tronco
-## girado, golpe hacia abajo cargando el peso delante y vuelta a la pose de antes.
+## Golpe (0..1): ataque con arma de la librería, solo de cintura para arriba para
+## poder golpear andando. Entra y sale mezclándose con la pose de antes.
 func animate_swing(t: float) -> void:
 	if j.is_empty():
 		return
-	var w := smoothstep(0.0, 0.12, t) * (1.0 - smoothstep(0.72, 1.0, t))
-	var arm := _keys([[0.0, 0.3], [0.3, 2.6], [0.48, 0.75], [0.62, 0.65], [1.0, 0.3]], t)
-	var elb := _keys([[0.0, 0.3], [0.3, 0.85], [0.48, 0.15], [0.62, 0.25], [1.0, 0.3]], t)
-	j["arm_r"].rotation.x = lerpf(j["arm_r"].rotation.x, arm, w)
-	j["elbow_r"].rotation.x = lerpf(j["elbow_r"].rotation.x, elb, w)
-	j["arm_r"].rotation.z = 0.22 + _keys([[0.0, 0.0], [0.3, 0.35], [0.48, -0.1], [1.0, 0.0]], t) * w
-	j["arm_l"].rotation.x = lerpf(j["arm_l"].rotation.x, _keys([[0.0, 0.0], [0.3, 0.55], [0.48, -0.3], [1.0, 0.0]], t), w)
-	j["elbow_l"].rotation.x = lerpf(j["elbow_l"].rotation.x, 0.9, w)
-	j["spine"].rotation.y += _keys([[0.0, 0.0], [0.3, 0.4], [0.48, -0.32], [0.7, -0.2], [1.0, 0.0]], t) * w
-	j["spine"].rotation.x += _keys([[0.0, 0.0], [0.3, 0.1], [0.48, -0.24], [0.7, -0.15], [1.0, 0.0]], t) * w
-	j["hips"].rotation.y += _keys([[0.0, 0.0], [0.3, 0.12], [0.48, -0.12], [1.0, 0.0]], t) * w
-	var dip := _keys([[0.0, 0.0], [0.3, 0.0], [0.5, 0.035], [1.0, 0.0]], t) * w
-	j["hips"].position.y -= dip
-	for side in ["l", "r"]:
-		j["knee_" + side].rotation.x -= dip * 6.0
-		j["leg_" + side].rotation.x += dip * 3.0
-		j["foot_" + side].rotation.x += dip * 3.0
+	var w := smoothstep(0.0, 0.1, t) * (1.0 - smoothstep(0.8, 1.0, t))
+	# parado, todo el cuerpo (con el paso adelante); andando, de cintura para arriba
+	# tramo del clip con la carga y el golpe (del 15 % al 70 %)
+	pose("Sword_Attack", (0.15 + 0.55 * t) * clip_length("Sword_Attack"), w, UPPER if _move > 0.3 else [], false)
 
 
-## Respiración y peso del cuerpo cuando está quieto (w 0..1). t en segundos.
+## Reposo: respiración y pequeños movimientos (w 0..1). t en segundos.
 func animate_idle(t: float, w: float) -> void:
-	if j.is_empty() or w <= 0.001:
-		return
-	var br := sin(t * 1.7)
-	j["spine"].rotation.x += br * 0.02 * w
-	j["head"].rotation.x += br * 0.015 * w
-	j["head"].rotation.y += sin(t * 0.37) * 0.22 * smoothstep(0.3, 1.0, sin(t * 0.23)) * w   # mira alrededor
-	for side in [-1.0, 1.0]:
-		var tag := "l" if side < 0.0 else "r"
-		j["arm_" + tag].rotation.z = side * (0.22 + (0.5 + 0.5 * br) * 0.035 * w)
-		j["elbow_" + tag].rotation.x += 0.06 * w
-	# el peso pasa de una pierna a otra muy despacio
-	var sway := sin(t * 0.45) * w
-	j["hips"].rotation.z += sway * 0.035
-	j["spine"].rotation.z -= sway * 0.045
-	j["hips"].position.y -= absf(sway) * 0.008
+	pose("Idle_Loop", t, w)
+	# brazos más sueltos que en el clip (el maniquí original es mucho más ancho)
+	for jn in ["arm_l", "arm_r", "elbow_l", "elbow_r"]:
+		var r: Quaternion = _rest_q[jn] if _rest_q.has(jn) else Quaternion.IDENTITY
+		j[jn].quaternion = (j[jn].quaternion as Quaternion).slerp(r, (0.3 if jn.begins_with("elbow") else 0.2) * w)

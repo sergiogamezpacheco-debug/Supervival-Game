@@ -112,7 +112,7 @@ func _physics_process(delta: float) -> void:
 	if training > 0.0:
 		_visual.animate_swing(fmod(training, 0.75) / 0.75)
 	if _swing_t >= 0.0:
-		_swing_t += delta / 0.3
+		_swing_t += delta / 0.45   # lo que dura el gesto del golpe (solo visual)
 		if _swing_t >= 1.0:
 			_swing_t = -1.0
 		else:

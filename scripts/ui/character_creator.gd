@@ -386,6 +386,7 @@ func _rebuild_model() -> void:
 	if model:
 		model.queue_free()
 	model = CharacterModel.new(look)
+	model.auto_idle = true
 	_pivot.add_child(model)
 	_update_thumbs()
 

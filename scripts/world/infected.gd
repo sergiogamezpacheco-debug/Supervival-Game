@@ -43,6 +43,7 @@ static func top(kind: String) -> float:
 static func build(kind: String) -> CharacterModel:
 	var k: Dictionary = KINDS[kind]
 	var c := CharacterModel.new(k["look"], k.get("phys", {}), k.get("outfit", {}))
+	c.design = false   # la textura del superviviente no es para los infectados
 	c.tint = k.get("tint", {})
 	c.scale = k.get("scale", Vector3.ONE)
 	c.set_meta("kind", kind)

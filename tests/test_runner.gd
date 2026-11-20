@@ -1038,33 +1038,38 @@ func test_character() -> void:
 	check(dressed.get_child_count() > 0 and _count_verts(dressed) > _count_verts(bare) + 300, "la ropa añade piezas al personaje")
 	dressed.animate_walk(1.0, 1.0)
 	check(absf(dressed.j["leg_l"].rotation.x) > 0.1, "las piernas se mueven al andar")
-	# articulaciones lógicas: rodillas solo hacia atrás, codos solo hacia delante, al correr se inclina adelante
+	# animaciones de captura (Universal Animation Library) en nuestras articulaciones
+	check(CharacterModel.anims() != null and CharacterModel.anims().clips.has("Walk_Loop") and CharacterModel.clip_length("Sword_Attack") > 0.3, "están las animaciones de la librería")
 	var ok_knees := true
 	for k in 16:
 		bare.animate_walk(k * TAU / 16.0, 1.0, float(k % 2))
 		for sd in ["l", "r"]:
-			if bare.j["knee_" + sd].rotation.x > 0.001 or bare.j["elbow_" + sd].rotation.x < 0.0:
+			if (bare.j["knee_" + sd].basis * Vector3.DOWN).z < -0.08 or (bare.j["elbow_" + sd].basis * Vector3.DOWN).z > 0.08:
 				ok_knees = false
 	check(ok_knees, "al andar y correr las rodillas y los codos se doblan hacia el lado natural")
 	bare.animate_walk(1.0, 1.0, 1.0)
-	check(bare.j["spine"].rotation.x < -0.1, "al correr el tronco se inclina hacia delante")
+	check(((bare.j["hips"].basis * bare.j["spine"].basis) * Vector3.UP).z < -0.02, "al correr el tronco se inclina hacia delante")
 	var skel: Skeleton3D = bare._skel
 	check(skel != null and skel.get_bone_count() == bare.j.size() and _count_meshes(bare) <= 2, "el cuerpo es una sola malla con esqueleto (sin huecos en las articulaciones)")
 	# relieve muscular: el anillo de los pectorales sale más por delante que por los lados
 	check(CharacterModel._shape(["pec", 0.2], deg_to_rad(240.0)) > 1.1 and is_equal_approx(CharacterModel._shape(["pec", 0.2], 0.0), 1.0), "los pectorales abultan solo por delante")
 	bare.animate_walk(0.0, 0.0)
-	var sp0: float = bare.j["spine"].rotation.x
-	bare.animate_idle(1.0 / 1.7 * PI / 2.0, 1.0)
-	check(bare.j["spine"].rotation.x > sp0 + 0.01, "quieto respira (el pecho se mueve)")
+	bare.animate_idle(0.0, 1.0)
+	var sp0: Quaternion = bare.j["spine"].quaternion
+	bare.animate_idle(1.3, 1.0)
+	check(bare.j["spine"].quaternion.angle_to(sp0) > 0.005, "quieto respira (el pecho se mueve)")
+	bare.animate_walk(0.5, 1.0)
+	var arm0: Quaternion = bare.j["arm_r"].quaternion
+	var leg0: Quaternion = bare.j["leg_l"].quaternion
+	bare.animate_swing(0.45)
+	check(bare.j["arm_r"].quaternion.angle_to(arm0) > 0.4 and bare.j["leg_l"].quaternion.angle_to(leg0) < 0.001, "andando, el golpe mueve brazos y tronco sin tocar las piernas")
 	bare.animate_walk(0.0, 0.0)
-	bare.animate_swing(0.3)
-	check(bare.j["arm_r"].rotation.x > 2.0 and bare.j["spine"].rotation.y > 0.2, "el golpe carga el brazo por encima del hombro girando el tronco")
-	bare.animate_walk(0.0, 0.0)
-	bare.animate_swing(0.5)
-	check(bare.j["arm_r"].rotation.x < 1.2 and bare.j["spine"].rotation.x < -0.1, "y descarga hacia delante inclinando el cuerpo")
-	bare.animate_walk(0.0, 0.0)
+	var legq: Quaternion = bare.j["leg_l"].quaternion
+	bare.animate_swing(0.45)
+	check(bare.j["leg_l"].quaternion.angle_to(legq) > 0.05, "parado, el golpe es de todo el cuerpo (paso adelante)")
+	bare.animate_walk(0.5, 1.0)
 	bare.animate_swing(1.0)
-	check(is_equal_approx(bare.j["spine"].rotation.y, 0.0), "al acabar el golpe vuelve a la pose normal")
+	check(bare.j["arm_r"].quaternion.angle_to(arm0) < 0.001, "al acabar el golpe vuelve a la pose normal")
 	dressed.queue_free()
 	bare.queue_free()
 	GS.look["sex"] = "f"

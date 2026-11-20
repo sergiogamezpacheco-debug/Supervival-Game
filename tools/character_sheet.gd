@@ -44,6 +44,8 @@ func _ready() -> void:
 		await _props()
 	elif OS.get_cmdline_user_args().size() > 1 and OS.get_cmdline_user_args()[1] == "inv":
 		await _inventory()
+	elif OS.get_cmdline_user_args().size() > 1 and OS.get_cmdline_user_args()[1] == "clips":
+		await _clips(OS.get_cmdline_user_args().slice(2))
 	elif OS.get_cmdline_user_args().size() > 1 and OS.get_cmdline_user_args()[1] == "ref":
 		await _ref()
 	elif OS.get_cmdline_user_args().size() > 1 and OS.get_cmdline_user_args()[1] == "heads":
@@ -204,6 +206,21 @@ func _inventory() -> void:
 	await _shot("agachado_frente", Vector2i(700, 800), Vector3(1.5, 1.4, -3.8), Vector3(0, 0.7, 0), 26)
 
 
+## Hoja de un clip: 6 instantes de cada uno, vista de lado en 3/4.
+func _clips(names: Array) -> void:
+	var M := {"sex": "m", "skin": 1, "hair": 1, "hair_color": 1}
+	_clear()
+	var c := _char(M, {}, {}, Vector3.ZERO, 0.9)
+	var tool := Builder.tool_mesh("hacha")
+	tool.rotation_degrees.x = -80.0
+	c.hand.add_child(tool)
+	for nm in names:
+		var ln := CharacterModel.clip_length(nm)
+		for k in 6:
+			c.pose(nm, ln * k / 5.0, 1.0, [], false)
+			await _shot("clip_%s_%d" % [nm, k], Vector2i(300, 500), Vector3(-3.6, 1.1, -1.4), Vector3(0, 0.85, 0), 30)
+
+
 ## Superviviente básico (como el diseño del inventario): cuerpo, cara, lado y poses.
 func _ref() -> void:
 	var M := {"sex": "m", "skin": 1, "hair": 1, "hair_color": 1, "eyes": 0, "eye_color": 0, "nose": 0, "mouth": 1}
@@ -233,7 +250,7 @@ func _ref() -> void:
 		await _shot("ref_paso_%d" % k, Vector2i(400, 700), Vector3(-4.2, 1.1, -0.6), Vector3(0, 0.9, 0), 28)
 	for k in 4:
 		c.animate_walk(0.0, 0.0)
-		c.animate_swing([0.3, 0.42, 0.52, 0.8][k])
+		c.animate_swing([0.2, 0.45, 0.6, 0.85][k])
 		await _shot("ref_golpe_%d" % k, Vector2i(400, 700), Vector3(-4.2, 1.1, -0.6), Vector3(0, 0.9, 0), 28)
 
 

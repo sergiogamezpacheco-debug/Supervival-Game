@@ -243,6 +243,7 @@ func _rebuild_model() -> void:
 	if _model:
 		_model.queue_free()
 	_model = CharacterModel.new(GS.look, GS.physique, GS.outfit)
+	_model.auto_idle = true
 	_pivot.add_child(_model)
 
 
