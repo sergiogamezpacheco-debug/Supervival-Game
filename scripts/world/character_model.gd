@@ -9,8 +9,8 @@ extends Node3D
 ## physique: fuerza y resistencia (0..1) cambian el cuerpo
 ## outfit:   ranuras de ropa (cabeza, torso, piernas, pies, manos, espalda)
 
-const SKINS := [Color("efcfb4"), Color("dcae8a"), Color("bf855d"), Color("8a5a3c"), Color("5a3a28")]
-const HAIR_COLORS := [Color("221a15"), Color("553820"), Color("b8914e"), Color("8e3a1c"), Color("a9a49c")]
+const SKINS := [Color("efcfb4"), Color("d6a98d"), Color("bf855d"), Color("8a5a3c"), Color("5a3a28")]
+const HAIR_COLORS := [Color("221a15"), Color("46382f"), Color("b8914e"), Color("8e3a1c"), Color("a9a49c")]
 const EYE_COLORS := [Color("3b2516"), Color("33608f"), Color("3f6e3a"), Color("596269"), Color("8f6418")]
 
 const HAIR_NAMES_M := ["Rapado", "Corto", "Tupé", "Melena", "Corto con barba"]
@@ -89,8 +89,12 @@ static func loft(rings: Array, sides := 8, caps := true, arc := 1.0, arc_start :
 		var r1: Array = pts[k + 1]
 		for i in sides:
 			var i2 := (i + 1) % n if closed else i + 1
-			tris.append([r0[i], r1[i2], r1[i]])
-			tris.append([r0[i], r0[i2], r1[i2]])
+			if (i + k) % 2 == 0:
+				tris.append([r0[i], r1[i2], r1[i]])
+				tris.append([r0[i], r0[i2], r1[i2]])
+			else:   # diagonal alternada: caras en rombo, como el low poly del diseño
+				tris.append([r0[i], r0[i2], r1[i]])
+				tris.append([r0[i2], r1[i2], r1[i]])
 	if caps and closed:
 		var first: Array = pts[0]
 		var last: Array = pts[pts.size() - 1]
@@ -107,8 +111,7 @@ static func loft(rings: Array, sides := 8, caps := true, arc := 1.0, arc_start :
 			tris.append([c0, first[i], first[i2]])
 			tris.append([c1, last[i2], last[i]])
 	for t in tris:
-		var v := 1.0 - rng.randf() * 0.07
-		st.set_color(Color(v, v, v))
+		st.set_color(Color.WHITE)   # un solo tono por cara: lo da la luz
 		st.add_vertex(t[0])
 		st.add_vertex(t[1])
 		st.add_vertex(t[2])
@@ -137,6 +140,8 @@ static func _shape(shp: Array, a: float) -> float:
 			return 1.0 + k * back * _bell(absf(x), 0.5, 0.4)
 		"quad":    # cuádriceps
 			return 1.0 + k * front * _bell(x, 0.0, 0.9)
+		"knee":    # rótula
+			return 1.0 + k * front * _bell(x, 0.0, 0.55)
 		"calf":    # gemelos
 			return 1.0 + k * back
 		"bicep":
@@ -234,12 +239,12 @@ func dims() -> Dictionary:
 	var s := 1.0 if male else 0.94
 	return {
 		"s": s, "male": male, "f": f, "r": r,
-		"thigh": 0.385 * s, "shin": 0.385 * s, "ankle": 0.08 * s,
-		"upper": 0.29 * s, "fore": 0.26 * s,
-		"shoulder": (0.225 if male else 0.155) * s * (1.0 + 0.12 * f),
-		"arm": (1.22 if male else 0.9) * (1.0 + 0.5 * f),
-		"leg": (1.18 if male else 1.0) * (1.0 + 0.28 * f),
-		"chest": (1.12 if male else 0.88) * (1.0 + 0.14 * f),
+		"thigh": 0.385 * s, "shin": (0.355 if male else 0.385 * s), "ankle": 0.08 * s,
+		"upper": (0.3 if male else 0.29 * s), "fore": (0.2 if male else 0.25 * s),
+		"shoulder": (0.23 if male else 0.155) * s * (1.0 + 0.12 * f),
+		"arm": (1.0 if male else 0.9) * (1.0 + 0.5 * f),
+		"leg": (1.0 if male else 1.0) * (1.0 + 0.28 * f),
+		"chest": (1.0 if male else 0.88) * (1.0 + 0.14 * f),
 		"waist": (1.0 if male else 0.86) * (1.0 - 0.08 * r) * (1.0 + 0.04 * f),
 		"hips": (0.95 if male else 1.1),
 	}
@@ -250,6 +255,8 @@ func dims() -> Dictionary:
 func _pelvis(d: Dictionary) -> Array:
 	var h: float = d["hips"]
 	var w: float = d["waist"]
+	if d["male"]:   # medidas del diseño de frente y de perfil
+		return [[0.1, 0.14 * w, 0.1 * w], [0.03, 0.15, 0.108, 0.0, -0.004], [-0.06, 0.148, 0.112, 0.0, -0.008], [-0.13, 0.124, 0.1, 0.0, -0.006], [-0.17, 0.075, 0.07, 0.0, 0.0]]
 	return [[0.08, 0.135 * w, 0.09 * w], [0.03, 0.142 * h, 0.095 * h], [-0.04, 0.15 * h, 0.1 * h], [-0.1, 0.125 * h, 0.088 * h], [-0.14, 0.08 * h, 0.066, 0.0, 0.005]]
 
 
@@ -259,20 +266,20 @@ func _torso(d: Dictionary) -> Array:
 	var s: float = d["s"]
 	var sh: float = d["shoulder"]
 	if d["male"]:
-		# tronco en V: cintura estrecha, abdominales, pectorales, omóplatos y trapecio
+		# tronco medido del diseño: cintura, abdominales, pectorales, hombros y trapecio
 		return [
-			[0.0, 0.134 * w, 0.09 * w, 0.0, 0.0, ["abs", 0.03]],
-			[0.07 * s, 0.13 * w, 0.09 * w, 0.0, -0.004, ["abs", 0.11]],
-			[0.14 * s, 0.14 * w, 0.097 * w, 0.0, -0.006, ["abs", 0.04]],
-			[0.2 * s, 0.155 * c, 0.104 * c, 0.0, -0.008, ["abs", 0.1]],
-			[0.26 * s, 0.176 * c, 0.112 * c, 0.0, -0.01, ["pec", 0.04]],
-			[0.31 * s, 0.19 * c, 0.116 * c, 0.0, -0.012, ["pec", 0.2]],
-			[0.36 * s, 0.198 * c, 0.112 * c, 0.0, -0.006, ["pec", 0.12]],
-			[0.395 * s, sh * 0.82, 0.1 * c, 0.0, 0.004, ["back", 0.07]],
-			[0.425 * s, sh * 0.62, 0.09 * c, 0.0, 0.01],
-			[0.455 * s, sh * 0.44, 0.078 * c, 0.0, 0.012],
-			[0.485 * s, 0.085 * c, 0.065 * c, 0.0, 0.012],
-			[0.5 * s, 0.06, 0.054, 0.0, 0.008],
+			[0.0, 0.14 * w, 0.1 * w, 0.0, 0.0, ["abs", 0.03]],
+			[0.04 * s, 0.136 * w, 0.105 * w, 0.0, -0.004, ["abs", 0.12]],
+			[0.09 * s, 0.131 * w, 0.108 * w, 0.0, -0.006, ["abs", 0.04]],
+			[0.14 * s, 0.135 * c, 0.108 * c, 0.0, -0.006, ["abs", 0.12]],
+			[0.19 * s, 0.148 * c, 0.112 * c, 0.0, -0.008, ["pec", 0.09]],
+			[0.235 * s, 0.163 * c, 0.13 * c, 0.0, 0.0, ["pec", 0.24]],
+			[0.28 * s, 0.17 * c, 0.138 * c, 0.0, 0.006, ["pec", 0.08]],
+			[0.33 * s, 0.175 * c, 0.13 * c, 0.0, 0.014, ["back", 0.08]],
+			[0.38 * s, 0.19 * c, 0.11 * c, 0.0, 0.02],
+			[0.42 * s, 0.17 * c, 0.09 * c, 0.0, 0.025],
+			[0.45 * s, 0.135 * c, 0.075 * c, 0.0, 0.03],
+			[0.475 * s, 0.085, 0.066, 0.0, 0.035],
 		]
 	var bust := 0.022
 	return [
@@ -291,12 +298,16 @@ func _torso(d: Dictionary) -> Array:
 func _thigh(d: Dictionary) -> Array:
 	var g: float = d["leg"]
 	var t: float = d["thigh"]
+	if d["male"]:
+		return [[0.03, 0.08 * g, 0.09 * g], [-0.06, 0.08 * g, 0.095 * g, 0.0, -0.004, ["quad", 0.05]], [-0.2, 0.073 * g, 0.088 * g, 0.0, -0.005, ["quad", 0.1]], [-0.3, 0.058 * g, 0.07 * g, 0.0, -0.004, ["quad", 0.08]], [-0.36, 0.046 * g, 0.068 * g, 0.0, 0.0, ["knee", 0.1]], [-t - 0.015, 0.044 * g, 0.064 * g, 0.0, 0.0, ["knee", 0.14]]]
 	return [[0.03, 0.08 * g, 0.084 * g], [-0.06, 0.084 * g, 0.088 * g, 0.0, -0.004, ["quad", 0.05]], [-t * 0.4, 0.074 * g, 0.078 * g, 0.0, -0.008, ["quad", 0.1]], [-t * 0.72, 0.058 * g, 0.062 * g, 0.0, -0.006, ["quad", 0.09]], [-t * 0.9, 0.046 * g, 0.05 * g, 0.0, -0.008], [-t - 0.015, 0.044 * g, 0.048 * g, 0.0, -0.01]]
 
 
 func _shin(d: Dictionary) -> Array:
 	var g: float = d["leg"]
 	var sh: float = d["shin"]
+	if d["male"]:
+		return [[0.01, 0.043 * g, 0.064 * g, 0.0, 0.0, ["knee", 0.12]], [-0.04, 0.044 * g, 0.066 * g, 0.0, 0.008], [-0.1, 0.062 * g, 0.076 * g, 0.0, 0.032, ["calf", 0.06]], [-0.2, 0.042 * g, 0.064 * g, 0.0, 0.034], [-0.3, 0.03 * g, 0.054 * g, 0.0, 0.026], [-sh - 0.01, 0.028, 0.044, 0.0, 0.016]]
 	return [[0.01, 0.044 * g, 0.048 * g, 0.0, -0.01], [-sh * 0.12, 0.044 * g, 0.05 * g, 0.0, 0.0], [-sh * 0.3, 0.05 * g, 0.06 * g, 0.0, 0.012, ["calf", 0.09]], [-sh * 0.5, 0.044 * g, 0.05 * g, 0.0, 0.008], [-sh * 0.78, 0.03 * g, 0.033 * g], [-sh - 0.01, 0.028 * g, 0.03 * g]]
 
 
@@ -309,6 +320,8 @@ func _upper_arm(d: Dictionary, side := 0) -> Array:
 	var a: float = d["arm"]
 	var u: float = d["upper"]
 	var o := float(side) * 0.012 * a   # el deltoides abulta hacia fuera
+	if d["male"]:
+		return [[0.045, 0.032 * a, 0.034 * a, o * 0.3], [0.025, 0.058 * a, 0.058 * a, o * 0.7], [-0.03, 0.068 * a, 0.064 * a, o * 1.2], [-0.08, 0.06 * a, 0.06 * a, o * 0.8, 0.0, ["bicep", 0.06]], [-0.15, 0.055 * a, 0.058 * a, o * 0.4, -0.004, ["bicep", 0.12]], [-0.24, 0.046 * a, 0.048 * a], [-u - 0.01, 0.038 * a, 0.04 * a]]
 	# hombro redondo, deltoides, bíceps y codo estrecho
 	return [[0.045, 0.02 * a, 0.022 * a, o * 0.3], [0.035, 0.042 * a, 0.044 * a, o * 0.7], [0.012, 0.056 * a, 0.056 * a, o], [-0.03, 0.058 * a, 0.054 * a, o, 0.0, ["bicep", 0.05]], [-0.07, 0.048 * a, 0.05 * a, o * 0.4, -0.004, ["bicep", 0.1]], [-u * 0.5, 0.047 * a, 0.052 * a, 0.0, -0.006, ["bicep", 0.14]], [-u * 0.8, 0.04 * a, 0.042 * a], [-u - 0.01, 0.034 * a, 0.036 * a]]
 
@@ -316,6 +329,8 @@ func _upper_arm(d: Dictionary, side := 0) -> Array:
 func _fore_arm(d: Dictionary) -> Array:
 	var a: float = d["arm"]
 	var fo: float = d["fore"]
+	if d["male"]:
+		return [[0.01, 0.038 * a, 0.038 * a], [-0.05, 0.045 * a, 0.041 * a], [-0.11, 0.037 * a, 0.033 * a], [-0.17, 0.028 * a, 0.024 * a], [-fo - 0.005, 0.025 * a, 0.021 * a]]
 	return [[0.01, 0.036 * a, 0.038 * a], [-fo * 0.2, 0.046 * a, 0.042 * a], [-fo * 0.45, 0.04 * a, 0.035 * a], [-fo * 0.78, 0.028 * a, 0.025 * a], [-fo, 0.024 * a, 0.02 * a]]
 
 
@@ -324,7 +339,7 @@ func _head_rings() -> Array:
 	return [
 		[-0.122, 0.036, 0.034, 0.0, -0.04],
 		[-0.108, 0.062, 0.06, 0.0, -0.028, ["jaw", 0.1]],
-		[-0.075, 0.079, 0.086, 0.0, -0.014, ["jaw", 0.1]],
+		[-0.075, 0.074, 0.086, 0.0, -0.014, ["jaw", 0.1]],
 		[-0.035, 0.082, 0.096, 0.0, -0.005, ["cheek", 0.05]],
 		[0.005, 0.087, 0.1, 0.0, 0.0, ["cheek", 0.03]],
 		[0.045, 0.09, 0.102, 0.0, 0.004],
@@ -358,24 +373,25 @@ func rebuild() -> void:
 
 	for side in [-1, 1]:
 		var tag := "l" if side < 0 else "r"
-		var leg := _joint(hips, "leg_" + tag, Vector3(side * 0.082 * s * float(d["hips"]) + side * e * 0.12, -0.06 - e * 0.1, 0))
+		var leg := _joint(hips, "leg_" + tag, Vector3(side * (0.094 if d["male"] else 0.082 * s * float(d["hips"])) + side * e * 0.12, -0.06 - e * 0.1, 0))
+		leg.rotation.z = side * 0.06   # piernas algo abiertas
 		_p(leg, loft(_thigh(d), 9), skin)
 		var knee := _joint(leg, "knee_" + tag, Vector3(0, -float(d["thigh"]) - e * 0.08, 0))
 		_p(knee, loft(_shin(d), 9), skin)
 		var foot := _joint(knee, "foot_" + tag, Vector3(0, -float(d["shin"]) - e * 0.06, 0))
 		_p(foot, loft(_foot(), 7), skin, Vector3.ZERO, Vector3(-PI / 2.0, 0, 0))
 
-	var spine := _joint(hips, "spine", Vector3(0, 0.07 + e * 0.12, 0))
+	var spine := _joint(hips, "spine", Vector3(0, (0.1 if d["male"] else 0.07) + e * 0.12, 0))
 	_p(spine, loft(_torso(d), 12), skin)
 
-	var head := _joint(spine, "head", Vector3(0, 0.63 * s + e * 0.18, 0))
-	head.scale = Vector3.ONE * (1.06 if d["male"] else 0.97)
+	var head := _joint(spine, "head", Vector3(0, (0.61 if d["male"] else 0.63 * s) + e * 0.18, -0.018 if d["male"] else 0.0))
+	head.scale = Vector3(1.1, 1.1, 1.2) if d["male"] else Vector3.ONE * 0.97
 	_build_head(head, skin)
 
 	for side in [-1, 1]:
 		var tag := "l" if side < 0 else "r"
-		var arm := _joint(spine, "arm_" + tag, Vector3(side * (float(d["shoulder"]) - 0.03 + e * 0.22), 0.365 * s, 0.0))
-		arm.rotation.z = side * 0.16
+		var arm := _joint(spine, "arm_" + tag, Vector3(side * (float(d["shoulder"]) - 0.03 + e * 0.22), (0.33 if d["male"] else 0.365 * s), 0.0))
+		arm.rotation.z = side * 0.22
 		_p(arm, loft(_upper_arm(d, side), 9), skin)
 		var elbow := _joint(arm, "elbow_" + tag, Vector3(0, -float(d["upper"]) - e * 0.06, 0))
 		elbow.rotation.x = 0.12   # codo algo doblado (positivo = la mano va hacia delante)
@@ -576,8 +592,9 @@ func _sync_pose() -> void:
 
 func _build_hand(h: Node3D, side: int, skin: Color) -> void:
 	# palma y dedos juntos (manopla facetada) y pulgar aparte
-	_p(h, loft([[0.0, 0.026, 0.017], [-0.035, 0.034, 0.016], [-0.065, 0.034, 0.014], [-0.1, 0.028, 0.011], [-0.112, 0.018, 0.008]], 6), skin, Vector3.ZERO, Vector3(0.15, 0, 0))
-	_p(h, loft([[0.0, 0.011, 0.011], [-0.03, 0.01, 0.009], [-0.048, 0.007, 0.006]], 5), skin, Vector3(-side * 0.02, -0.018, -0.016), Vector3(0.45, 0, side * 0.35))
+	var hs := Vector3(1.15, 0.88, 1.25) if look.get("sex", "m") == "m" else Vector3.ONE   # mano más maciza
+	_p(h, loft([[0.0, 0.026, 0.017], [-0.035, 0.034, 0.016], [-0.065, 0.034, 0.014], [-0.1, 0.028, 0.011], [-0.112, 0.018, 0.008]], 6), skin, Vector3.ZERO, Vector3(0.15, 0, 0), hs)
+	_p(h, loft([[0.0, 0.011, 0.011], [-0.03, 0.01, 0.009], [-0.048, 0.007, 0.006]], 5), skin, Vector3(-side * 0.02, -0.018, -0.016) * hs, Vector3(0.45, 0, side * 0.35), hs)
 
 
 func _build_head(head: Node3D, skin: Color) -> void:
@@ -595,7 +612,8 @@ func _build_head(head: Node3D, skin: Color) -> void:
 		rings = soft
 	_p(head, loft(rings, 12), skin)
 	# cuello
-	_p(head, loft([[-0.2, 0.052, 0.052, 0.0, 0.01], [-0.09, 0.046, 0.048, 0.0, 0.012]], 8), skin)
+	var nk := 1.18 if male else 1.0
+	_p(head, loft([[-0.2, 0.052 * nk, 0.052 * nk, 0.0, 0.01], [-0.09, 0.046 * nk, 0.048 * nk, 0.0, 0.012]], 8), skin)
 	# arco de las cejas (relieve) y orejas
 	_p(head, loft([[0.0, 0.07, 0.012], [0.02, 0.066, 0.01]], 6, true, 0.5, PI), skin.darkened(0.03), Vector3(0, 0.035, -0.088))
 	for side in [-1, 1]:
@@ -799,12 +817,13 @@ func _build_underwear(d: Dictionary) -> void:
 		_p(j["spine"], loft(grow(slice(_torso(d), 0.36 * float(d["s"]), 0.18 * float(d["s"])), 1.04, 1.07), 12, false), under)
 	if _has("piernas"):
 		return
-	_p(j["hips"], loft(grow(slice(_pelvis(d), 0.06, -0.14), 1.03, 1.04), 9), under)
+	_p(j["hips"], loft(grow(slice(_pelvis(d), 0.1, -0.17), 1.03, 1.04), 9), under)
 	var wb := 1.05
 	var pv: Array = _pelvis(d)[0]
 	# goma de la cintura, más oscura
-	_p(j["hips"], loft([[0.035, float(pv[1]) * wb, float(pv[2]) * wb], [0.07, float(pv[1]) * wb, float(pv[2]) * wb]], 9, false), under.darkened(0.3))
-	var leg_len := 0.1 if d["male"] else 0.07
+	var pt := float(pv[0])
+	_p(j["hips"], loft([[pt - 0.04, float(pv[1]) * wb, float(pv[2]) * wb], [pt - 0.005, float(pv[1]) * wb, float(pv[2]) * wb]], 9, false), under.darkened(0.3))
+	var leg_len := 0.19 if d["male"] else 0.07
 	for side in [-1, 1]:
 		var tag := "l" if side < 0 else "r"
 		var cut := ring_at(_thigh(d), -leg_len)
@@ -1003,7 +1022,7 @@ func animate_swing(t: float) -> void:
 	var elb := _keys([[0.0, 0.3], [0.3, 0.85], [0.48, 0.15], [0.62, 0.25], [1.0, 0.3]], t)
 	j["arm_r"].rotation.x = lerpf(j["arm_r"].rotation.x, arm, w)
 	j["elbow_r"].rotation.x = lerpf(j["elbow_r"].rotation.x, elb, w)
-	j["arm_r"].rotation.z = 0.16 + _keys([[0.0, 0.0], [0.3, 0.35], [0.48, -0.1], [1.0, 0.0]], t) * w
+	j["arm_r"].rotation.z = 0.22 + _keys([[0.0, 0.0], [0.3, 0.35], [0.48, -0.1], [1.0, 0.0]], t) * w
 	j["arm_l"].rotation.x = lerpf(j["arm_l"].rotation.x, _keys([[0.0, 0.0], [0.3, 0.55], [0.48, -0.3], [1.0, 0.0]], t), w)
 	j["elbow_l"].rotation.x = lerpf(j["elbow_l"].rotation.x, 0.9, w)
 	j["spine"].rotation.y += _keys([[0.0, 0.0], [0.3, 0.4], [0.48, -0.32], [0.7, -0.2], [1.0, 0.0]], t) * w
@@ -1027,7 +1046,7 @@ func animate_idle(t: float, w: float) -> void:
 	j["head"].rotation.y += sin(t * 0.37) * 0.22 * smoothstep(0.3, 1.0, sin(t * 0.23)) * w   # mira alrededor
 	for side in [-1.0, 1.0]:
 		var tag := "l" if side < 0.0 else "r"
-		j["arm_" + tag].rotation.z = side * (0.16 + (0.5 + 0.5 * br) * 0.035 * w)
+		j["arm_" + tag].rotation.z = side * (0.22 + (0.5 + 0.5 * br) * 0.035 * w)
 		j["elbow_" + tag].rotation.x += 0.06 * w
 	# el peso pasa de una pierna a otra muy despacio
 	var sway := sin(t * 0.45) * w

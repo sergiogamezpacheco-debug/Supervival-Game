@@ -208,7 +208,15 @@ func _inventory() -> void:
 func _ref() -> void:
 	var M := {"sex": "m", "skin": 1, "hair": 1, "hair_color": 1, "eyes": 0, "eye_color": 0, "nose": 0, "mouth": 1}
 	_clear()
-	var c := _char(M, {}, {}, Vector3.ZERO, 0.32)
+	var c := _char(M, {}, {}, Vector3.ZERO, 0.0)
+	# vistas ortogonales a la escala del diseño (docs/diseno_personaje.jpg: ~0,003 m por píxel)
+	cam.projection = Camera3D.PROJECTION_ORTHOGONAL
+	cam.size = 1.95
+	await _shot("orto_frente", Vector2i(500, 650), Vector3(0, 0.9, -5.0), Vector3(0, 0.9, 0))
+	c.rotation.y = PI / 2.0
+	await _shot("orto_lado", Vector2i(500, 650), Vector3(0, 0.9, -5.0), Vector3(0, 0.9, 0))
+	cam.projection = Camera3D.PROJECTION_PERSPECTIVE
+	c.rotation.y = 0.32
 	await _shot("ref_cuerpo", Vector2i(500, 900), Vector3(0.0, 1.05, -4.6), Vector3(0, 0.9, 0), 26)
 	await _shot("ref_cara", Vector2i(400, 400), Vector3(0.0, 1.72, -1.1), Vector3(0, 1.63, 0), 24)
 	var F := {"sex": "f", "skin": 2, "hair": 1, "hair_color": 0, "eyes": 1, "eye_color": 2, "nose": 0, "mouth": 2}

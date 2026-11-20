@@ -162,13 +162,13 @@ func _build_left() -> void:
 	env.background_mode = Environment.BG_CLEAR_COLOR
 	env.ambient_light_source = Environment.AMBIENT_SOURCE_COLOR
 	env.ambient_light_color = Color("c8c0b0")
-	env.ambient_light_energy = 0.4
+	env.ambient_light_energy = 0.3
 	var we := WorldEnvironment.new()
 	we.environment = env
 	vp.add_child(we)
 	var sun := DirectionalLight3D.new()
 	sun.rotation_degrees = Vector3(-38, 128, 0)
-	sun.light_energy = 1.6
+	sun.light_energy = 1.45
 	vp.add_child(sun)
 	var rim := DirectionalLight3D.new()
 	rim.rotation_degrees = Vector3(-15, -30, 0)
