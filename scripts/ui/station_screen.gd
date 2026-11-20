@@ -226,6 +226,7 @@ func _build_left() -> void:
 	_vp.add_child(cam)
 	cam.look_at(Vector3(0, 0.7, 0), Vector3.UP)
 	_pedestal = Node3D.new()
+	_pedestal.visible = false   # sin peana: solo el objeto, como en los diseños
 	_vp.add_child(_pedestal)
 	var stone := Color("6d655c")
 	StationModels._p(_pedestal, StationModels._cyl(1.25, 1.35, 0.18, 12), stone.darkened(0.15), Vector3(0, 0.09, 0))
@@ -240,13 +241,13 @@ func _build_left() -> void:
 	_pedestal.add_child(arrow)
 	_item = Sprite3D.new()
 	_item.pixel_size = 0.0125
-	_item.position = Vector3(0, 1.05, 0)
+	_item.position = Vector3(0, 0.7, 0)
 	_item.texture_filter = BaseMaterial3D.TEXTURE_FILTER_LINEAR_WITH_MIPMAPS
 	_item.alpha_cut = SpriteBase3D.ALPHA_CUT_DISCARD
 	_item.shaded = false
 	_vp.add_child(_item)
 	_model_holder = Node3D.new()
-	_model_holder.position = Vector3(0, 0.34, 0)
+	_model_holder.position = Vector3(0, 0.05, 0)
 	_vp.add_child(_model_holder)
 	# Nombre, tiempo y descripción
 	_name = _lbl("", 30, PAPER, Vector2(48, 370))
@@ -604,7 +605,7 @@ func _show_preview(e: Dictionary) -> void:
 		_item.texture = preview_tex(icon_id)
 		var tw := float(_item.texture.get_width()) if _item.texture else 128.0
 		var big := ResourceLoader.exists("res://assets/icons/preview/%s.png" % icon_id)
-		_item.pixel_size = (1.75 if big else 1.45) / maxf(tw, 1.0)
+		_item.pixel_size = (2.5 if big else 2.1) / maxf(tw, 1.0)
 
 
 func _max_qty() -> int:
@@ -750,5 +751,5 @@ func _process(delta: float) -> void:
 	_pedestal.rotation.y = _t * 0.5
 	_model_holder.rotation.y = _t * 0.5
 	_item.rotation.y = sin(_t * 0.8) * 0.45
-	_item.position.y = 1.05 + sin(_t * 1.6) * 0.04
+	_item.position.y = 0.7 + sin(_t * 1.6) * 0.04
 	tick()
