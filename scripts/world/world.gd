@@ -56,6 +56,10 @@ const TrapScript := preload("res://scripts/world/trap.gd")
 
 func _ready() -> void:
 	add_to_group("world")
+	# Movimiento suave aunque la pantalla vaya a más (o menos) de 60 fps: el jugador y las
+	# criaturas se dibujan interpolados entre pasos de física; lo que se mueve en _process
+	# (cámara, interfaz, efectos) no se interpola.
+	physics_interpolation_mode = Node.PHYSICS_INTERPOLATION_MODE_OFF
 	randomize()
 	var world := GS.load_game()
 	map_id = GS.current_map
@@ -77,6 +81,7 @@ func _ready() -> void:
 
 	player = PlayerScript.new()
 	player.position = SPAWN
+	player.physics_interpolation_mode = Node.PHYSICS_INTERPOLATION_MODE_ON
 	add_child(player)
 	hud.add_minimap(self)
 
@@ -283,7 +288,7 @@ func _process(delta: float) -> void:
 			_respawn_player()
 	else:
 		player.move_input = hud.joystick.value
-		player.action_held = hud.action_button.held
+		player.action_held = hud.action_button.held and not hud.any_panel_open()
 		player.position.x = clampf(player.position.x, -_half, _half)
 		player.position.z = clampf(player.position.z, -_half, _half)
 		if base:
@@ -301,6 +306,10 @@ func _process(delta: float) -> void:
 	if _night_check <= 0.0:
 		_night_check = 1.0
 		_update_night()
+		# La comida de los cofres también se estropea (las conservas no)
+		for st in get_tree().get_nodes_in_group("station"):
+			if st.is_chest():
+				GS.spoil(st.storage)
 	_clock_t -= delta
 	if _clock_t <= 0.0:
 		_clock_t = 0.5
@@ -313,7 +322,9 @@ func _process(delta: float) -> void:
 			entry["c"].revive()
 
 	_autosave += delta
-	if _autosave >= float(DB.bal("autosave_seconds", 15)):
+	# Se guarda con el jugador parado (guardar a mitad de carrera da un tirón); si no para, igualmente al rato
+	var every := float(DB.bal("autosave_seconds", 15))
+	if _autosave >= every and (player.move_input.length() < 0.1 or _autosave >= every * 4.0):
 		_autosave = 0.0
 		save()
 
@@ -462,7 +473,7 @@ func _unhandled_input(ev: InputEvent) -> void:
 
 func _update_camera(delta: float) -> void:
 	var off := CAM_OFF * zoom()
-	var want := player.global_position + off
+	var want: Vector3 = player.get_global_transform_interpolated().origin + off
 	camera.global_position = camera.global_position.lerp(want, clampf(delta * 6.0, 0.0, 1.0))
 	camera.look_at(camera.global_position - off, Vector3.UP)
 	if player.shake > 0.0:
@@ -743,6 +754,7 @@ func _respawn_player() -> void:
 			get_tree().change_scene_to_file.call_deferred("res://scenes/main.tscn")
 		return
 	player.global_position = SPAWN
+	player.reset_physics_interpolation()
 	camera.global_position = SPAWN + CAM_OFF * zoom()
 
 
@@ -781,6 +793,7 @@ func _load_world(w: Dictionary) -> void:
 	var p: Array = w.get("player", [SPAWN.x, SPAWN.z])
 	if not GS.dead:
 		player.position = Vector3(float(p[0]), 0, float(p[1]))
+		player.reset_physics_interpolation()
 	for b in w.get("bags", []):
 		var pos: Array = b.get("pos", [0, 0])
 		var items: Array = b.get("items", [])
@@ -806,3 +819,9 @@ func _notification(what: int) -> void:
 	if what == NOTIFICATION_APPLICATION_PAUSED or what == NOTIFICATION_WM_CLOSE_REQUEST:
 		if player != null:
 			save()
+	elif what == NOTIFICATION_WM_GO_BACK_REQUEST:
+		# Botón Atrás de Android: cierra la ventana abierta (nunca sale del juego de golpe)
+		if hud != null and hud.any_panel_open():
+			hud.close_panels()
+		elif build_mode != "":
+			exit_build()

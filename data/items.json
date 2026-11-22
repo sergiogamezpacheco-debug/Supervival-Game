@@ -86,7 +86,8 @@
     "food": 8,
     "water": 3,
     "desc": "Quitan un poco de hambre y sed.",
-    "weight": 0.05
+    "weight": 0.05,
+    "spoil": 21600
   },
   "carne_cruda": {
     "name": "Carne cruda",
@@ -95,7 +96,8 @@
     "food": 6,
     "heal": -5,
     "desc": "Mejor cocinarla en la hoguera.",
-    "weight": 0.3
+    "weight": 0.3,
+    "spoil": 3600
   },
   "carne_asada": {
     "name": "Carne asada",
@@ -103,7 +105,8 @@
     "stack": 20,
     "food": 28,
     "desc": "Quita mucha hambre.",
-    "weight": 0.25
+    "weight": 0.25,
+    "spoil": 10800
   },
   "carne_seca": {
     "name": "Carne seca",
@@ -112,7 +115,8 @@
     "food": 35,
     "water": -2,
     "desc": "Tiras de carne secadas al aire. Llenan mucho, pero dan algo de sed.",
-    "weight": 0.1
+    "weight": 0.1,
+    "spoil": 172800
   },
   "venda": {
     "name": "Vendas simples",
@@ -219,7 +223,8 @@
     "food": 6,
     "water": 1,
     "desc": "Seta del bosque. Comestible.",
-    "weight": 0.05
+    "weight": 0.05,
+    "spoil": 21600
   },
   "carbon": {
     "name": "Carbón",
@@ -548,7 +553,8 @@
     "food": 45,
     "heal": 10,
     "desc": "Carne guisada con setas. Quita mucha hambre y cura un poco.",
-    "weight": 0.4
+    "weight": 0.4,
+    "spoil": 14400
   },
   "guiso_setas": {
     "name": "Guiso de setas",
@@ -558,14 +564,15 @@
     "water": 20,
     "heal": 5,
     "desc": "Caldo caliente: hambre, sed y algo de vida.",
-    "weight": 0.5
+    "weight": 0.5,
+    "spoil": 14400
   },
   "conserva_carne": {
     "name": "Conserva de carne",
     "type": "consumable",
     "stack": 10,
     "food": 50,
-    "desc": "Carne cocida y enlatada. Llena muchísimo.",
+    "desc": "Carne cocida, enlatada con sal o en tarro esterilizado. No caduca y llena muchísimo.",
     "weight": 0.4
   },
   "conserva_bayas": {
@@ -574,7 +581,7 @@
     "stack": 10,
     "food": 22,
     "water": 15,
-    "desc": "Bayas en almíbar. Dulce y con algo de líquido.",
+    "desc": "Bayas en conserva (lata con sal o tarro esterilizado). No caducan.",
     "weight": 0.35
   },
   "alcohol": {
@@ -670,5 +677,38 @@
     "durability": 4,
     "desc": "Colócala en el suelo: hiere a lo que la pise. Aguanta 4 golpes; se puede recoger.",
     "weight": 2.5
+  },
+  "sal": {
+    "name": "Sal",
+    "type": "material",
+    "stack": 30,
+    "desc": "Conservante: se saca hirviendo agua sucia. Con ella, la comida enlatada no caduca.",
+    "weight": 0.1,
+    "tier": "procesado"
+  },
+  "tarro_cristal": {
+    "name": "Tarro de cristal",
+    "type": "material",
+    "stack": 10,
+    "desc": "Tarro con tapa de rosca. Esterilizado en la cocina, guarda conservas que no caducan.",
+    "weight": 0.3,
+    "tier": "bruto"
+  },
+  "tarro_esterilizado": {
+    "name": "Tarro esterilizado",
+    "type": "material",
+    "stack": 10,
+    "desc": "Hervido en la cocina de campo, listo para meter conservas.",
+    "weight": 0.3,
+    "tier": "procesado"
+  },
+  "comida_podrida": {
+    "name": "Comida podrida",
+    "type": "consumable",
+    "stack": 20,
+    "food": 3,
+    "heal": -10,
+    "desc": "Se ha estropeado. Comerla sienta muy mal.",
+    "weight": 0.2
   }
 }

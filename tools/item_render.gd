@@ -8,7 +8,7 @@ const M := preload("res://scripts/world/station_models.gd")
 const IDS := ["hacha_hierro", "pico_hierro", "machete", "casco_obra", "chaqueta_piel", "chaleco",
 	"pantalon_cargo", "zapatillas", "botas", "guantes", "fibra", "piel", "baya", "carne_cruda",
 	"carne_asada", "seta", "carbon", "clavos", "tela_resistente", "botella_vacia", "lata_vacia", "cantimplora_vacia",
-	"conserva_bayas", "acido", "cable_cobre", "circuito", "bateria"]
+	"conserva_bayas", "acido", "cable_cobre", "circuito", "bateria", "sal", "tarro_cristal", "tarro_esterilizado", "comida_podrida"]
 
 var vp: SubViewport
 var cam: Camera3D
@@ -415,3 +415,51 @@ func _bateria() -> float:
 	_p(_cyl(0.36, 0.36, 0.14, 8), Color("6a6560"), Vector3(0, 0.45, 0))
 	_p(_cyl(0.12, 0.12, 0.1, 8), Color("8a8580"), Vector3(0, 0.56, 0))
 	return 1.5
+
+
+# ----------------------------------------------------------- conservas y comida podrida
+
+func _sal() -> float:
+	# salero de cristal con sal y tapa metálica agujereada
+	_p(_cyl(0.3, 0.34, 0.8, 8), Color("dfe9ee"))
+	_p(_cyl(0.305, 0.345, 0.55, 8), Color("f7f7f3"), Vector3(0, -0.12, 0))
+	_p(_cyl(0.31, 0.31, 0.2, 10), Color("c9ced2"), Vector3(0, 0.5, 0))
+	_p(_cyl(0.2, 0.31, 0.12, 10), Color("b3b9bd"), Vector3(0, 0.66, 0))
+	for k in 5:
+		var a := float(k) * TAU / 5.0
+		_p(_cyl(0.025, 0.025, 0.02, 6), Color("4d5257"), Vector3(cos(a) * 0.1, 0.73, sin(a) * 0.1))
+	return 1.6
+
+
+func _tarro(lid: Color, steam: bool) -> float:
+	_p(_cyl(0.42, 0.42, 0.85, 10), Color("bcd6d6"), Vector3(0, -0.08, 0))
+	for k in 2:
+		_p(_box(Vector3(0.06, 0.6, 0.02)), Color("eef7f7"), Vector3(-0.05 + k * 0.1, -0.05, 0.41))
+	_p(_cyl(0.34, 0.36, 0.06, 10), Color(0.75, 0.85, 0.85), Vector3(0, -0.5, 0))
+	_p(_cyl(0.33, 0.37, 0.12, 10), Color(0.8, 0.9, 0.9), Vector3(0, 0.4, 0))
+	_p(_cyl(0.36, 0.36, 0.14, 10), lid, Vector3(0, 0.5, 0))
+	_p(_cyl(0.3, 0.3, 0.02, 10), lid.lightened(0.15), Vector3(0, 0.58, 0))
+	if steam:
+		# etiqueta azul de "esterilizado"
+		_p(_box(Vector3(0.5, 0.3, 0.02)), Color("3f7fb5"), Vector3(0.1, -0.1, 0.42))
+		_p(_box(Vector3(0.3, 0.05, 0.021)), Color("eef2f5"), Vector3(0.1, -0.08, 0.43))
+	return 1.7
+
+
+func _tarro_cristal() -> float:
+	return _tarro(Color("b98a3a"), false)
+
+
+func _tarro_esterilizado() -> float:
+	return _tarro(Color("c9ced2"), true)
+
+
+func _comida_podrida() -> float:
+	# filete verdoso con manchas y moscas
+	_blob(41, Color("c8c6a0"), Vector3(0, -0.02, 0), Vector3(0.82, 0.16, 0.6), 0.12)
+	_blob(42, Color("6f7a3a"), Vector3(0, 0.03, 0), Vector3(0.74, 0.18, 0.52), 0.12)
+	for k in 5:
+		_blob(50 + k, Color("3f4a22") if k % 2 == 0 else Color("8a8a3a"), Vector3(-0.3 + k * 0.15, 0.13, -0.15 + (k % 3) * 0.12), Vector3(0.12, 0.05, 0.1), 0.2)
+	for k in 3:
+		_p(_box(Vector3(0.07, 0.05, 0.09)), Color("1c1c1c"), Vector3(-0.2 + k * 0.22, 0.45 + (k % 2) * 0.15, 0.1))
+	return 1.9

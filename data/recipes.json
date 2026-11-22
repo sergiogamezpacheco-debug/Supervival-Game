@@ -663,7 +663,8 @@
     "time": 30,
     "cost": {
       "carne_cruda": 3,
-      "lata_vacia": 1
+      "lata_vacia": 1,
+      "sal": 1
     },
     "unlock": 9,
     "cat": "Conservas"
@@ -677,7 +678,63 @@
     "time": 25,
     "cost": {
       "baya": 5,
-      "lata_vacia": 1
+      "lata_vacia": 1,
+      "sal": 1
+    },
+    "unlock": 9,
+    "cat": "Conservas"
+  },
+  {
+    "id": "sal",
+    "result": "sal",
+    "qty": 1,
+    "station": "cocina",
+    "level": 1,
+    "time": 20,
+    "cost": {
+      "agua_sucia": 2
+    },
+    "unlock": 9,
+    "cat": "Conservas"
+  },
+  {
+    "id": "tarro_esterilizado",
+    "result": "tarro_esterilizado",
+    "qty": 1,
+    "station": "cocina",
+    "level": 1,
+    "time": 15,
+    "cost": {
+      "tarro_cristal": 1,
+      "agua_sucia": 1
+    },
+    "unlock": 9,
+    "cat": "Conservas"
+  },
+  {
+    "id": "conserva_carne_tarro",
+    "result": "conserva_carne",
+    "qty": 1,
+    "station": "cocina",
+    "level": 1,
+    "time": 30,
+    "cost": {
+      "carne_cruda": 3,
+      "tarro_esterilizado": 1
+    },
+    "unlock": 9,
+    "cat": "Conservas"
+  },
+  {
+    "id": "conserva_bayas_tarro",
+    "result": "conserva_bayas",
+    "qty": 1,
+    "station": "cocina",
+    "level": 1,
+    "time": 25,
+    "cost": {
+      "baya": 5,
+      "tarro_esterilizado": 1
     },
     "unlock": 9,
     "cat": "Conservas"

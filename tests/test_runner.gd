@@ -39,6 +39,8 @@ func _ready() -> void:
 	await test_shelter_structures()
 	print("== Cocina, destilería, química, electrónica, molotov y trampas")
 	await test_new_stations()
+	print("== Recolectar con herramienta, comida que caduca, desplazar listas y ventanas")
+	await test_fixes()
 	print("== Niveles y peso")
 	await test_levels_weight()
 	await test_crafting_tree()
@@ -220,6 +222,19 @@ func test_world() -> void:
 	player.global_position = tree.global_position + Vector3(1.2, 0, 0)
 	await _frames(3)
 	check(world.find_target() == tree, "detecta el pino como objetivo")
+	# Sin hacha no se tala (el botón lo dice); las ramas del suelo sí se recogen a mano
+	player.action_held = true
+	await _frames(50)
+	player.action_held = false
+	check(GS.count("madera") == 0 and tree.action_label() == "Necesitas hacha", "sin hacha el pino no da madera")
+	var twigs: Node3D = null
+	for r in get_tree().get_nodes_in_group("resource"):
+		if r.kind == "ramas" and twigs == null:
+			twigs = r
+	twigs.interact(player)
+	check(GS.count("madera") > 0, "las ramas secas dan madera a mano")
+	GS.remove_item("madera", GS.count("madera"))
+	GS.add_item("hacha_piedra", 1)
 	player.action_held = true
 	world.hud.action_button.held = true
 	await _frames(150)
@@ -810,6 +825,154 @@ func test_new_stations() -> void:
 	await _frames(1)
 	trap.interact(player)
 	check(GS.count("trampa_pinchos") == 1 and int(GS.slots[_slot_of("trampa_pinchos")]["dur"]) == 3, "recogerla devuelve la trampa con los golpes que le quedan")
+	world.queue_free()
+	await _frames(2)
+
+
+func _touch(idx: int, canvas_pos: Vector2, pressed: bool) -> void:
+	var ev := InputEventScreenTouch.new()
+	ev.index = idx
+	ev.position = get_tree().root.get_final_transform() * canvas_pos
+	ev.pressed = pressed
+	Input.parse_input_event(ev)
+
+
+func _drag(idx: int, canvas_pos: Vector2, rel: Vector2) -> void:
+	var ev := InputEventScreenDrag.new()
+	ev.index = idx
+	ev.position = get_tree().root.get_final_transform() * canvas_pos
+	ev.relative = get_tree().root.get_final_transform().basis_xform(rel)
+	Input.parse_input_event(ev)
+
+
+func test_fixes() -> void:
+	DirAccess.remove_absolute(ProjectSettings.globalize_path(GS.save_path))
+	GS.new_game()
+	GS.forced_rain = 0
+	var world := await _new_world()
+	var player: Node3D = world.player
+	GS.slots.resize(48)
+	for i in GS.slots.size():
+		GS.slots[i] = null
+	GS.hand = null
+
+	# Movimiento suave: interpolación de física en el jugador y las criaturas, la cámara sigue la posición dibujada
+	check(bool(ProjectSettings.get_setting("physics/common/physics_interpolation", false)), "interpolación de física activada (sin tirones)")
+	check(player.physics_interpolation_mode == Node.PHYSICS_INTERPOLATION_MODE_ON and world.physics_interpolation_mode == Node.PHYSICS_INTERPOLATION_MODE_OFF, "se interpola el jugador; la cámara y la interfaz no")
+	var some_creature: Node = get_tree().get_nodes_in_group("creature")[0]
+	check(some_creature.physics_interpolation_mode == Node.PHYSICS_INTERPOLATION_MODE_ON, "las criaturas también se mueven suaves")
+
+	# Recolectar: cada recurso con su herramienta (y su icono)
+	var rock: Node3D = null
+	var stones: Node3D = null
+	for r in get_tree().get_nodes_in_group("resource"):
+		if r.kind == "roca" and rock == null:
+			rock = r
+		if r.kind == "piedras" and stones == null:
+			stones = r
+	check(rock != null and stones != null, "hay rocas y piedras sueltas en el refugio")
+	player.global_position = rock.global_position + Vector3(float(rock.data.get("radius", 0.0)) + 1.0, 0, 0)
+	await _frames(3)
+	player.target = rock
+	var info: Dictionary = player.action_info()
+	check(info["icon"] == "pico_piedra" and info.get("missing", false), "junto a una roca sin pico sale el pico en gris")
+	rock.interact(player)
+	check(GS.count("piedra") == 0 and rock.action_label() == "Necesitas pico", "sin pico la roca no da piedra")
+	stones.interact(player)
+	check(GS.count("piedra") > 0, "las piedras sueltas se recogen a mano")
+	GS.add_item("pico_piedra", 1)
+	info = player.action_info()
+	check(info["icon"] == "pico_piedra" and not info.get("missing", false), "con pico: icono del pico")
+	var p0 := GS.count("piedra")
+	rock.interact(player)
+	check(GS.count("piedra") > p0, "con pico la roca da piedra")
+	var bush: Node3D = null
+	for r in get_tree().get_nodes_in_group("resource"):
+		if r.kind == "arbusto":
+			bush = r
+			break
+	player.target = bush
+	check(player.action_info()["icon"] == "mano", "en un arbusto se recoge con la mano")
+	player.target = null
+
+	# Comida que caduca; las conservas no
+	GS.add_item("carne_cruda", 2)
+	var meat: Dictionary = GS.slots[_slot_of("carne_cruda")]
+	check(meat.has("rot") and absf(GS.spoil_left(meat) - 3600.0) < 5.0, "la carne cruda aguanta una hora")
+	GS.time_offset += 1800.0
+	GS.add_item("carne_cruda", 1)
+	check(GS.count("carne_cruda") == 3 and absf(GS.spoil_left(GS.slots[_slot_of("carne_cruda")]) - 1800.0) < 5.0, "al juntarla se queda la fecha de la más vieja")
+	GS.add_item("conserva_carne", 1)
+	check(not GS.slots[_slot_of("conserva_carne")].has("rot"), "la conserva no caduca")
+	GS.time_offset += 1801.0
+	GS._spoil_timer = 0.0
+	GS.tick(0.01)
+	check(GS.count("carne_cruda") == 0 and GS.count("comida_podrida") == 3 and GS.count("conserva_carne") == 1, "pasada la hora, la carne se pudre; la conserva sigue")
+	var hp := GS.health
+	GS.use_slot(_slot_of("comida_podrida"))
+	check(GS.health < hp, "comer comida podrida sienta mal")
+	var chest := {"storage": [{"id": "baya", "qty": 3, "rot": GS.now() - 1.0}, {"id": "conserva_bayas", "qty": 1}, null]}
+	GS.spoil(chest["storage"])
+	check(chest["storage"][0]["id"] == "comida_podrida" and chest["storage"][1]["id"] == "conserva_bayas", "en los cofres también se estropea")
+
+	# Conservas en la cocina: lata con sal o tarro esterilizado
+	var base: Node3D = world.base
+	var pp := Vector3(30, 0, 30)
+	player.global_position = pp
+	var stove := _build_full(base, "cocina", pp)
+	stove.fuel = 1800.0
+	check(_make(stove, "sal") and GS.count("sal") == 1, "la sal sale de hervir agua sucia")
+	check(_make(stove, "tarro_esterilizado") and _make(stove, "conserva_carne_tarro") and GS.count("conserva_carne") >= 2, "conserva de carne en tarro esterilizado")
+	check(DB.recipe("conserva_carne")["cost"].has("sal") and DB.recipe("conserva_bayas")["cost"].has("sal"), "las latas piden sal como conservante")
+	world.hud.open_station(stove)
+	await _pframes(1)
+	var scr: Control = world.hud._station_panel
+	scr.tab = "Conservas"
+	scr.refresh()
+	check(scr.entries.size() == 6, "pestaña Conservas: 2 latas, sal, tarro y 2 tarros (%d)" % scr.entries.size())
+	world.hud.close_panels()
+
+	# Ventanas: con cualquiera abierta no se ven los controles ni se puede usar la acción
+	var box := _build_full(base, "cofre", pp)
+	world.hud.open_station(box)
+	world.hud.action_button.held = true
+	await _pframes(2)
+	check(not world.hud.action_button.visible and not world.hud.action_button.held and not player.action_held, "con el cofre abierto el botón de acción se oculta y se suelta")
+	var cp: Control = world.hud._chest_panel
+	# centrada en 1280x720 empieza en y = 60: cabe si no pasa de 660 de alto
+	check(cp.size.y <= 660.0 and cp.size.x <= 1200.0, "la ventana del cofre (con 48 huecos) cabe en la pantalla (%s)" % str(cp.size))
+	world._notification(Node.NOTIFICATION_WM_GO_BACK_REQUEST)
+	check(not world.hud.any_panel_open(), "el botón Atrás de Android cierra la ventana")
+	check(not bool(ProjectSettings.get_setting("application/config/quit_on_go_back", true)), "Atrás no cierra el juego de golpe")
+
+	# Fabricación: la pestaña Todo se desplaza arrastrando con el dedo
+	world.hud.craft_btn.pressed.emit()
+	await _pframes(3)
+	var cs: Control = world.hud._craft_panel
+	cs.ctab = "Todo"
+	cs.sel = 0
+	cs.refresh()
+	await _pframes(2)
+	var sc: ScrollContainer = cs._gscroll
+	check(sc.get_v_scroll_bar().max_value > sc.size.y + 100.0, "en Todo hay más tarjetas de las que caben")
+	var at: Vector2 = sc.get_global_transform_with_canvas() * Vector2(200, 400)
+	_touch(5, at, true)
+	await _pframes(1)
+	for k in 10:
+		_drag(5, at + Vector2(0, -30 * (k + 1)), Vector2(0, -30))
+		await _pframes(1)
+	_touch(5, at + Vector2(0, -300), false)
+	await _pframes(2)
+	check(sc.scroll_vertical >= 250, "arrastrar hacia arriba baja la lista (%d)" % sc.scroll_vertical)
+	check(cs.sel == 0 and cs.dragged, "arrastrar no cuenta como tocar una tarjeta")
+	_touch(5, at, true)
+	await _pframes(1)
+	_drag(5, at + Vector2(0, 300), Vector2(0, 300))
+	await _pframes(1)
+	_touch(5, at + Vector2(0, 300), false)
+	await _pframes(2)
+	check(sc.scroll_vertical <= 5, "y hacia abajo vuelve arriba (%d)" % sc.scroll_vertical)
+	world.hud.close_panels()
 	world.queue_free()
 	await _frames(2)
 
@@ -1771,7 +1934,7 @@ func test_action_hud(world: Node3D, player: Node3D, tree: Node3D) -> void:
 	await _pframes(3)
 	tree.hits_left = 50
 	await _pframes(3)
-	check(hud.action_icon == "puno" and hud.action_button.ring < 0.0, "junto al pino sin hacha: puño y sin borde")
+	check(hud.action_icon == "hacha_piedra" and hud.action_button.ring < 0.0 and not hud.action_button.enabled, "junto al pino sin hacha: icono del hacha en gris y sin borde")
 	GS.add_item("hacha_piedra", 1)
 	GS.add_item("lanza", 1)
 	GS.equip_slot(1)
@@ -1849,8 +2012,9 @@ func test_dodge_audio() -> void:
 		check(SFX._stream(id) != null, "existe el sonido %s" % id)
 	check(SFX.played.has("esquivar") and SFX.played.has("dano"), "esquivar y recibir daño suenan")
 	SFX.played.clear()
+	GS.add_item("hacha_piedra", 1)
 	for r in get_tree().get_nodes_in_group("resource"):
-		if r.kind == "pino":
+		if r.kind == "pino" and not r.depleted:
 			r.interact(player)
 			break
 	check(SFX.played.has("talar"), "talar suena")

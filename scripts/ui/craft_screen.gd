@@ -58,6 +58,7 @@ func _ready() -> void:
 	_gscroll.position = Vector2(40, 104)
 	_gscroll.size = Vector2(COLS * (CARD.x + GAP), 506)
 	_gscroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	_gscroll.mouse_filter = Control.MOUSE_FILTER_IGNORE   # se desplaza arrastrando (station_screen._input)
 	_content.add_child(_gscroll)
 	_grid = Control.new()
 	_gscroll.add_child(_grid)
@@ -116,6 +117,10 @@ func _ready() -> void:
 	_where.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	craft_btn = _btn("FABRICAR", Rect2(800, 630, 420, 62), true, 30)
 	craft_btn.pressed.connect(_on_craft)
+
+
+func _scroll_box() -> ScrollContainer:
+	return _gscroll
 
 
 func open_craft() -> void:
@@ -186,7 +191,9 @@ func _card(i: int) -> Control:
 	for k in ["normal", "hover", "pressed"]:
 		b.add_theme_stylebox_override(k, _box(bg, ORANGE if on else ROW_LINE, 12, 3 if on else 2))
 	b.add_theme_stylebox_override("focus", StyleBoxEmpty.new())
-	b.pressed.connect(func(): _show(i))
+	b.pressed.connect(func():
+		if not dragged:
+			_show(i))
 	var locked := GS.level < DB.recipe_unlock(r)
 	var ti := TextureRect.new()
 	ti.texture = recipe_icon(res)

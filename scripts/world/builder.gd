@@ -213,6 +213,26 @@ static func resource_mesh(kind: String) -> Node3D:
 				var blade := part(cyl(0.0, 0.07, 0.6), Color("a3b84a"), Vector3(cos(a) * 0.15, 0.3, sin(a) * 0.15))
 				blade.rotation = Vector3(sin(a) * 0.3, 0, cos(a) * 0.3)
 				root.add_child(blade)
+		"ramas":
+			# palos secos caídos: se recogen a mano (madera sin hacha)
+			for i in 4:
+				var a := float(i) * 1.9 + randf() * 0.5
+				var st := part(cyl(0.035, 0.05, 0.9 - i * 0.12), Color("7a5232").lightened(0.06 * (i % 2)), Vector3(cos(a) * 0.12, 0.05 + i * 0.03, sin(a) * 0.12))
+				st.rotation = Vector3(PI / 2.0, a, 0)
+				root.add_child(st)
+				var twig := part(cyl(0.015, 0.02, 0.25), Color("6b4a2c"), Vector3(cos(a) * 0.25, 0.08, sin(a) * 0.25))
+				twig.rotation = Vector3(PI / 2.0, a + 0.7, 0)
+				root.add_child(twig)
+		"piedras":
+			# piedras sueltas por el suelo: se recogen a mano (piedra sin pico)
+			for i in 5:
+				var a := float(i) * 1.3
+				var d := 0.1 + float(i % 3) * 0.12
+				var pr := Nature.rock_a(i + 1)
+				pr.scale = Vector3.ONE * (0.16 + 0.04 * float(i % 2))
+				pr.position = Vector3(cos(a) * d, 0, sin(a) * d)
+				pr.rotation.y = a
+				root.add_child(pr)
 	return root
 
 

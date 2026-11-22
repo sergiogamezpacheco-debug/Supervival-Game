@@ -109,8 +109,12 @@ Datos: `data/recipes.json` (`station` vacío = a mano) y `"tier"` en `data/items
 |---|---|---|
 | Plato cocinado | Carne cruda 2, Seta 1 | 9 |
 | Guiso de setas | Seta 4, Agua sucia 1 | 9 |
-| Conserva de carne | Carne cruda 3, Lata vacía 1 | 9 |
-| Conserva de bayas | Bayas 5, Lata vacía 1 | 9 |
+| Conserva de carne | Carne cruda 3, Lata vacía 1, Sal 1 | 9 |
+| Conserva de bayas | Bayas 5, Lata vacía 1, Sal 1 | 9 |
+| Sal | Agua sucia 2 | 9 |
+| Tarro esterilizado | Tarro de cristal 1, Agua sucia 1 | 9 |
+| Conserva de carne | Carne cruda 3, Tarro esterilizado 1 | 9 |
+| Conserva de bayas | Bayas 5, Tarro esterilizado 1 | 9 |
 | Agua hervida | Agua sucia 1 | 9 |
 | Cantimplora vacía | Lingote de hierro 1, Cuero curtido 1, Cuerda 1 | 9 |
 | Cantimplora | Cantimplora vacía 1, Agua sucia 2 | 9 |
@@ -152,5 +156,13 @@ Datos: `data/recipes.json` (`station` vacío = a mano) y `"tier"` en `data/items
   Deja un charco de fuego de 2,6 m que quema 14 por segundo durante 5 s (a ti no te quema).
 - **Trampa de pinchos**: desde el inventario, *Colocar* (delante de ti). Hace 40 a lo que la pise (una vez por criatura
   cada 1,2 s) y aguanta 4 golpes; con enemigos lejos se puede *Recoger* con los golpes que le queden. Se guarda por zona.
+- **Comida que caduca** (tiempo real, también con el juego cerrado y dentro de los cofres): carne cruda 1 h,
+  carne asada 3 h, plato cocinado y guiso 4 h, bayas y setas 6 h, carne seca 48 h. Al juntar un montón se queda la
+  fecha de la más vieja; caducada se vuelve *comida podrida* (vida −10). En el inventario pone cuánto le queda.
+- **Conservas (no caducan)**: en la cocina, lata vacía + **sal** (sale de hervir 2 de agua sucia) o un **tarro de
+  cristal esterilizado** (tarro + agua sucia hervidos). Latas y tarros salen en cofres, taquillas y cajas.
+- **Recolectar con herramienta**: pinos solo con hacha; rocas y vetas solo con pico. A mano: ramas secas (madera),
+  piedras sueltas (piedra), hierba, arbustos, setas y restos metálicos. El botón muestra la herramienta que toca
+  (en gris si no la llevas).
 - **Pendiente**: pestaña *Dispositivos* del banco de electrónica (linterna táctica, alarma de movimiento, torreta),
   que usarán los circuitos y baterías.

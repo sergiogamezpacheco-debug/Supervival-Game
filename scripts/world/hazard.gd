@@ -43,6 +43,7 @@ func _disc_mesh(r: float, c: Color) -> MeshInstance3D:
 
 
 func _ready() -> void:
+	physics_interpolation_mode = Node.PHYSICS_INTERPOLATION_MODE_ON   # la roca se mueve en _physics_process
 	add_to_group("hazard")
 	match mode:
 		"cloud":

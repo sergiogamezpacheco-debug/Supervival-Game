@@ -9,7 +9,9 @@
       "roca": 35,
       "veta_hierro": 8,
       "arbusto": 30,
-      "hierba": 40
+      "hierba": 40,
+      "ramas": 30,
+      "piedras": 24
     },
     "creatures": [
       {
@@ -102,7 +104,9 @@
       "roca": 15,
       "arbusto": 30,
       "hierba": 30,
-      "seta": 24
+      "seta": 24,
+      "ramas": 30,
+      "piedras": 10
     },
     "prefabs": [
       {
@@ -233,7 +237,8 @@
       "chatarra": 10,
       "hierba": 10,
       "veta_cobre": 12,
-      "veta_azufre": 8
+      "veta_azufre": 8,
+      "piedras": 20
     },
     "prefabs": [
       {

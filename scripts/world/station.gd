@@ -407,6 +407,7 @@ func _store(it: Dictionary) -> int:
 			if s != null and s["id"] == id_ and int(s["qty"]) < max_stack:
 				var add := mini(max_stack - int(s["qty"]), left)
 				s["qty"] = int(s["qty"]) + add
+				GS.merge_rot(s, float(it.get("rot", -1.0)))
 				left -= add
 	for i in storage.size():
 		if left <= 0:

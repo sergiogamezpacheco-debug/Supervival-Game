@@ -252,8 +252,9 @@ func _swing() -> void:
 
 ## Qué usa el botón de acción ahora mismo:
 ## {"icon": id de objeto o icono de interfaz, "item": objeto (para su estado) o null}.
-## Junto a un pino o una roca, el hacha o el pico del inventario; con un cofre o
-## una estación, la mano; si no, el arma equipada o el puño.
+## Junto a un pino o una roca, el hacha o el pico del inventario (si no lo llevas, su icono
+## en gris: sin herramienta no se puede); con un cofre o una estación, la mano; si no, el
+## arma equipada o el puño.
 func action_info() -> Dictionary:
 	var t := target
 	if t != null and is_instance_valid(t) and t.is_in_group("resource"):
@@ -262,6 +263,8 @@ func action_info() -> Dictionary:
 			var i := GS.best_tool(need)
 			if i >= 0:
 				return {"icon": str(GS.slots[i]["id"]), "item": GS.slots[i], "ui": false}
+			return {"icon": "hacha_piedra" if need == "axe" else "pico_piedra", "item": null, "ui": false, "missing": true}
+		return {"icon": "mano", "item": null, "ui": true}
 	elif t != null and is_instance_valid(t) and not t.is_in_group("creature"):
 		return {"icon": "mano", "item": null, "ui": true}
 	if GS.hand != null:

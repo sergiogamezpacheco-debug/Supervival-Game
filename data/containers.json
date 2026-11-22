@@ -118,6 +118,14 @@
           2
         ],
         "weight": 2
+      },
+      {
+        "id": "tarro_cristal",
+        "qty": [
+          1,
+          2
+        ],
+        "weight": 2
       }
     ]
   },
@@ -200,6 +208,14 @@
           3
         ],
         "weight": 2
+      },
+      {
+        "id": "tarro_cristal",
+        "qty": [
+          1,
+          2
+        ],
+        "weight": 1
       }
     ]
   },
@@ -301,6 +317,14 @@
       },
       {
         "id": "agua_hervida",
+        "qty": [
+          1,
+          1
+        ],
+        "weight": 1
+      },
+      {
+        "id": "tarro_cristal",
         "qty": [
           1,
           1

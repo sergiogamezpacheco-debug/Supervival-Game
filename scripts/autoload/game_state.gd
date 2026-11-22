@@ -19,6 +19,7 @@ var water := 100.0
 var dead := false
 var time_offset := 0.0         # solo para tests: adelanta el reloj
 var poison := 0.0              # segundos de veneno que quedan
+var _spoil_timer := 0.0
 var current_map := "refugio"   # zona en la que está el jugador
 var _launched := false          # ya se cargó la partida una vez desde que se abrió el juego
 var maps_state: Dictionary = {} # estado guardado de cada zona (refugio, bolsas…)
@@ -109,6 +110,13 @@ func tick(delta: float) -> void:
 		_water_timer -= water_step
 		water = maxf(water - 1.0, 0.0)
 		changed = true
+	_spoil_timer -= delta
+	if _spoil_timer <= 0.0:
+		_spoil_timer = float(DB.bal("spoil_check_seconds", 2.0))
+		var rotten := spoil(slots)
+		if not rotten.is_empty():
+			message.emit("Se ha estropeado: %s" % ", ".join(rotten).to_lower())
+			inventory_changed.emit()
 	if poison > 0.0:
 		poison = maxf(poison - delta, 0.0)
 		damage(float(DB.bal("poison_damage_per_second", 1.5)) * delta)
@@ -161,13 +169,24 @@ func make_item(id: String, qty: int = 1) -> Dictionary:
 	var data := DB.item(id)
 	if data.has("durability"):
 		it["dur"] = int(data["durability"])
+	if data.has("spoil"):
+		it["rot"] = now() + float(data["spoil"])   # momento en que se estropea
 	return it
 
 
-## Añade objetos. Devuelve lo que NO cupo.
-func add_item(id: String, qty: int, dur: int = -1) -> int:
+## Al juntar comida en un montón se queda la fecha de la más vieja.
+static func merge_rot(s: Dictionary, rot: float) -> void:
+	if s.has("rot") and rot > 0.0:
+		s["rot"] = minf(float(s["rot"]), rot)
+
+
+## Añade objetos. Devuelve lo que NO cupo. rot: cuándo se estropea (comida); -1 = recién hecha.
+func add_item(id: String, qty: int, dur: int = -1, rot: float = -1.0) -> int:
 	var max_stack := DB.stack_size(id)
 	var left := qty
+	var data := DB.item(id)
+	if rot < 0.0 and data.has("spoil"):
+		rot = now() + float(data["spoil"])
 	if max_stack > 1:
 		for s in slots:
 			if left <= 0:
@@ -175,6 +194,7 @@ func add_item(id: String, qty: int, dur: int = -1) -> int:
 			if s != null and s["id"] == id and int(s["qty"]) < max_stack:
 				var add := mini(max_stack - int(s["qty"]), left)
 				s["qty"] = int(s["qty"]) + add
+				merge_rot(s, rot)
 				left -= add
 	for i in slots.size():
 		if left <= 0:
@@ -184,6 +204,8 @@ func add_item(id: String, qty: int, dur: int = -1) -> int:
 			var it := make_item(id, add)
 			if dur >= 0 and it.has("dur"):
 				it["dur"] = dur
+			if rot > 0.0 and it.has("rot"):
+				it["rot"] = rot
 			slots[i] = it
 			left -= add
 	if left != qty:
@@ -192,7 +214,25 @@ func add_item(id: String, qty: int, dur: int = -1) -> int:
 
 
 func add_stack(it: Dictionary) -> int:
-	return add_item(str(it["id"]), int(it["qty"]), int(it.get("dur", -1)))
+	return add_item(str(it["id"]), int(it["qty"]), int(it.get("dur", -1)), float(it.get("rot", -1.0)))
+
+
+## Comida caducada de una lista de casillas (mochila o cofre): se vuelve comida podrida.
+## Las conservas no llevan "spoil" y no caducan. Devuelve los nombres de lo estropeado.
+func spoil(arr: Array) -> PackedStringArray:
+	var out := PackedStringArray()
+	var t := now()
+	for i in arr.size():
+		var s = arr[i]
+		if s != null and s.has("rot") and t >= float(s["rot"]):
+			out.append(DB.item_name(str(s["id"])))
+			arr[i] = {"id": "comida_podrida", "qty": int(s["qty"])}
+	return out
+
+
+## Segundos que le quedan a una comida antes de estropearse (-1 = no caduca).
+func spoil_left(it: Dictionary) -> float:
+	return maxf(float(it["rot"]) - now(), 0.0) if it.has("rot") else -1.0
 
 
 func count(id: String) -> int:

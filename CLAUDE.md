@@ -65,3 +65,11 @@
 - Fuego y energía de estaciones: `"burns": true` (cocina, destilería) = fuego propio en `station.fuel` (`DB.bal("stove_fuel")`);
   `"power": true` = gasta el del generador. Consumibles con `"empty"` devuelven el envase; `"throw": true` (molotov)
   se lanza con `world.throw_at()` (`scripts/world/fire.gd`); `type: trap` se coloca con `world.place_trap(i)` (`trap.gd`).
+- Movimiento: `physics/common/physics_interpolation` activada; el mundo va con interpolación OFF y el jugador,
+  criaturas y rocas lanzadas ON. La cámara y el minimapa siguen `player.get_global_transform_interpolated()`.
+  Tras teletransportar al jugador: `reset_physics_interpolation()`.
+- Caducidad: `"spoil"` (segundos) en la comida -> `"rot"` (unix) en cada montón; `GS.spoil(array)` la pudre (mochila en
+  `GS.tick`, cofres en `world`). Recursos con `"hand_ok": false` piden su herramienta (`resource_node.missing_tool()`).
+- Listas con dedo: `station_screen._input` desplaza `_scroll_box()` arrastrando (los ScrollContainer van con
+  `MOUSE_FILTER_IGNORE`; los botones miran `dragged` para no contar el arrastre como toque).
+- Con cualquier ventana abierta (`hud.any_panel_open()`) se ocultan joystick y botones y no hay acción; Atrás cierra.

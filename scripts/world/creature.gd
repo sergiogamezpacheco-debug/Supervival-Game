@@ -45,6 +45,7 @@ func setup(p_kind: String) -> void:
 
 
 func _ready() -> void:
+	physics_interpolation_mode = Node.PHYSICS_INTERPOLATION_MODE_ON   # se dibuja suave entre pasos de física
 	motion_mode = CharacterBody3D.MOTION_MODE_FLOATING
 	add_to_group("interactable")
 	add_to_group("creature")

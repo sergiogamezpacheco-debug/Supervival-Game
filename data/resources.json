@@ -9,7 +9,7 @@
     ],
     "hits": 6,
     "tool": "axe",
-    "hand_ok": true,
+    "hand_ok": false,
     "respawn": 60,
     "radius": 0.5
   },
@@ -23,7 +23,7 @@
     ],
     "hits": 6,
     "tool": "pickaxe",
-    "hand_ok": true,
+    "hand_ok": false,
     "respawn": 75,
     "radius": 0.7
   },
@@ -138,5 +138,33 @@
     "hand_ok": false,
     "respawn": 120,
     "radius": 0.7
+  },
+  "ramas": {
+    "name": "Ramas secas",
+    "action": "Recoger",
+    "yield": "madera",
+    "amount": [
+      1,
+      2
+    ],
+    "hits": 2,
+    "tool": "",
+    "hand_ok": true,
+    "respawn": 60,
+    "radius": 0.0
+  },
+  "piedras": {
+    "name": "Piedras sueltas",
+    "action": "Recoger",
+    "yield": "piedra",
+    "amount": [
+      1,
+      2
+    ],
+    "hits": 2,
+    "tool": "",
+    "hand_ok": true,
+    "respawn": 60,
+    "radius": 0.0
   }
 }

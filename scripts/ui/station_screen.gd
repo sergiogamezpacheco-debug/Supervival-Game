@@ -60,6 +60,11 @@ var _pedestal: Node3D
 var _item: Sprite3D
 var _model_holder: Node3D
 var _t := 0.0
+# Arrastrar con el dedo para desplazar la lista (los botones se comían el gesto)
+var _drag_idx := -1
+var _drag_from := Vector2.ZERO
+var _drag_scroll := 0
+var dragged := false             # el último toque fue un arrastre: no cuenta como pulsar
 
 
 func _init() -> void:
@@ -304,6 +309,7 @@ func _build_right() -> void:
 	_scroll.position = Vector2(656, 104)
 	_scroll.size = Vector2(590, 486)
 	_scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	_scroll.mouse_filter = Control.MOUSE_FILTER_IGNORE   # se desplaza con _input (arrastrar)
 	_content.add_child(_scroll)
 	_list = VBoxContainer.new()
 	_list.custom_minimum_size = Vector2(570, 0)
@@ -511,7 +517,9 @@ func _build_rows() -> void:
 		row.focus_mode = Control.FOCUS_NONE
 		row.toggle_mode = false
 		var idx := i
-		row.pressed.connect(func(): _select(idx))
+		row.pressed.connect(func():
+			if not dragged:
+				_select(idx))
 		# Icono en su caja
 		var ib := Panel.new()
 		ib.position = Vector2(12, 12)
@@ -765,6 +773,35 @@ func _on_action() -> void:
 	var keep := selected
 	refresh()
 	_select(keep)
+
+
+## Lista que se desplaza arrastrando (la de recetas; la pantalla de fabricación usa la de tarjetas).
+func _scroll_box() -> ScrollContainer:
+	return _scroll
+
+
+func _input(ev: InputEvent) -> void:
+	if not visible:
+		return
+	var sc := _scroll_box()
+	if sc == null or not sc.is_visible_in_tree():
+		return
+	var inv := sc.get_global_transform_with_canvas().affine_inverse()
+	if ev is InputEventScreenTouch:
+		if ev.pressed and _drag_idx == -1 and Rect2(Vector2.ZERO, sc.size).has_point(inv * ev.position):
+			_drag_idx = ev.index
+			_drag_from = ev.position
+			_drag_scroll = sc.scroll_vertical
+			dragged = false
+		elif not ev.pressed and ev.index == _drag_idx:
+			_drag_idx = -1
+	elif ev is InputEventScreenDrag and ev.index == _drag_idx:
+		var dy: float = inv.basis_xform(ev.position - _drag_from).y
+		if absf(dy) > 14.0:
+			dragged = true
+		if dragged:
+			sc.scroll_vertical = _drag_scroll - int(dy)
+			get_viewport().set_input_as_handled()
 
 
 func _process(delta: float) -> void:

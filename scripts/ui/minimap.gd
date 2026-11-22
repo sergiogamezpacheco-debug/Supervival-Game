@@ -58,7 +58,7 @@ func _process(_delta: float) -> void:
 	_frame += 1
 	if _frame % update_every != 0:
 		return
-	var p: Vector3 = world.player.global_position
+	var p: Vector3 = world.player.get_global_transform_interpolated().origin
 	_cam.global_position = p + Vector3(0.0, cos(TILT), sin(TILT)) * 60.0
 	_cam.look_at(p, Vector3.FORWARD)   # norte (-Z) arriba
 	_vp.render_target_update_mode = SubViewport.UPDATE_ONCE

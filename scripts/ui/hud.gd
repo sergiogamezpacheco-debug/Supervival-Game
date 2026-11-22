@@ -614,10 +614,10 @@ func _big_button(icon_name: String, tip: String) -> Button:
 
 
 ## Botón de acción: icono de lo que se va a usar y borde con su estado.
-## info viene de player.action_info().
+## info viene de player.action_info(); "missing": falta la herramienta (se ve en gris).
 func set_action(label: String, info: Dictionary = {}) -> void:
 	action_button.set_text(label if label != "" else "Acción")
-	action_button.set_enabled(label != "")
+	action_button.set_enabled(label != "" and not bool(info.get("missing", false)))
 	if info.is_empty():
 		return
 	action_icon = str(info["icon"])
@@ -663,11 +663,9 @@ func show_death(v: bool) -> void:
 
 func _process(delta: float) -> void:
 	_refresh_stamina()
-	var inv_open := _inv_panel != null and _inv_panel.visible
-	inv_open = inv_open or (_map_panel != null and _map_panel.visible)
-	inv_open = inv_open or (_settings_panel != null and _settings_panel.visible)
-	inv_open = inv_open or (_station_panel != null and _station_panel.visible)
-	inv_open = inv_open or (_craft_panel != null and _craft_panel.visible)
+	# Con cualquier ventana abierta (también cofre, gimnasio, construir o niveles) se ocultan los
+	# controles: si no, el botón de acción tapaba la ventana y la volvía a abrir sin parar.
+	var inv_open := any_panel_open()
 	if fps_label and fps_label.visible:
 		fps_label.text = "%d FPS" % Engine.get_frames_per_second()
 	joystick.visible = not inv_open
@@ -1153,7 +1151,7 @@ func _build_chest_panel() -> void:
 	lt.text = "Cofre"
 	left.add_child(lt)
 	_chest_grid = GridContainer.new()
-	_chest_grid.columns = 7
+	_chest_grid.columns = 8   # 8 x 56 px: caben cofre y mochila táctica enteros en pantalla
 	left.add_child(_chest_grid)
 	h.add_child(left)
 	var right := VBoxContainer.new()
@@ -1161,14 +1159,14 @@ func _build_chest_panel() -> void:
 	rt.text = "Inventario"
 	right.add_child(rt)
 	_chest_bag_grid = GridContainer.new()
-	_chest_bag_grid.columns = 7
+	_chest_bag_grid.columns = 8
 	right.add_child(_chest_bag_grid)
 	h.add_child(right)
 
 
-func _slot_button(s: Variant) -> Button:
+func _slot_button(s: Variant, px := 64) -> Button:
 	var b := Button.new()
-	b.custom_minimum_size = Vector2(64, 64)
+	b.custom_minimum_size = Vector2(px, px)
 	b.add_theme_font_size_override("font_size", 15)
 	b.clip_text = true
 	if s != null:
@@ -1177,12 +1175,12 @@ func _slot_button(s: Variant) -> Button:
 			b.icon = tex
 			b.expand_icon = true
 			b.icon_alignment = HORIZONTAL_ALIGNMENT_CENTER
-			b.add_theme_constant_override("icon_max_width", 46)
+			b.add_theme_constant_override("icon_max_width", int(px * 0.72))
 			b.tooltip_text = DB.item_name(str(s["id"]))
 			if int(s["qty"]) > 1:
 				var q := Label.new()
 				q.text = str(int(s["qty"]))
-				q.position = Vector2(30, 40)
+				q.position = Vector2(px - 34, px - 24)
 				q.size = Vector2(30, 20)
 				q.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
 				q.add_theme_font_size_override("font_size", 15)
@@ -1215,11 +1213,11 @@ func _refresh_chest() -> void:
 	for c in _chest_bag_grid.get_children():
 		c.queue_free()
 	for i in station.storage.size():
-		var b := _slot_button(station.storage[i])
+		var b := _slot_button(station.storage[i], 56)
 		b.pressed.connect(func(): station.chest_to_bag(i))
 		_chest_grid.add_child(b)
 	for i in GS.slots.size():
-		var b := _slot_button(GS.slots[i])
+		var b := _slot_button(GS.slots[i], 56)
 		b.pressed.connect(func(): station.bag_to_chest(i))
 		_chest_bag_grid.add_child(b)
 
