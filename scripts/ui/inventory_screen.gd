@@ -534,7 +534,12 @@ func _refresh_detail() -> void:
 		stats.append("Estado %d/%d" % [int(it["dur"]), int(data["durability"])])
 	if it.has("rot"):
 		var m := int(ceil(GS.spoil_left(it) / 60.0))
-		stats.append("Se estropea en %s" % ("%d h %02d min" % [m / 60, m % 60] if m >= 60 else "%d min" % m))
+		var left := "%d min" % m
+		if m >= 2880:
+			left = "%d días %d h" % [m / 1440, (m % 1440) / 60]
+		elif m >= 60:
+			left = "%d h %02d min" % [m / 60, m % 60]
+		stats.append("Se estropea en %s" % left)
 	elif data.has("food") and id != "comida_podrida":
 		stats.append("No caduca")
 	_show(DB.item_icon(id), DB.item_name(id), str(data.get("desc", "")), " · ".join(stats), "x%d" % int(it["qty"]) if int(it.get("qty", 1)) > 1 else "")

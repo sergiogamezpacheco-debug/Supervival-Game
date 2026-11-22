@@ -87,7 +87,7 @@
     "water": 3,
     "desc": "Quitan un poco de hambre y sed.",
     "weight": 0.05,
-    "spoil": 21600
+    "spoil": 432000
   },
   "carne_cruda": {
     "name": "Carne cruda",
@@ -97,7 +97,7 @@
     "heal": -5,
     "desc": "Mejor cocinarla en la hoguera.",
     "weight": 0.3,
-    "spoil": 3600
+    "spoil": 172800
   },
   "carne_asada": {
     "name": "Carne asada",
@@ -106,7 +106,7 @@
     "food": 28,
     "desc": "Quita mucha hambre.",
     "weight": 0.25,
-    "spoil": 10800
+    "spoil": 259200
   },
   "carne_seca": {
     "name": "Carne seca",
@@ -116,7 +116,7 @@
     "water": -2,
     "desc": "Tiras de carne secadas al aire. Llenan mucho, pero dan algo de sed.",
     "weight": 0.1,
-    "spoil": 172800
+    "spoil": 604800
   },
   "venda": {
     "name": "Vendas simples",
@@ -224,7 +224,7 @@
     "water": 1,
     "desc": "Seta del bosque. Comestible.",
     "weight": 0.05,
-    "spoil": 21600
+    "spoil": 432000
   },
   "carbon": {
     "name": "Carbón",
@@ -554,7 +554,7 @@
     "heal": 10,
     "desc": "Carne guisada con setas. Quita mucha hambre y cura un poco.",
     "weight": 0.4,
-    "spoil": 14400
+    "spoil": 432000
   },
   "guiso_setas": {
     "name": "Guiso de setas",
@@ -565,7 +565,7 @@
     "heal": 5,
     "desc": "Caldo caliente: hambre, sed y algo de vida.",
     "weight": 0.5,
-    "spoil": 14400
+    "spoil": 432000
   },
   "conserva_carne": {
     "name": "Conserva de carne",

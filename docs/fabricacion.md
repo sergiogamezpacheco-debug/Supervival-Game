@@ -156,8 +156,8 @@ Datos: `data/recipes.json` (`station` vacío = a mano) y `"tier"` en `data/items
   Deja un charco de fuego de 2,6 m que quema 14 por segundo durante 5 s (a ti no te quema).
 - **Trampa de pinchos**: desde el inventario, *Colocar* (delante de ti). Hace 40 a lo que la pise (una vez por criatura
   cada 1,2 s) y aguanta 4 golpes; con enemigos lejos se puede *Recoger* con los golpes que le queden. Se guarda por zona.
-- **Comida que caduca** (tiempo real, también con el juego cerrado y dentro de los cofres): carne cruda 1 h,
-  carne asada 3 h, plato cocinado y guiso 4 h, bayas y setas 6 h, carne seca 48 h. Al juntar un montón se queda la
+- **Comida que caduca** (tiempo real, también con el juego cerrado y dentro de los cofres): carne cruda 48 h,
+  carne asada 72 h, plato cocinado y guiso 5 días, bayas y setas 5 días, carne seca 7 días. Al juntar un montón se queda la
   fecha de la más vieja; caducada se vuelve *comida podrida* (vida −10). En el inventario pone cuánto le queda.
 - **Conservas (no caducan)**: en la cocina, lata vacía + **sal** (sale de hervir 2 de agua sucia) o un **tarro de
   cristal esterilizado** (tarro + agua sucia hervidos). Latas y tarros salen en cofres, taquillas y cajas.

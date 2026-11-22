@@ -898,16 +898,23 @@ func test_fixes() -> void:
 	# Comida que caduca; las conservas no
 	GS.add_item("carne_cruda", 2)
 	var meat: Dictionary = GS.slots[_slot_of("carne_cruda")]
-	check(meat.has("rot") and absf(GS.spoil_left(meat) - 3600.0) < 5.0, "la carne cruda aguanta una hora")
-	GS.time_offset += 1800.0
+	var life := float(DB.item("carne_cruda")["spoil"])
+	check(meat.has("rot") and is_equal_approx(life, 48.0 * 3600.0) and absf(GS.spoil_left(meat) - life) < 5.0, "la carne cruda aguanta 48 h reales")
+	var days := {"carne_asada": 72.0 / 24.0, "guiso_setas": 5.0, "plato_cocinado": 5.0, "baya": 5.0, "seta": 5.0, "carne_seca": 7.0}
+	var bad_days := []
+	for id in days:
+		if not is_equal_approx(float(DB.item(id)["spoil"]), days[id] * 86400.0):
+			bad_days.append(id)
+	check(bad_days.is_empty(), "asada 72 h, guiso y plato 5 días, bayas y setas 5 días, carne seca 7 días %s" % str(bad_days))
+	GS.time_offset += life / 2.0
 	GS.add_item("carne_cruda", 1)
-	check(GS.count("carne_cruda") == 3 and absf(GS.spoil_left(GS.slots[_slot_of("carne_cruda")]) - 1800.0) < 5.0, "al juntarla se queda la fecha de la más vieja")
+	check(GS.count("carne_cruda") == 3 and absf(GS.spoil_left(GS.slots[_slot_of("carne_cruda")]) - life / 2.0) < 5.0, "al juntarla se queda la fecha de la más vieja")
 	GS.add_item("conserva_carne", 1)
 	check(not GS.slots[_slot_of("conserva_carne")].has("rot"), "la conserva no caduca")
-	GS.time_offset += 1801.0
+	GS.time_offset += life / 2.0 + 1.0
 	GS._spoil_timer = 0.0
 	GS.tick(0.01)
-	check(GS.count("carne_cruda") == 0 and GS.count("comida_podrida") == 3 and GS.count("conserva_carne") == 1, "pasada la hora, la carne se pudre; la conserva sigue")
+	check(GS.count("carne_cruda") == 0 and GS.count("comida_podrida") == 3 and GS.count("conserva_carne") == 1, "pasadas las 48 h, la carne se pudre; la conserva sigue")
 	var hp := GS.health
 	GS.use_slot(_slot_of("comida_podrida"))
 	check(GS.health < hp, "comer comida podrida sienta mal")
