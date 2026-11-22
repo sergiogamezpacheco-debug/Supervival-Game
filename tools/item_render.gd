@@ -8,7 +8,7 @@ const M := preload("res://scripts/world/station_models.gd")
 const IDS := ["hacha_hierro", "pico_hierro", "machete", "casco_obra", "chaqueta_piel", "chaleco",
 	"pantalon_cargo", "zapatillas", "botas", "guantes", "fibra", "piel", "baya", "carne_cruda",
 	"carne_asada", "seta", "carbon", "clavos", "tela_resistente", "botella_vacia", "lata_vacia", "cantimplora_vacia",
-	"conserva_bayas", "acido", "cable_cobre", "circuito", "bateria", "sal", "tarro_cristal", "tarro_esterilizado", "comida_podrida"]
+	"conserva_bayas", "acido", "cable_cobre", "circuito", "bateria", "sal", "tarro_cristal", "tarro_esterilizado", "comida_podrida", "hortalizas", "tierra"]
 
 var vp: SubViewport
 var cam: Camera3D
@@ -463,3 +463,38 @@ func _comida_podrida() -> float:
 	for k in 3:
 		_p(_box(Vector3(0.07, 0.05, 0.09)), Color("1c1c1c"), Vector3(-0.2 + k * 0.22, 0.45 + (k % 2) * 0.15, 0.1))
 	return 1.9
+
+
+# ----------------------------------------------------------- compostadora y huerto
+
+func _abono() -> float:
+	# saco de arpillera abierto con compost oscuro asomando
+	_blob(91, Color("a88a5a"), Vector3(0, -0.1, 0), Vector3(0.6, 0.62, 0.48), 0.1)
+	_p(_cyl(0.42, 0.5, 0.2, 9), Color("b89a66"), Vector3(0, 0.42, 0))
+	_blob(92, Color("3b2a1e"), Vector3(0, 0.55, 0), Vector3(0.42, 0.14, 0.36), 0.15)
+	for k in 4:
+		_blob(93 + k, [Color("6d8a3a"), Color("a8763a"), Color("5f7a30"), Color("4a3424")][k], Vector3(-0.18 + k * 0.12, 0.64, -0.05 + (k % 2) * 0.1), Vector3(0.08, 0.03, 0.06), 0.2)
+	_p(_box(Vector3(0.5, 0.05, 0.02)), Color("7a6040"), Vector3(0, 0.0, 0.47))
+	return 1.8
+
+
+func _hortalizas() -> float:
+	# dos zanahorias con hojas y tres patatas
+	for k in 2:
+		var g := _group(Vector3(-0.25 + k * 0.35, 0.05, -0.05 * k), Vector3(0, 30 * k, 70 + 10 * k))
+		_p(_cyl(0.13, 0.02, 0.75, 8), Color("e8822e"), Vector3.ZERO, Vector3.ZERO, Vector3.ONE, g)
+		for j in 3:
+			_p(_cyl(0.04, 0.0, 0.35, 5), Color("5f9a35"), Vector3(-0.04 + j * 0.04, 0.52, 0), Vector3(0, 0, -20 + j * 20), Vector3.ONE, g)
+	for k in 3:
+		_blob(70 + k, Color("b88a52"), Vector3(-0.35 + k * 0.32, -0.3, 0.25 - (k % 2) * 0.12), Vector3(0.2, 0.15, 0.17), 0.12)
+	return 1.8
+
+
+func _tierra() -> float:
+	# montón de tierra marrón clara con piedrecitas
+	_blob(101, Color("8a6440"), Vector3(0, -0.15, 0), Vector3(0.8, 0.42, 0.7), 0.12)
+	_blob(102, Color("9c7449"), Vector3(0.1, 0.05, 0.05), Vector3(0.45, 0.3, 0.4), 0.12)
+	for k in 5:
+		var a := float(k) * 1.3
+		_blob(110 + k, Color("9a9a92"), Vector3(cos(a) * 0.45, -0.3 + float(k % 2) * 0.15, sin(a) * 0.4), Vector3(0.08, 0.06, 0.07), 0.2)
+	return 1.8

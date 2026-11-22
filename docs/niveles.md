@@ -93,7 +93,8 @@ cada nivel redondo.
 | 10 | Hacha y pico de hierro, cuero, chaqueta de piel |
 | 12 | Banco de armas, machete, botas, pantalón cargo |
 | 13 | Combustible (destilería nivel 2) |
-| 14 | Huerto y cultivos, lingote de cobre |
+| 13 | Compostadora: compost, abono orgánico, humus y tierra (con comida podrida) |
+| 14 | Huerto y cultivos (con compost el doble, con humus más rápido, hortalizas con abono), lingote de cobre |
 | 16 | Mesa médica, botiquín, antídoto, mochila de excursión |
 | 18 | Chaleco, componentes |
 | 20 | Generador, pólvora, construcción de metal |

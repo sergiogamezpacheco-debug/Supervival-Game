@@ -708,7 +708,50 @@
     "stack": 20,
     "food": 3,
     "heal": -10,
-    "desc": "Se ha estropeado. Comerla sienta muy mal.",
-    "weight": 0.2
+    "desc": "Se ha estropeado. Comerla sienta muy mal; mejor llevarla a la compostadora.",
+    "weight": 0.2,
+    "tier": "bruto"
+  },
+  "hortalizas": {
+    "name": "Hortalizas",
+    "type": "consumable",
+    "stack": 20,
+    "food": 18,
+    "water": 6,
+    "spoil": 432000,
+    "desc": "Patatas y zanahorias del huerto. Solo crecen con abono orgánico.",
+    "weight": 0.3
+  },
+  "compost": {
+    "name": "Compost fértil",
+    "type": "material",
+    "stack": 20,
+    "desc": "Restos orgánicos convertidos en abono. En el huerto, bayas y setas dan el doble y antes.",
+    "weight": 1.0,
+    "tier": "procesado"
+  },
+  "abono_organico": {
+    "name": "Abono orgánico",
+    "type": "material",
+    "stack": 20,
+    "desc": "Saco de abono con tierra. Hace crecer hortalizas en el huerto.",
+    "weight": 1.5,
+    "tier": "procesado"
+  },
+  "humus": {
+    "name": "Humus rápido",
+    "type": "material",
+    "stack": 20,
+    "desc": "Humus húmedo: en el huerto, cosechas en muy poco tiempo.",
+    "weight": 1.0,
+    "tier": "procesado"
+  },
+  "tierra": {
+    "name": "Tierra",
+    "type": "material",
+    "stack": 30,
+    "desc": "Tierra suelta mezclada con compost. Base del abono orgánico.",
+    "weight": 1.0,
+    "tier": "procesado"
   }
 }

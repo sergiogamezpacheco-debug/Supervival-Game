@@ -26,9 +26,9 @@ func _ready() -> void:
 		GS.add_item(id, 12)
 	var base: Node3D = world.base
 	var pp := Vector3(30, 0, 30)
-	var spots := [Vector2i(-6, 2), Vector2i(-2, 2), Vector2i(2, 2), Vector2i(6, 2), Vector2i(-6, 6), Vector2i(-2, 6), Vector2i(2, 6), Vector2i(6, 6), Vector2i(-6, -2), Vector2i(-2, -2), Vector2i(2, -2), Vector2i(6, -2), Vector2i(-6, -6)]
+	var spots := [Vector2i(-6, 2), Vector2i(-2, 2), Vector2i(2, 2), Vector2i(6, 2), Vector2i(-6, 6), Vector2i(-2, 6), Vector2i(2, 6), Vector2i(6, 6), Vector2i(-6, -2), Vector2i(-2, -2), Vector2i(2, -2), Vector2i(6, -2), Vector2i(-6, -6), Vector2i(-2, -6)]
 	var made := {}
-	for id in ["carpinteria", "horno", "banco_trabajo", "mesa_costura", "generador", "recicladora", "mesa_medica", "cocina", "destileria", "mesa_quimica", "banco_electronica"]:
+	for id in ["carpinteria", "horno", "banco_trabajo", "mesa_costura", "generador", "recicladora", "mesa_medica", "cocina", "destileria", "mesa_quimica", "banco_electronica", "compostadora"]:
 		for c in spots:
 			if not made.has(id) and base.check_place(id, c, 0, pp) == "":
 				for ph in DB.station_phases(id):
@@ -99,4 +99,9 @@ func _ready() -> void:
 		el.add_phase()
 	world.hud.open_station(el)
 	await _shot(out + "/estacion_electronica.png")
+	GS.add_item("comida_podrida", 8)
+	GS.add_item("fibra", 4)
+	world.hud.open_station(made["compostadora"])
+	made["compostadora"].start("compost")
+	await _shot(out + "/estacion_compostadora.png")
 	get_tree().quit()

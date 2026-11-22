@@ -18,7 +18,7 @@ const PANEL_BG := Color(0.07, 0.065, 0.05, 0.8)
 const W := 1280.0
 const TAB_ORDER := ["Obra", "Herramientas", "Armas", "Trampas", "Ropa", "Mochilas", "Platos", "Comida", "Conservas",
 	"Medicamentos", "Medicinas", "Explosivos", "Alquimia", "Líquidos", "Circuitos", "Energía", "Dispositivos",
-	"Componentes", "Recursos", "Combustible", "Agua", "Fuego", "Reparar"]
+	"Componentes", "Recursos", "Compost", "Residuos", "Suelo", "Combustible", "Agua", "Fuego", "Reparar"]
 
 var station: Node3D
 var entries: Array = []          # lo que se puede hacer aquí (pestaña actual)

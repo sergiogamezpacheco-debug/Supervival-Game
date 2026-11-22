@@ -92,6 +92,7 @@ static func make(kind: String, level: int) -> Node3D:
 		"recolector_agua": _recolector(root)
 		"secadero": _secadero(root)
 		"huerto": _huerto(root)
+		"compostadora": _compostadora(root)
 		"mesa_medica": _mesa_medica(root)
 		"generador": _generador(root)
 		"recicladora": _recicladora(root)
@@ -224,6 +225,32 @@ static func _secadero(r: Node3D) -> void:
 		var h := 0.42 + (i % 2) * 0.08
 		_p(r, _box(Vector3(0.12, h, 0.04)), Color("a8402e"), Vector3(x, 1.46 - h / 2.0, 0), Vector3(0, 0, (i - 2) * 3))
 		_p(r, _box(Vector3(0.04, h * 0.8, 0.045)), Color("e3a28a"), Vector3(x + 0.02, 1.46 - h / 2.0, 0), Vector3(0, 0, (i - 2) * 3))
+
+
+# ----------------------------------------------------------- compostadora
+## Cajón de listones con huecos, montón de compost oscuro con restos y la tapa apoyada al lado.
+static func _compostadora(r: Node3D) -> void:
+	var h := 0.9
+	for x in [-0.55, 0.55]:
+		for z in [-0.55, 0.55]:
+			_p(r, _box(Vector3(0.1, h + 0.06, 0.1)), WOOD_D, Vector3(x, (h + 0.06) / 2.0, z))
+	for k in 5:
+		var y := 0.1 + k * 0.18
+		for z in [-0.55, 0.55]:
+			_p(r, _box(Vector3(1.12, 0.12, 0.05)), WOOD_L if k % 2 == 0 else WOOD, Vector3(0, y, z))
+		for x in [-0.55, 0.55]:
+			_p(r, _box(Vector3(0.05, 0.12, 1.12)), WOOD if k % 2 == 0 else WOOD_L, Vector3(x, y, 0))
+	# compost: tierra oscura con restos de comida y hojas
+	_p(r, _box(Vector3(1.02, 0.7, 1.02)), Color("3b2a1e"), Vector3(0, 0.38, 0))
+	_p(r, Nature.blob(61, 0.25, 7, 4), Color("4a3424"), Vector3(0, 0.74, 0), Vector3.ZERO, Vector3(0.48, 0.16, 0.48))
+	var bits := [Color("6d8a3a"), Color("a8763a"), Color("8a3b26"), Color("c9b25a"), Color("5f7a30")]
+	for k in 9:
+		var a := float(k) * 2.4
+		var d := 0.12 + float(k % 3) * 0.11
+		_p(r, _box(Vector3(0.1, 0.03, 0.06)), bits[k % bits.size()], Vector3(cos(a) * d, 0.8 + float(k % 2) * 0.03, sin(a) * d), Vector3(0, a * 40.0, 10))
+	# montón de compost caído delante, en una esquina (como en el diseño)
+	_p(r, Nature.blob(62, 0.25, 7, 4), Color("3b2a1e"), Vector3(0.45, 0.08, -0.72), Vector3.ZERO, Vector3(0.32, 0.18, 0.24))
+	_p(r, Nature.blob(63, 0.25, 6, 3), Color("4a3424"), Vector3(0.62, 0.05, -0.62), Vector3.ZERO, Vector3(0.14, 0.08, 0.12))
 
 
 # ---------------------------------------------------------------- huerto

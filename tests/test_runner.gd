@@ -980,6 +980,37 @@ func test_fixes() -> void:
 	await _pframes(2)
 	check(sc.scroll_vertical <= 5, "y hacia abajo vuelve arriba (%d)" % sc.scroll_vertical)
 	world.hud.close_panels()
+
+	# Compostadora (diseño docs/diseno_est_compostadora.jpg): comida podrida -> compost, abono, humus, tierra
+	check(DB.stations.has("compostadora") and ResourceLoader.exists("res://assets/icons/estaciones/compostadora.png"), "compostadora con su icono")
+	var cm := StationModels.make("compostadora", 1)
+	check(cm != null and cm.get_child_count() >= 6, "modelo 3D de la compostadora")
+	cm.free()
+	for id in ["compost", "abono_organico", "humus"]:
+		check(DB.item_icon(id) != null and DB.item_icon(id).resource_path.ends_with(".png"), "icono de %s sacado del diseño" % id)
+	var comp := _build_full(base, "compostadora", pp)
+	GS.remove_item("comida_podrida", GS.count("comida_podrida"))
+	GS.add_item("comida_podrida", 3)
+	GS.add_item("fibra", 2)
+	check(comp.start("compost") == "" and GS.count("comida_podrida") == 0, "compost fértil: 3 de comida podrida y 2 de fibra")
+	GS.time_offset += comp.recipe_time(DB.recipe("compost")) + 1.0
+	check(comp.collect() and GS.count("compost") == 2, "sale compost fértil (2)")
+	check(_make(comp, "tierra") and _make(comp, "abono_organico") and _make(comp, "humus"), "tierra, abono orgánico y humus rápido")
+	var garden := _build_full(base, "huerto", pp)
+	var plain := DB.recipe("cultivo_bayas")
+	var rich := DB.recipe("cultivo_bayas_abono")
+	check(int(rich["qty"]) == 2 * int(plain["qty"]) and float(rich["time"]) < float(plain["time"]) and rich["cost"].has("compost"), "con compost las bayas dan el doble y antes")
+	check(float(DB.recipe("cultivo_bayas_humus")["time"]) < float(rich["time"]), "con humus aún antes")
+	GS.add_item("baya", 2)
+	var c0 := GS.count("compost")
+	check(garden.start("cultivo_bayas_abono") == "" and GS.count("compost") == c0 - 1, "plantar bayas con compost")
+	GS.time_offset += garden.recipe_time(rich) + 1.0
+	check(garden.collect() and GS.count("baya") >= 12, "cosecha de 12 bayas")
+	check(_make(garden, "cultivo_hortalizas") and GS.count("hortalizas") == 6 and DB.recipe("cultivo_hortalizas")["cost"].has("abono_organico"), "hortalizas con abono orgánico")
+	world.hud.open_station(comp)
+	await _pframes(1)
+	check(scr.tabs == ["Compost", "Residuos", "Suelo"], "pestañas de la compostadora como en el diseño %s" % str(scr.tabs))
+	world.hud.close_panels()
 	world.queue_free()
 	await _frames(2)
 

@@ -16,6 +16,7 @@ const SIZES := {
 	"recolector_agua": Vector3(1.1, 1.4, 1.1),
 	"secadero": Vector3(1.8, 1.7, 0.6),
 	"huerto": Vector3(1.8, 0.4, 1.2),
+	"compostadora": Vector3(1.3, 1.0, 1.3),
 	"mesa_medica": Vector3(1.6, 1.0, 0.9),
 	"generador": Vector3(1.2, 1.0, 0.8),
 	"recicladora": Vector3(1.6, 1.8, 1.4),

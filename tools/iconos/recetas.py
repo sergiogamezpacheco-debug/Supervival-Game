@@ -32,10 +32,14 @@ RECETAS = {  # id: (lámina, x, y) del marco de 96x96 de la tarjeta
     "alcohol": ("destileria", 637, 294, 115),
     "combustible": ("destileria", 637, 449, 115),
     "agua_sucia": ("destileria", 637, 604, 115),
+    "compost": ("compostadora", 718, 122, 96, "oscuro"),   # montón negro sobre fondo oscuro
+    "abono_organico": ("compostadora", 718, 250),
+    "humus": ("compostadora", 718, 378, 96, "oscuro"),
 }
 TAMBIEN_ITEMS = ["mango", "viga", "acero", "pantalon_tela", "gorra", "camiseta", "antidoto", "botiquin",
                  "estimulante", "vendas_avanzadas", "circuito_avanzado", "plato_cocinado", "conserva_carne", "agua_hervida",
-                 "guiso_setas", "agua_purificada", "alcohol", "combustible", "agua_sucia"]
+                 "guiso_setas", "agua_purificada", "alcohol", "combustible", "agua_sucia",
+                 "compost", "abono_organico", "humus"]
 VISTAS = {  # id: (lámina, x, y, w, h)
     "lingote_hierro": ("horno", 180, 165, 330, 250),
     "tablon": ("carpinteria", 185, 200, 320, 230),
@@ -44,10 +48,23 @@ VISTAS = {  # id: (lámina, x, y, w, h)
 }
 
 
-def cut(a, tol, size, only_biggest=False):
+def cut(a, tol, size, only_biggest=False, dark=False):
     edge = np.concatenate([a[0], a[-1], a[:, 0], a[:, -1]])
     bg = np.median(edge, axis=0)
-    fg = np.sqrt(((a - bg) ** 2).sum(axis=2)) > tol
+    if dark:
+        # dibujo más oscuro que el fondo (compost): se separa por luminosidad
+        fg = a.mean(axis=2) < bg.mean() * 0.88
+        fg = ndimage.binary_closing(fg, iterations=3)
+        lab, n = ndimage.label(fg)
+        if n:   # el montón: la mancha más grande, rellena columna a columna (es un montículo)
+            sizes = ndimage.sum(fg, lab, range(1, n + 1))
+            fg = ndimage.binary_fill_holes(lab == int(np.argmax(sizes)) + 1)
+            for c in range(fg.shape[1]):
+                rows = np.nonzero(fg[:, c])[0]
+                if rows.size:
+                    fg[rows[0]:rows[-1] + 1, c] = True
+    else:
+        fg = np.sqrt(((a - bg) ** 2).sum(axis=2)) > tol
     fg = ndimage.binary_opening(fg, iterations=1)
     lab, n = ndimage.label(fg)
     if n:
@@ -72,10 +89,11 @@ if __name__ == "__main__":
         if solo and k not in solo:
             continue
         f = fr[0] if fr else 96
+        dark = "oscuro" in fr
         m = round(f * 0.094)
         img = Image.open(f"{docs}/diseno_est_{sheet}.jpg").convert("RGB")
         a = np.asarray(img.crop((x + m, y + m, x + f - m, y + f - m))).astype(float)
-        ic = cut(a, 26, 128)
+        ic = cut(a, 26, 128, dark=dark)
         ic.save(f"{out}/recetas/{k}.png")
         if k in TAMBIEN_ITEMS:
             ic.save(f"{out}/items/{k}.png")

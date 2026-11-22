@@ -550,6 +550,140 @@
     "unlock": 14
   },
   {
+    "id": "cultivo_bayas_abono",
+    "result": "baya",
+    "qty": 12,
+    "station": "huerto",
+    "level": 1,
+    "time": 420,
+    "cost": {
+      "baya": 2,
+      "compost": 1
+    },
+    "unlock": 14
+  },
+  {
+    "id": "cultivo_setas_abono",
+    "result": "seta",
+    "qty": 8,
+    "station": "huerto",
+    "level": 1,
+    "time": 600,
+    "cost": {
+      "seta": 1,
+      "compost": 1
+    },
+    "unlock": 14
+  },
+  {
+    "id": "cultivo_hortalizas",
+    "result": "hortalizas",
+    "qty": 6,
+    "station": "huerto",
+    "level": 1,
+    "time": 900,
+    "cost": {
+      "abono_organico": 1,
+      "fibra": 2
+    },
+    "unlock": 14
+  },
+  {
+    "id": "cultivo_bayas_humus",
+    "result": "baya",
+    "qty": 8,
+    "station": "huerto",
+    "level": 1,
+    "time": 180,
+    "cost": {
+      "baya": 2,
+      "humus": 1
+    },
+    "unlock": 14
+  },
+  {
+    "id": "compost",
+    "result": "compost",
+    "qty": 2,
+    "station": "compostadora",
+    "level": 1,
+    "time": 300,
+    "cost": {
+      "comida_podrida": 3,
+      "fibra": 2
+    },
+    "unlock": 13,
+    "cat": "Compost"
+  },
+  {
+    "id": "abono_organico",
+    "result": "abono_organico",
+    "qty": 2,
+    "station": "compostadora",
+    "level": 1,
+    "time": 600,
+    "cost": {
+      "comida_podrida": 5,
+      "tierra": 2
+    },
+    "unlock": 13,
+    "cat": "Compost"
+  },
+  {
+    "id": "humus",
+    "result": "humus",
+    "qty": 1,
+    "station": "compostadora",
+    "level": 1,
+    "time": 240,
+    "cost": {
+      "comida_podrida": 4,
+      "agua_sucia": 1
+    },
+    "unlock": 13,
+    "cat": "Compost"
+  },
+  {
+    "id": "compost_fibra",
+    "result": "compost",
+    "qty": 1,
+    "station": "compostadora",
+    "level": 1,
+    "time": 600,
+    "cost": {
+      "fibra": 10
+    },
+    "unlock": 13,
+    "cat": "Residuos"
+  },
+  {
+    "id": "compost_carne",
+    "result": "compost",
+    "qty": 1,
+    "station": "compostadora",
+    "level": 1,
+    "time": 600,
+    "cost": {
+      "carne_cruda": 3
+    },
+    "unlock": 13,
+    "cat": "Residuos"
+  },
+  {
+    "id": "tierra",
+    "result": "tierra",
+    "qty": 3,
+    "station": "compostadora",
+    "level": 1,
+    "time": 120,
+    "cost": {
+      "piedra": 2,
+      "compost": 1
+    },
+    "unlock": 13,
+    "cat": "Suelo"
+  },
+  {
     "id": "venda_medica",
     "result": "venda",
     "qty": 2,

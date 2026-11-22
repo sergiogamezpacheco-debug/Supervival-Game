@@ -89,6 +89,20 @@ Datos: `data/recipes.json` (`station` vacío = a mano) y `"tier"` en `data/items
 | Bayas x6 | Bayas 2 | 14 |
 | Seta x4 | Seta 1 | 14 |
 | Fibra vegetal x8 | Fibra vegetal 2 | 14 |
+| Bayas x12 | Bayas 2, Compost fértil 1 | 14 |
+| Seta x8 | Seta 1, Compost fértil 1 | 14 |
+| Hortalizas x6 | Abono orgánico 1, Fibra vegetal 2 | 14 |
+| Bayas x8 | Bayas 2, Humus rápido 1 | 14 |
+
+## Compostadora
+| Resultado | Ingredientes | Nivel |
+|---|---|---|
+| Compost fértil x2 | Comida podrida 3, Fibra vegetal 2 | 13 |
+| Abono orgánico x2 | Comida podrida 5, Tierra 2 | 13 |
+| Humus rápido | Comida podrida 4, Agua sucia 1 | 13 |
+| Compost fértil | Fibra vegetal 10 | 13 |
+| Compost fértil | Carne cruda 3 | 13 |
+| Tierra x3 | Piedra bruta 2, Compost fértil 1 | 13 |
 
 ## Mesa médica
 | Resultado | Ingredientes | Nivel |
@@ -161,6 +175,11 @@ Datos: `data/recipes.json` (`station` vacío = a mano) y `"tier"` en `data/items
   fecha de la más vieja; caducada se vuelve *comida podrida* (vida −10). En el inventario pone cuánto le queda.
 - **Conservas (no caducan)**: en la cocina, lata vacía + **sal** (sale de hervir 2 de agua sucia) o un **tarro de
   cristal esterilizado** (tarro + agua sucia hervidos). Latas y tarros salen en cofres, taquillas y cajas.
+- **Compostadora** (nivel 13, sin energía): *Compost* — compost fértil (3 de comida podrida + 2 de fibra → 2),
+  abono orgánico (5 de podrida + 2 de tierra → 2), humus rápido (4 de podrida + 1 de agua sucia); *Residuos* — compost
+  con 10 de fibra o 3 de carne cruda; *Suelo* — tierra (2 de piedra + 1 de compost → 3). En el huerto: con compost
+  las bayas dan 12 en 7 min (sin nada 6 en 10) y las setas 8 en 10 min; con humus, 8 bayas en 3 min; las
+  **hortalizas** (patatas y zanahorias) solo crecen con abono orgánico (1 + 2 de fibra → 6).
 - **Recolectar con herramienta**: pinos solo con hacha; rocas y vetas solo con pico. A mano: ramas secas (madera),
   piedras sueltas (piedra), hierba, arbustos, setas y restos metálicos. El botón muestra la herramienta que toca
   (en gris si no la llevas).
