@@ -7,7 +7,7 @@ extends Node
 const M := preload("res://scripts/world/station_models.gd")
 const IDS := ["hacha_hierro", "pico_hierro", "machete", "casco_obra", "chaqueta_piel", "chaleco",
 	"pantalon_cargo", "zapatillas", "botas", "guantes", "fibra", "piel", "baya", "carne_cruda",
-	"carne_asada", "seta", "carbon"]
+	"carne_asada", "seta", "carbon", "clavos", "tela_resistente"]
 
 var vp: SubViewport
 var cam: Camera3D
@@ -296,3 +296,24 @@ func _carbon() -> float:
 	for i in pts.size():
 		_blob(60 + i, Color("2b2b2d").lightened(0.05 * (i % 2)), pts[i], Vector3(0.3, 0.24, 0.27), 0.3)
 	return 1.5
+
+
+func _clavos() -> float:
+	# puñado de clavos tirados, cabeza plana y punta
+	for k in 9:
+		var a := float(k) * 2.4
+		var g := _group(Vector3(cos(a) * 0.32 * (0.4 + 0.07 * k), 0, sin(a) * 0.3 * (0.4 + 0.07 * k)), Vector3(84 + k * 3, k * 47, 0))
+		_p(_cyl(0.035, 0.035, 0.9, 6), STEEL, Vector3.ZERO, Vector3.ZERO, Vector3.ONE, g)
+		_p(_cyl(0.09, 0.09, 0.04, 8), STEEL_D, Vector3(0, 0.46, 0), Vector3.ZERO, Vector3.ONE, g)
+		_p(_cyl(0.0, 0.035, 0.12, 6), Color("dfe5e8"), Vector3(0, -0.51, 0), Vector3(180, 0, 0), Vector3.ONE, g)
+	return 1.9
+
+
+func _tela_resistente() -> float:
+	# lona doblada en capas, color caqui, con costura
+	for k in 3:
+		var c := Color("8c8a5e").lerp(Color("6f7048"), float(k) / 2.0)
+		_p(_box(Vector3(1.5, 0.1, 1.0)), c, Vector3(k * 0.03, k * 0.11, -k * 0.02), Vector3(0, k * 4, 0))
+		_p(_box(Vector3(1.52, 0.012, 0.03)), Color("d9cfa2"), Vector3(k * 0.03, k * 0.11 + 0.056, 0.42 - k * 0.02), Vector3(0, k * 4, 0))
+	_p(_box(Vector3(0.2, 0.36, 1.04)), Color("7d7b52"), Vector3(0.74, 0.12, 0), Vector3(0, 0, 8))
+	return 2.1

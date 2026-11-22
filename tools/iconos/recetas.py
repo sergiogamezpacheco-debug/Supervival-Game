@@ -12,13 +12,16 @@ RECETAS = {  # id: (lámina, x, y) del marco de 96x96 de la tarjeta
     "lingote_hierro": ("horno", 718, 116),
     "lingote_cobre": ("horno", 718, 244),
     "tablon": ("carpinteria", 718, 116),
+    "mango": ("carpinteria", 718, 244),
+    "viga": ("carpinteria", 718, 372),
+    "acero": ("horno", 718, 372),
     "pantalon_tela": ("costura", 718, 244),
     "gorra": ("costura", 718, 372),
     "camiseta": ("costura", 718, 500),
     "antidoto": ("quimica", 718, 116),
     "botiquin": ("quimica", 718, 244),
 }
-TAMBIEN_ITEMS = ["pantalon_tela", "gorra", "camiseta", "antidoto", "botiquin"]
+TAMBIEN_ITEMS = ["mango", "viga", "acero", "pantalon_tela", "gorra", "camiseta", "antidoto", "botiquin"]
 VISTAS = {  # id: (lámina, x, y, w, h)
     "lingote_hierro": ("horno", 180, 165, 330, 250),
     "tablon": ("carpinteria", 185, 200, 320, 230),

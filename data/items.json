@@ -3,71 +3,81 @@
     "name": "Troncos",
     "type": "material",
     "stack": 50,
-    "desc": "Troncos de pino. Base de casi todo.",
-    "weight": 0.3
+    "desc": "Troncos de pino. Se trabajan en el banco de carpintería.",
+    "weight": 0.3,
+    "tier": "bruto"
   },
   "piedra": {
     "name": "Piedra bruta",
     "type": "material",
     "stack": 50,
     "desc": "Piedra suelta para herramientas y estaciones.",
-    "weight": 0.4
+    "weight": 0.4,
+    "tier": "bruto"
   },
   "fibra": {
     "name": "Fibra vegetal",
     "type": "material",
     "stack": 50,
     "desc": "Hierba seca para cuerdas y vendas.",
-    "weight": 0.05
+    "weight": 0.05,
+    "tier": "bruto"
   },
   "tela": {
     "name": "Tela",
     "type": "material",
     "stack": 30,
     "desc": "Jirones de ropa de los infectados.",
-    "weight": 0.15
+    "weight": 0.15,
+    "tier": "bruto"
   },
   "tablon": {
     "name": "Tablón",
     "type": "material",
     "stack": 50,
-    "desc": "Madera trabajada en el banco de carpintería.",
-    "weight": 0.3
+    "desc": "Madera trabajada (banco de carpintería). Para construir y para piezas.",
+    "weight": 0.3,
+    "tier": "procesado"
   },
   "bloque_piedra": {
     "name": "Bloque de piedra",
     "type": "material",
     "stack": 50,
     "desc": "Piedra tallada en la mesa de cantería.",
-    "weight": 0.5
+    "weight": 0.5,
+    "tier": "procesado"
   },
   "cuerda": {
     "name": "Cuerda",
     "type": "material",
     "stack": 30,
     "desc": "Fibra trenzada.",
-    "weight": 0.2
+    "weight": 0.2,
+    "tier": "procesado"
   },
   "piel": {
     "name": "Piel",
     "type": "material",
     "stack": 30,
     "desc": "Piel de animal salvaje.",
-    "weight": 0.3
+    "weight": 0.3,
+    "tier": "bruto"
   },
   "mineral_hierro": {
     "name": "Mena de hierro",
     "type": "material",
     "stack": 50,
     "desc": "Se funde en el horno.",
-    "weight": 0.5
+    "weight": 0.5,
+    "tier": "bruto"
   },
   "lingote_hierro": {
     "name": "Lingote de hierro",
     "type": "material",
     "stack": 50,
     "desc": "Metal para herramientas y estructuras de metal.",
-    "weight": 0.4
+    "weight": 0.4,
+    "tier": "procesado"
   },
   "baya": {
     "name": "Bayas",
@@ -105,7 +115,7 @@
     "weight": 0.1
   },
   "venda": {
-    "name": "Venda",
+    "name": "Vendas simples",
     "type": "consumable",
     "stack": 10,
     "heal": 25,
@@ -132,7 +142,7 @@
     "weight": 0.2
   },
   "hacha_piedra": {
-    "name": "Hacha de piedra",
+    "name": "Hacha improvisada",
     "type": "tool",
     "tool": "axe",
     "damage": 14,
@@ -143,7 +153,7 @@
     "weight": 1.5
   },
   "pico_piedra": {
-    "name": "Pico de piedra",
+    "name": "Pico improvisado",
     "type": "tool",
     "tool": "pickaxe",
     "damage": 12,
@@ -185,12 +195,12 @@
     "weight": 1.5
   },
   "garrote": {
-    "name": "Garrote",
+    "name": "Garrote con clavos",
     "type": "weapon",
     "damage": 20,
     "durability": 70,
     "stack": 1,
-    "desc": "Pesado y resistente.",
+    "desc": "Mango con clavos. Pega fuerte.",
     "weight": 1.8
   },
   "machete": {
@@ -215,57 +225,65 @@
     "name": "Carbón",
     "type": "material",
     "stack": 50,
-    "desc": "Combustible para el horno: funde más rápido.",
-    "weight": 0.2
+    "desc": "Se hace con troncos en la hoguera o el horno. Funde el metal.",
+    "weight": 0.2,
+    "tier": "procesado"
   },
   "chatarra": {
     "name": "Chatarra",
     "type": "material",
     "stack": 50,
     "desc": "Restos metálicos. Se funden en el horno.",
-    "weight": 0.3
+    "weight": 0.3,
+    "tier": "bruto"
   },
   "mineral_cobre": {
     "name": "Mena de cobre",
     "type": "material",
     "stack": 50,
     "desc": "Roca verdosa de la cantera. Se funde en el horno.",
-    "weight": 0.5
+    "weight": 0.5,
+    "tier": "bruto"
   },
   "lingote_cobre": {
     "name": "Lingote de cobre",
     "type": "material",
     "stack": 50,
     "desc": "Metal blando y buen conductor: cables y piezas finas.",
-    "weight": 0.4
+    "weight": 0.4,
+    "tier": "procesado"
   },
   "cuero": {
     "name": "Cuero curtido",
     "type": "material",
     "stack": 30,
     "desc": "Piel curtida. Más resistente para mochilas y equipo.",
-    "weight": 0.3
+    "weight": 0.3,
+    "tier": "procesado"
   },
   "azufre": {
     "name": "Azufre",
     "type": "material",
     "stack": 50,
     "desc": "Polvo amarillo de la cantera. Con carbón, pólvora.",
-    "weight": 0.2
+    "weight": 0.2,
+    "tier": "bruto"
   },
   "polvora": {
     "name": "Pólvora",
     "type": "material",
     "stack": 30,
     "desc": "Carbón y azufre molidos. Para munición y explosivos.",
-    "weight": 0.1
+    "weight": 0.1,
+    "tier": "procesado"
   },
   "componentes": {
     "name": "Componentes",
     "type": "material",
     "stack": 30,
     "desc": "Muelles, engranajes y cables. Se sacan de la chatarra.",
-    "weight": 0.2
+    "weight": 0.2,
+    "tier": "componente"
   },
   "gorra": {
     "name": "Gorra",
@@ -408,5 +426,55 @@
     "bag_slots": 24,
     "desc": "24 huecos más. Cinchas y placas.",
     "weight": 1.6
+  },
+  "mango": {
+    "name": "Mango de herramienta",
+    "type": "material",
+    "tier": "componente",
+    "stack": 20,
+    "desc": "Mango de madera tallado. Base de hachas, picos y armas.",
+    "weight": 0.3
+  },
+  "clavos": {
+    "name": "Clavos",
+    "type": "material",
+    "tier": "componente",
+    "stack": 100,
+    "desc": "Clavos de hierro para garrotes, trampas y muebles.",
+    "weight": 0.01
+  },
+  "viga": {
+    "name": "Viga reforzada",
+    "type": "material",
+    "tier": "componente",
+    "stack": 20,
+    "desc": "Tablones unidos con chapa. Para estructuras fuertes.",
+    "weight": 1.2
+  },
+  "acero": {
+    "name": "Acero forjado",
+    "type": "material",
+    "tier": "procesado",
+    "stack": 50,
+    "desc": "Hierro afinado con carbón en el horno. Filos y armas buenas.",
+    "weight": 0.4
+  },
+  "tela_resistente": {
+    "name": "Tela resistente",
+    "type": "material",
+    "tier": "procesado",
+    "stack": 30,
+    "desc": "Tela doble cosida en la mesa de costura. Base de la ropa.",
+    "weight": 0.2
+  },
+  "antorcha": {
+    "name": "Antorcha",
+    "type": "weapon",
+    "damage": 8,
+    "durability": 30,
+    "stack": 1,
+    "light": true,
+    "desc": "Alumbra de noche. Como arma, poca cosa.",
+    "weight": 0.5
   }
 }

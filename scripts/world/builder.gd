@@ -246,6 +246,21 @@ static func tool_mesh(item_id: String) -> Node3D:
 			root.add_child(part(box(Vector3(0.08, 0.1, 0.5)), Color("8a8c8f"), Vector3(0, 0.4, -0.2)))
 		"lanza":
 			root.add_child(part(cyl(0.0, 0.06, 0.25), Color("cfc29a"), Vector3(0, 0.55, -0.2)))
+		"antorcha":
+			# trapo atado y llama que alumbra
+			root.add_child(part(cyl(0.065, 0.06, 0.14), Color("b49a6a"), Vector3(0, 0.42, -0.2)))
+			root.add_child(part(cyl(0.0, 0.08, 0.22), Color("ffb347"), Vector3(0, 0.6, -0.2), 3.0))
+			var l := OmniLight3D.new()
+			l.light_color = Color(1.0, 0.72, 0.4)
+			l.light_energy = 1.6
+			l.omni_range = 7.0
+			l.position = Vector3(0, 0.75, -0.2)
+			root.add_child(l)
+		"garrote":
+			root.add_child(part(cyl(0.07, 0.05, 0.4), Color("8b5a2b"), Vector3(0, 0.35, -0.2)))
+			for k in 5:
+				var a := float(k) * 1.3
+				root.add_child(part(box(Vector3(0.02, 0.02, 0.16)), Color("9aa0a4"), Vector3(sin(a) * 0.07, 0.3 + k * 0.05, -0.2 + cos(a) * 0.07)))
 	root.rotation_degrees = Vector3(-60, 0, 0)
 	return root
 

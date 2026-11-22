@@ -1,5 +1,15 @@
 [
   {
+    "id": "cuerda",
+    "result": "cuerda",
+    "qty": 1,
+    "station": "",
+    "cost": {
+      "fibra": 3
+    },
+    "unlock": 1
+  },
+  {
     "id": "hacha_piedra",
     "result": "hacha_piedra",
     "qty": 1,
@@ -33,68 +43,25 @@
     "unlock": 1
   },
   {
-    "id": "cuerda",
-    "result": "cuerda",
+    "id": "antorcha",
+    "result": "antorcha",
     "qty": 1,
     "station": "",
     "cost": {
-      "fibra": 3
+      "madera": 2,
+      "fibra": 2
     },
     "unlock": 1
   },
   {
-    "id": "garrote",
-    "result": "garrote",
+    "id": "venda",
+    "result": "venda",
     "qty": 1,
-    "station": "banco_trabajo",
-    "level": 1,
-    "time": 5,
+    "station": "",
     "cost": {
-      "madera": 6,
-      "cuerda": 1
+      "tela": 2
     },
-    "unlock": 2
-  },
-  {
-    "id": "hacha_hierro",
-    "result": "hacha_hierro",
-    "qty": 1,
-    "station": "banco_trabajo",
-    "level": 2,
-    "time": 20,
-    "cost": {
-      "lingote_hierro": 3,
-      "tablon": 2,
-      "cuerda": 1
-    },
-    "unlock": 10
-  },
-  {
-    "id": "pico_hierro",
-    "result": "pico_hierro",
-    "qty": 1,
-    "station": "banco_trabajo",
-    "level": 2,
-    "time": 20,
-    "cost": {
-      "lingote_hierro": 3,
-      "tablon": 2,
-      "cuerda": 1
-    },
-    "unlock": 10
-  },
-  {
-    "id": "machete",
-    "result": "machete",
-    "qty": 1,
-    "station": "banco_armas",
-    "level": 1,
-    "time": 25,
-    "cost": {
-      "lingote_hierro": 4,
-      "cuerda": 1
-    },
-    "unlock": 12
+    "unlock": 1
   },
   {
     "id": "tablon",
@@ -104,21 +71,48 @@
     "level": 1,
     "time": 8,
     "cost": {
-      "madera": 3
+      "madera": 2
     },
     "unlock": 3
   },
   {
-    "id": "bloque_piedra",
-    "result": "bloque_piedra",
+    "id": "mango",
+    "result": "mango",
     "qty": 1,
-    "station": "cantero",
+    "station": "carpinteria",
     "level": 1,
-    "time": 8,
+    "time": 10,
     "cost": {
-      "piedra": 3
+      "madera": 2
     },
-    "unlock": 5
+    "unlock": 3,
+    "cat": "Recursos"
+  },
+  {
+    "id": "viga",
+    "result": "viga",
+    "qty": 1,
+    "station": "carpinteria",
+    "level": 1,
+    "time": 20,
+    "cost": {
+      "tablon": 3,
+      "chatarra": 1
+    },
+    "unlock": 8,
+    "cat": "Recursos"
+  },
+  {
+    "id": "carbon_hoguera",
+    "result": "carbon",
+    "qty": 1,
+    "station": "hoguera",
+    "level": 1,
+    "time": 30,
+    "cost": {
+      "madera": 3
+    },
+    "unlock": 1
   },
   {
     "id": "carne_asada",
@@ -133,7 +127,19 @@
     "unlock": 1
   },
   {
-    "id": "lingote_hierro",
+    "id": "carbon_horno",
+    "result": "carbon",
+    "qty": 2,
+    "station": "horno",
+    "level": 1,
+    "time": 15,
+    "cost": {
+      "madera": 2
+    },
+    "unlock": 6
+  },
+  {
+    "id": "lingote_carbon",
     "result": "lingote_hierro",
     "qty": 1,
     "station": "horno",
@@ -141,33 +147,20 @@
     "time": 20,
     "cost": {
       "mineral_hierro": 3,
-      "madera": 2
+      "carbon": 1
     },
     "unlock": 6
   },
   {
-    "id": "venda",
-    "result": "venda",
-    "qty": 1,
-    "station": "mesa_costura",
-    "level": 1,
-    "time": 5,
-    "cost": {
-      "tela": 2,
-      "fibra": 1
-    },
-    "unlock": 4
-  },
-  {
-    "id": "lingote_carbon",
+    "id": "lingote_hierro",
     "result": "lingote_hierro",
-    "qty": 2,
+    "qty": 1,
     "station": "horno",
     "level": 1,
-    "time": 25,
+    "time": 30,
     "cost": {
-      "mineral_hierro": 4,
-      "carbon": 1
+      "mineral_hierro": 3,
+      "madera": 3
     },
     "unlock": 6
   },
@@ -180,7 +173,7 @@
     "time": 15,
     "cost": {
       "chatarra": 4,
-      "madera": 1
+      "carbon": 1
     },
     "unlock": 6
   },
@@ -193,22 +186,115 @@
     "time": 20,
     "cost": {
       "mineral_cobre": 3,
-      "madera": 2
+      "carbon": 1
     },
     "unlock": 14
   },
   {
-    "id": "cuero",
-    "result": "cuero",
+    "id": "acero",
+    "result": "acero",
     "qty": 1,
-    "station": "mesa_costura",
+    "station": "horno",
     "level": 1,
-    "time": 15,
+    "time": 35,
     "cost": {
-      "piel": 2,
-      "fibra": 1
+      "lingote_hierro": 2,
+      "carbon": 2
+    },
+    "unlock": 12
+  },
+  {
+    "id": "clavos",
+    "result": "clavos",
+    "qty": 6,
+    "station": "banco_trabajo",
+    "level": 1,
+    "time": 10,
+    "cost": {
+      "chatarra": 2
+    },
+    "unlock": 2,
+    "cat": "Recursos"
+  },
+  {
+    "id": "clavos_hierro",
+    "result": "clavos",
+    "qty": 12,
+    "station": "banco_trabajo",
+    "level": 1,
+    "time": 10,
+    "cost": {
+      "lingote_hierro": 1
+    },
+    "unlock": 6,
+    "cat": "Recursos"
+  },
+  {
+    "id": "garrote",
+    "result": "garrote",
+    "qty": 1,
+    "station": "banco_trabajo",
+    "level": 1,
+    "time": 10,
+    "cost": {
+      "mango": 1,
+      "clavos": 5
+    },
+    "unlock": 3
+  },
+  {
+    "id": "hacha_hierro",
+    "result": "hacha_hierro",
+    "qty": 1,
+    "station": "banco_trabajo",
+    "level": 2,
+    "time": 20,
+    "cost": {
+      "mango": 1,
+      "lingote_hierro": 2,
+      "cuerda": 1
     },
     "unlock": 10
+  },
+  {
+    "id": "pico_hierro",
+    "result": "pico_hierro",
+    "qty": 1,
+    "station": "banco_trabajo",
+    "level": 2,
+    "time": 20,
+    "cost": {
+      "mango": 1,
+      "lingote_hierro": 3,
+      "cuerda": 1
+    },
+    "unlock": 10
+  },
+  {
+    "id": "componentes",
+    "result": "componentes",
+    "qty": 1,
+    "station": "banco_trabajo",
+    "level": 2,
+    "time": 15,
+    "cost": {
+      "chatarra": 4
+    },
+    "unlock": 18
+  },
+  {
+    "id": "machete",
+    "result": "machete",
+    "qty": 1,
+    "station": "banco_armas",
+    "level": 1,
+    "time": 25,
+    "cost": {
+      "acero": 2,
+      "mango": 1,
+      "cuero": 1
+    },
+    "unlock": 12
   },
   {
     "id": "polvora",
@@ -224,16 +310,31 @@
     "unlock": 20
   },
   {
-    "id": "componentes",
-    "result": "componentes",
+    "id": "tela_resistente",
+    "result": "tela_resistente",
     "qty": 1,
-    "station": "banco_trabajo",
-    "level": 2,
+    "station": "mesa_costura",
+    "level": 1,
+    "time": 10,
+    "cost": {
+      "tela": 2,
+      "fibra": 2
+    },
+    "unlock": 4,
+    "cat": "Recursos"
+  },
+  {
+    "id": "cuero",
+    "result": "cuero",
+    "qty": 1,
+    "station": "mesa_costura",
+    "level": 1,
     "time": 15,
     "cost": {
-      "chatarra": 4
+      "piel": 2,
+      "fibra": 1
     },
-    "unlock": 18
+    "unlock": 10
   },
   {
     "id": "camiseta",
@@ -243,8 +344,7 @@
     "level": 1,
     "time": 20,
     "cost": {
-      "tela": 3,
-      "fibra": 2
+      "tela_resistente": 2
     },
     "unlock": 4
   },
@@ -256,8 +356,8 @@
     "level": 1,
     "time": 20,
     "cost": {
-      "tela": 4,
-      "fibra": 2
+      "tela_resistente": 3,
+      "cuerda": 2
     },
     "unlock": 4
   },
@@ -269,8 +369,8 @@
     "level": 1,
     "time": 15,
     "cost": {
-      "tela": 2,
-      "fibra": 1
+      "tela_resistente": 1,
+      "fibra": 3
     },
     "unlock": 4
   },
@@ -283,7 +383,7 @@
     "time": 20,
     "cost": {
       "piel": 1,
-      "tela": 1,
+      "tela_resistente": 1,
       "cuerda": 1
     },
     "unlock": 4
@@ -296,7 +396,7 @@
     "level": 1,
     "time": 40,
     "cost": {
-      "tela": 6,
+      "tela_resistente": 3,
       "cuerda": 3,
       "piel": 3
     },
@@ -310,9 +410,9 @@
     "level": 2,
     "time": 45,
     "cost": {
-      "piel": 6,
-      "cuerda": 2,
-      "tela": 2
+      "cuero": 3,
+      "tela_resistente": 2,
+      "cuerda": 1
     },
     "unlock": 10
   },
@@ -324,9 +424,9 @@
     "level": 2,
     "time": 40,
     "cost": {
-      "tela": 6,
+      "tela_resistente": 4,
       "cuerda": 2,
-      "piel": 2
+      "cuero": 1
     },
     "unlock": 12
   },
@@ -338,7 +438,7 @@
     "level": 2,
     "time": 40,
     "cost": {
-      "piel": 4,
+      "cuero": 2,
       "cuerda": 2,
       "tablon": 1
     },
@@ -352,10 +452,9 @@
     "level": 2,
     "time": 60,
     "cost": {
-      "tela": 6,
-      "chatarra": 6,
-      "cuerda": 3,
-      "lingote_hierro": 1
+      "tela_resistente": 3,
+      "acero": 2,
+      "cuerda": 3
     },
     "unlock": 18
   },
@@ -368,8 +467,8 @@
     "time": 60,
     "cost": {
       "mochila": 1,
-      "piel": 6,
-      "tela": 8,
+      "cuero": 3,
+      "tela_resistente": 4,
       "cuerda": 4
     },
     "unlock": 16
@@ -383,12 +482,24 @@
     "time": 90,
     "cost": {
       "mochila_excursion": 1,
-      "tela": 10,
-      "cuerda": 6,
-      "chatarra": 6,
-      "lingote_hierro": 2
+      "tela_resistente": 6,
+      "cuero": 4,
+      "acero": 2,
+      "componentes": 2
     },
     "unlock": 25
+  },
+  {
+    "id": "bloque_piedra",
+    "result": "bloque_piedra",
+    "qty": 1,
+    "station": "cantero",
+    "level": 1,
+    "time": 8,
+    "cost": {
+      "piedra": 3
+    },
+    "unlock": 5
   },
   {
     "id": "carne_seca",

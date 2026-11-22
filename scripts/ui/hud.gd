@@ -53,7 +53,7 @@ var _clock_icon: TextureRect
 var location_label: Label
 var _clock_label: Label
 var _rain_icon: TextureRect
-var _craft_panel: PanelContainer
+var _craft_panel: Control   # scripts/ui/craft_screen.gd
 var _craft_list: VBoxContainer
 var _root: Control
 var _build_panel: PanelContainer
@@ -572,7 +572,11 @@ func _build_controls() -> void:
 	inv_btn = _make_inv_button()
 	side.add_child(inv_btn)
 	craft_btn = _big_button("fabricar", "Fabricar")
-	craft_btn.pressed.connect(func(): _toggle(_craft_panel))
+	craft_btn.pressed.connect(func():
+		var opening := not _craft_panel.visible
+		close_panels()
+		if opening:
+			_craft_panel.open_craft())
 	side.add_child(craft_btn)
 	build_btn = _big_button("construir", "Construir")
 	build_btn.pressed.connect(func(): _toggle(_build_panel))
@@ -663,6 +667,7 @@ func _process(delta: float) -> void:
 	inv_open = inv_open or (_map_panel != null and _map_panel.visible)
 	inv_open = inv_open or (_settings_panel != null and _settings_panel.visible)
 	inv_open = inv_open or (_station_panel != null and _station_panel.visible)
+	inv_open = inv_open or (_craft_panel != null and _craft_panel.visible)
 	if fps_label and fps_label.visible:
 		fps_label.text = "%d FPS" % Engine.get_frames_per_second()
 	joystick.visible = not inv_open
@@ -824,55 +829,15 @@ func _make_inv_button() -> Button:
 # ------------------------------------------------------------- fabricación
 
 func _build_crafting() -> void:
-	var parts := _panel("Fabricar")
-	_craft_panel = parts[0]
-	var v: VBoxContainer = parts[1]
-	var hint := Label.new()
-	hint.text = "A mano. Las demás recetas están en las estaciones del refugio."
-	hint.add_theme_font_size_override("font_size", 18)
-	v.add_child(hint)
-	var scroll := ScrollContainer.new()
-	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
-	scroll.custom_minimum_size = Vector2(720, 380)
-	v.add_child(scroll)
-	_craft_list = VBoxContainer.new()
-	_craft_list.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	_craft_list.add_theme_constant_override("separation", 10)
-	scroll.add_child(_craft_list)
+	_craft_panel = load("res://scripts/ui/craft_screen.gd").new()
+	_root.add_child(_craft_panel)
 
 
 func _refresh_crafting() -> void:
-	if _craft_list == null:
-		return
-	for c in _craft_list.get_children():
-		c.queue_free()
-	for r in DB.recipes_for(""):
-		var row := HBoxContainer.new()
-		row.add_theme_constant_override("separation", 12)
-		row.add_child(_row_icon(str(r["result"])))
-		var lbl := Label.new()
-		lbl.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-		lbl.clip_text = true
-		lbl.custom_minimum_size.x = 100
-		lbl.add_theme_font_size_override("font_size", 20)
-		var cost: Dictionary = r.get("cost", {})
-		var parts := PackedStringArray()
-		for id in cost:
-			parts.append("%s %d/%d" % [DB.item_name(str(id)), GS.count(str(id)), int(cost[id])])
-		lbl.text = "%s\n   %s" % [DB.item_name(str(r["result"])), ", ".join(parts)]
-		row.add_child(lbl)
-		var b := Button.new()
-		b.text = "Fabricar"
-		b.custom_minimum_size = Vector2(150, 60)
-		b.disabled = not GS.can_craft(r)
-		if GS.level < DB.recipe_unlock(r):
-			b.disabled = true
-			b.text = "Nivel %d" % DB.recipe_unlock(r)
-			row.modulate = Color(1, 1, 1, 0.55)
-		var rid := str(r["id"])
-		b.pressed.connect(func(): GS.craft(rid))
-		row.add_child(b)
-		_craft_list.add_child(row)
+	if _craft_panel and _craft_panel.visible:
+		var keep: int = _craft_panel.sel
+		_craft_panel.refresh()
+		_craft_panel._show(keep)
 
 
 # ------------------------------------------------------------- construir

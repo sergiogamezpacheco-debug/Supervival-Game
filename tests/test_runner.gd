@@ -39,6 +39,7 @@ func _ready() -> void:
 	await test_shelter_structures()
 	print("== Niveles y peso")
 	await test_levels_weight()
+	await test_crafting_tree()
 	print("== Animales")
 	await test_animals()
 	print("== Viajes y zonas")
@@ -365,6 +366,7 @@ func test_base() -> void:
 	check(bench != null, "banco de trabajo colocado")
 	GS.add_item("lingote_hierro", 10)
 	GS.add_item("cuerda", 5)
+	GS.add_item("mango", 3)
 	check(bench.start("hacha_hierro") != "", "el hacha de hierro pide banco de nivel 2")
 	GS.add_item("bloque_piedra", 10)
 	check(base.upgrade(bench) and bench.level == 2, "banco mejorado a nivel 2")
@@ -383,6 +385,7 @@ func test_base() -> void:
 	GS.time_offset += 60.0
 	bench.collect()
 	check(GS.count("hacha_hierro") == 1, "hacha de hierro recogida")
+	GS.remove_item("mango", GS.count("mango"))
 	GS.remove_item("hacha_hierro", 1)
 	GS.add_item("chatarra", 4)
 	var why_c: String = bench.start("componentes")
@@ -401,7 +404,8 @@ func test_base() -> void:
 
 	var fire: Node3D = base.place("hoguera", Vector2i(-2, 6), 0, 0, pp)
 	GS.add_item("carne_cruda", 1)
-	check(fire != null and fire.start("carne_asada") == "", "la hoguera cocina carne")
+	var fmsg: String = fire.start("carne_asada") if fire else "sin hoguera"
+	check(fmsg == "", "la hoguera cocina carne (%s)" % fmsg)
 	GS.time_offset += 11.0
 	fire.collect()
 	check(GS.count("carne_asada") == 1, "carne asada recogida")
@@ -618,6 +622,59 @@ func test_shelter_structures() -> void:
 	await _frames(2)
 
 
+func test_crafting_tree() -> void:
+	print("== Fabricación: materias primas, procesados y bancos")
+	# a mano solo lo básico
+	var manual := DB.recipes_for("")
+	var ids := manual.map(func(r): return str(r["result"]))
+	check(manual.size() <= 6 and ids.has("hacha_piedra") and ids.has("cuerda") and not ids.has("garrote"), "a mano solo lo básico (%s)" % str(ids))
+	# todo lo que piden las recetas existe y, si no es materia prima o botín, se fabrica en algún sitio
+	var made := {}
+	for r in DB.recipes:
+		made[str(r["result"])] = true
+	var loot := ["tela", "piel", "chatarra", "carne_cruda", "baya", "seta", "azufre", "mochila", "mochila_excursion"]
+	var bad := []
+	for r in DB.recipes:
+		for id in r["cost"]:
+			var d := DB.item(str(id))
+			if d.is_empty() or (str(d.get("tier", "")) != "bruto" and not made.has(str(id)) and not loot.has(str(id))):
+				bad.append("%s<-%s" % [r["id"], id])
+	check(bad.is_empty(), "cada ingrediente existe y se puede conseguir %s" % str(bad))
+	check(DB.recipe("garrote")["cost"].has("mango") and DB.recipe("mango")["station"] == "carpinteria" and DB.recipe("clavos")["station"] == "banco_trabajo", "el garrote pide mango (carpintería) y clavos (banco)")
+	check(DB.recipe("hacha_hierro")["cost"].has("mango") and DB.recipe("acero")["station"] == "horno" and DB.recipe("machete")["cost"].has("acero"), "herramientas de metal con mango; el machete, con acero del horno")
+	check(DB.recipe("camiseta")["cost"].has("tela_resistente") and DB.recipe("tela_resistente")["station"] == "mesa_costura", "la ropa se cose con tela resistente")
+	check(bool(DB.item("antorcha").get("light", false)) and Builder.tool_mesh("antorcha").find_children("*", "OmniLight3D", true, false).size() == 1, "la antorcha alumbra")
+	# pantalla de fabricación
+	var world := await _new_world()
+	world.hud.craft_btn.pressed.emit()
+	await _pframes(2)
+	var cs: Control = world.hud._craft_panel
+	check(cs.visible and cs.cards.size() > 20 and cs.cards[0]["manual"], "la pantalla muestra todos los planos, primero los de a mano")
+	var gi := -1
+	for i in cs.cards.size():
+		if cs.cards[i]["r"]["result"] == "garrote":
+			gi = i
+	cs._show(gi)
+	check(not cs.cards[gi]["manual"] and cs.craft_btn.disabled and "Banco de trabajo" in cs._where.text, "el garrote dice en qué banco se hace")
+	GS.clear_inventory() if GS.has_method("clear_inventory") else null
+	cs.ctab = "Herramientas"
+	cs.sel = 0
+	cs.refresh()
+	var hi := -1
+	for i in cs.cards.size():
+		if cs.cards[i]["r"]["result"] == "hacha_piedra":
+			hi = i
+	cs._show(hi)
+	_give(DB.recipe("hacha_piedra")["cost"])
+	cs._show(hi)
+	var axes := GS.count("hacha_piedra")
+	check(not cs.craft_btn.disabled and cs._slots[0][2].text.begins_with("%d/" % GS.count("madera")), "a mano: se ven los materiales y se puede fabricar")
+	cs.craft_btn.pressed.emit()
+	check(GS.count("hacha_piedra") == axes + 1, "FABRICAR hace el hacha")
+	world.queue_free()
+	await _frames(2)
+
+
 func test_levels_weight() -> void:
 	DirAccess.remove_absolute(ProjectSettings.globalize_path(GS.save_path))
 	GS.new_game()
@@ -647,7 +704,7 @@ func test_levels_weight() -> void:
 	GS.leveled_up.connect(on_up)
 	GS.add_xp(30)
 	check(GS.level == 2 and GS.xp == 0 and GS.health == 100.0, "con 30 XP subes al 2 y recuperas la vida")
-	check(got.size() == 1 and "Cofre" in got[0][1] and "Garrote" in got[0][1], "al 2 se desbloquean el cofre y el garrote")
+	check(got.size() == 1 and "Cofre" in got[0][1] and "Clavos" in got[0][1], "al 2 se desbloquean el cofre y los clavos")
 	GS.level = 4
 	GS.xp = 0
 	var cuerdas := GS.count("cuerda")
@@ -670,9 +727,10 @@ func test_levels_weight() -> void:
 	var bench: Node3D = _place_any(base, "banco_trabajo", pp)
 	check(bench != null, "el banco de trabajo está desde el nivel 1")
 	_give(DB.recipe("garrote")["cost"])
-	check(bench.start("garrote") == "Se desbloquea en el nivel 2", "el garrote pide nivel 2")
+	check(bench.start("garrote") == "Se desbloquea en el nivel 3", "el garrote pide nivel 3")
+	GS.level = 3
+	check(bench.start("garrote") == "", "en el nivel 3 ya se fabrica")
 	GS.level = 2
-	check(bench.start("garrote") == "", "en el nivel 2 ya se fabrica")
 	world.hud.open_station(bench)
 	await _pframes(2)
 	var bs: Control = world.hud._station_panel
@@ -1490,8 +1548,8 @@ func test_night_stealth() -> void:
 	for i in ws.entries.size():
 		if ws.entries[i]["kind"] == "recipe" and ws.entries[i]["r"]["id"] == "garrote":
 			ws._select(i)
-	GS.add_item("madera", 12)
-	GS.add_item("cuerda", 2)
+	_give(DB.recipe("garrote")["cost"])
+	_give(DB.recipe("garrote")["cost"])
 	ws.set_qty(2)
 	check(ws.qty == 2 and ws._qty_label.text == "2", "se elige cuántas fabricar")
 	var hachas := GS.count("garrote")
