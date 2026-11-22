@@ -1,6 +1,6 @@
 extends Node
 ## Iconos de cabecera de las estaciones sin icono en los diseños: se renderiza su modelo 3D.
-##   xvfb-run ... res://tools/station_icons.tscn -- assets/icons/estaciones
+##   xvfb-run ... res://tools/station_icons.tscn -- assets/icons/estaciones [id ...]
 ## (las que tienen recorte en tools/iconos/estaciones.py no se tocan)
 
 func _ready() -> void:
@@ -25,8 +25,11 @@ func _ready() -> void:
 	var cam := Camera3D.new()
 	cam.projection = Camera3D.PROJECTION_ORTHOGONAL
 	vp.add_child(cam)
+	var only: Array = OS.get_cmdline_user_args().slice(1)   # opcional: solo estas
 	for id in DB.stations:
 		if FileAccess.file_exists("res://assets/icons/estaciones/%s.png" % id) and id in ["carpinteria", "horno", "mesa_costura", "banco_armas"]:
+			continue
+		if not only.is_empty() and not only.has(id):
 			continue
 		var m := Builder.station_mesh(id, 1)
 		for l in m.find_children("*", "Light3D", true, false):

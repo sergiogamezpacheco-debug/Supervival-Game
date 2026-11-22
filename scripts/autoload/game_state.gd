@@ -390,10 +390,15 @@ func use_slot(i: int) -> void:
 			if bool(data.get("cure_poison", false)) and poison > 0.0:
 				poison = 0.0
 				message.emit("Veneno curado")
+			if data.has("stamina"):
+				stamina = minf(max_stamina(), stamina + float(data["stamina"]) * max_stamina() / 100.0)
 			s["qty"] = int(s["qty"]) - 1
 			if int(s["qty"]) <= 0:
 				slots[i] = null
 			message.emit("Usado: %s" % DB.item_name(str(s["id"])))
+			# Botellas, cantimplora: queda el envase vacío
+			if data.has("empty") and add_item(str(data["empty"]), 1) > 0:
+				message.emit("No cabe: %s" % DB.item_name(str(data["empty"])).to_lower())
 			inventory_changed.emit()
 		"tool", "weapon":
 			equip_slot(i)
@@ -432,6 +437,21 @@ func drop_slot(i: int) -> Variant:
 	slots[i] = null
 	inventory_changed.emit()
 	return s
+
+
+## Arma arrojadiza en la mano (molotov): se lanza en vez de golpear.
+func hand_throws() -> bool:
+	return hand != null and bool(DB.item(str(hand["id"])).get("throw", false))
+
+
+## Gasta una unidad de lo que llevas en la mano (lo lanzado).
+func spend_hand() -> void:
+	if hand == null:
+		return
+	hand["qty"] = int(hand.get("qty", 1)) - 1
+	if int(hand["qty"]) <= 0:
+		hand = null
+	inventory_changed.emit()
 
 
 func hand_data() -> Dictionary:

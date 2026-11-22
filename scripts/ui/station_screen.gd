@@ -16,7 +16,9 @@ const ROW_BG := Color(0.13, 0.12, 0.095, 0.84)
 const ROW_LINE := Color("4d4536")
 const PANEL_BG := Color(0.07, 0.065, 0.05, 0.8)
 const W := 1280.0
-const TAB_ORDER := ["Obra", "Herramientas", "Armas", "Ropa", "Mochilas", "Comida", "Medicinas", "Recursos", "Combustible", "Agua", "Reparar"]
+const TAB_ORDER := ["Obra", "Herramientas", "Armas", "Trampas", "Ropa", "Mochilas", "Platos", "Comida", "Conservas",
+	"Medicamentos", "Medicinas", "Explosivos", "Alquimia", "Líquidos", "Circuitos", "Energía", "Dispositivos",
+	"Componentes", "Recursos", "Combustible", "Agua", "Fuego", "Reparar"]
 
 var station: Node3D
 var entries: Array = []          # lo que se puede hacer aquí (pestaña actual)
@@ -386,18 +388,19 @@ func _all_entries() -> Array:
 				"cost": ph[i].get("cost", {}), "desc": DB.stations[station.id].get("desc", ""), "done": i < station.stage})
 		return out
 	if station.is_generator():
-		var per: Dictionary = DB.bal("generator_fuel", {"carbon": 300, "madera": 90})
-		for fid in per:
-			out.append({"kind": "fuel", "id": str(fid), "tab": "Combustible", "name": "Echar %s" % DB.item_name(str(fid)).to_lower(),
-				"cost": {str(fid): 1}, "desc": "Cada unidad da %s de energía a la recicladora." % _clock(float(per[fid])), "icon": str(fid)})
+		_fuel_entries(out, "Combustible", "Cada unidad da %s de energía a la recicladora, la mesa química y el banco de electrónica.")
 		return out
 	if station.is_collector():
 		out.append({"kind": "water", "tab": "Agua", "name": "Beber agua", "cost": {},
 			"desc": "Junta agua sola; con lluvia, cuatro veces más rápido. Bebe hasta quitarte la sed.", "icon": ""})
+		out.append({"kind": "fill", "tab": "Agua", "name": "Llenar botellas", "cost": {"botella_vacia": 1}, "icon": "agua_sucia",
+			"desc": "Cada botella vacía se llena con %d de agua: sale agua sucia, que se hierve en la cocina de campo o se destila." % int(DB.bal("bottle_water", 10))})
 		return out
 	for r in DB.recipes_for(station.id):
 		out.append({"kind": "recipe", "r": r, "tab": recipe_cat(r), "name": DB.item_name(str(r["result"])),
 			"cost": r.get("cost", {}), "desc": str(DB.item(str(r["result"])).get("desc", "")), "icon": str(r["result"])})
+	if station.burns():
+		_fuel_entries(out, "Fuego", "Cada unidad da %s de fuego. Lo que fabricas gasta el fuego que dura.")
 	if station.id == "banco_trabajo" or station.id == "mesa_costura":
 		for ref in GS.damaged_items(station.id):
 			var it: Dictionary = ref["item"]
@@ -406,6 +409,13 @@ func _all_entries() -> Array:
 				"name": "Reparar %s (%d%%)" % [DB.item_name(str(it["id"])), roundi(100.0 * float(it["dur"]) / mx)],
 				"cost": GS.repair_cost(it), "desc": "Vuelve a dejarlo como nuevo."})
 	return out
+
+
+func _fuel_entries(out: Array, tab_name: String, desc: String) -> void:
+	var per: Dictionary = station.fuel_table()
+	for fid in per:
+		out.append({"kind": "fuel", "id": str(fid), "tab": tab_name, "name": "Echar %s" % DB.item_name(str(fid)).to_lower(),
+			"cost": {str(fid): 1}, "desc": desc % _clock(float(per[fid])), "icon": str(fid)})
 
 
 func refresh() -> void:
@@ -616,6 +626,8 @@ func _max_qty() -> int:
 		return maxi(1, StationScript().max_times(e["r"]))
 	if e["kind"] == "fuel":
 		return clampi(GS.count(str(e["id"])), 1, 20)
+	if e["kind"] == "fill":
+		return clampi(mini(GS.count("botella_vacia"), int(station.water_now() / float(DB.bal("bottle_water", 10)))), 1, 20)
 	return 1
 
 
@@ -640,7 +652,7 @@ func tick() -> void:
 	_qty_label.text = str(qty)
 	var e: Dictionary = entries[selected] if not entries.is_empty() else {}
 	var kind := str(e.get("kind", ""))
-	var uses_qty := kind == "recipe" or kind == "fuel"
+	var uses_qty := kind == "recipe" or kind == "fuel" or kind == "fill"
 	_minus.disabled = not uses_qty or qty <= 1
 	_plus.disabled = not uses_qty or qty >= _max_qty()
 	# Progreso
@@ -671,10 +683,16 @@ func tick() -> void:
 		_prog_time.text = ("%s listo" % nm) if station.is_done() else ("Tiempo: %s" % _clock(station.time_left()))
 	# Energía: el generador (y lo que gasta energía); el resto no la necesita
 	var gen: Node3D = station if station.is_generator() and station.is_built() else (station._generator() if station.is_built() and station.needs_power() else null)
-	var show_energy: bool = station.is_built() and (station.is_generator() or station.needs_power())
+	var show_energy: bool = station.is_built() and (station.is_generator() or station.needs_power() or station.burns())
 	for n in _energy_nodes:
 		n.visible = show_energy
-	if show_energy:
+	if show_energy and station.burns():
+		_energy_icon.texture = _tex("res://assets/icons/estaciones/llama.png")
+		var fm: float = station.fuel_max()
+		_energy_bar.value = station.fuel / fm
+		_energy_text.text = "%d/100" % roundi(100.0 * station.fuel / fm)
+		_energy_time.text = "TIEMPO: %s" % _clock(station.fuel)
+	elif show_energy:
 		_energy_icon.texture = _tex("res://assets/icons/estaciones/bateria.png")
 		var mx := float(DB.bal("generator_max", 3600))
 		var f: float = gen.fuel if gen else 0.0
@@ -710,6 +728,9 @@ func tick() -> void:
 		"water":
 			action_btn.text = "BEBER"
 			action_btn.disabled = station.water_now() < 1.0
+		"fill":
+			action_btn.text = "LLENAR"
+			action_btn.disabled = GS.count("botella_vacia") <= 0 or station.water_now() < float(DB.bal("bottle_water", 10))
 		_:
 			action_btn.text = "FABRICAR"
 			action_btn.disabled = true
@@ -737,6 +758,8 @@ func _on_action() -> void:
 			why = GS.repair(e["ref"])
 		"water":
 			station.drink()
+		"fill":
+			why = station.fill_bottles(qty)
 	if why != "":
 		GS.message.emit(why)
 	var keep := selected

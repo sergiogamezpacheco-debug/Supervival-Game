@@ -56,7 +56,8 @@
   "dodge_cooldown": 0.9,
   "generator_fuel": {
     "carbon": 300,
-    "madera": 90
+    "madera": 90,
+    "combustible": 1200
   },
   "generator_max": 3600,
   "garden_water_mult": 0.5,
@@ -67,5 +68,15 @@
   "overload_walk_drain": 3.0,
   "overload_run_mult": 1.5,
   "run_release": 0.8,
-  "player_accel": 14.0
+  "player_accel": 14.0,
+  "stove_fuel": {
+    "madera": 60,
+    "carbon": 180,
+    "combustible": 600
+  },
+  "stove_max": 1800,
+  "bottle_water": 10,
+  "throw_range": 11.0,
+  "trap_radius": 0.9,
+  "trap_cooldown": 1.2
 }

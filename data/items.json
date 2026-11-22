@@ -476,5 +476,199 @@
     "light": true,
     "desc": "Alumbra de noche. Como arma, poca cosa.",
     "weight": 0.5
+  },
+  "botella_vacia": {
+    "name": "Botella vacía",
+    "type": "material",
+    "stack": 20,
+    "desc": "Se llena en el recolector de agua. Base del molotov.",
+    "weight": 0.1,
+    "tier": "bruto"
+  },
+  "lata_vacia": {
+    "name": "Lata vacía",
+    "type": "material",
+    "stack": 20,
+    "desc": "Lata limpia para hacer conservas en la cocina de campo.",
+    "weight": 0.05,
+    "tier": "bruto"
+  },
+  "agua_sucia": {
+    "name": "Agua sucia",
+    "type": "consumable",
+    "stack": 10,
+    "water": 15,
+    "heal": -4,
+    "empty": "botella_vacia",
+    "desc": "Quita la sed, pero sienta mal. Mejor hervirla o destilarla.",
+    "weight": 0.5,
+    "tier": "bruto"
+  },
+  "agua_hervida": {
+    "name": "Agua hervida",
+    "type": "consumable",
+    "stack": 10,
+    "water": 30,
+    "empty": "botella_vacia",
+    "desc": "Hervida en la cocina de campo. Se puede beber sin miedo.",
+    "weight": 0.5
+  },
+  "agua_purificada": {
+    "name": "Agua purificada",
+    "type": "consumable",
+    "stack": 10,
+    "water": 45,
+    "heal": 3,
+    "empty": "botella_vacia",
+    "desc": "Destilada: la más limpia. Quita mucha sed y sirve para medicinas.",
+    "weight": 0.5,
+    "tier": "procesado"
+  },
+  "cantimplora_vacia": {
+    "name": "Cantimplora vacía",
+    "type": "material",
+    "stack": 1,
+    "desc": "Se rellena en la cocina de campo con agua sucia (la hierve).",
+    "weight": 0.3,
+    "tier": "componente"
+  },
+  "cantimplora": {
+    "name": "Cantimplora",
+    "type": "consumable",
+    "stack": 1,
+    "water": 60,
+    "empty": "cantimplora_vacia",
+    "desc": "Mucha agua en poco peso. Al beberla queda vacía para volver a llenarla.",
+    "weight": 1.0
+  },
+  "plato_cocinado": {
+    "name": "Plato cocinado",
+    "type": "consumable",
+    "stack": 10,
+    "food": 45,
+    "heal": 10,
+    "desc": "Carne guisada con setas. Quita mucha hambre y cura un poco.",
+    "weight": 0.4
+  },
+  "guiso_setas": {
+    "name": "Guiso de setas",
+    "type": "consumable",
+    "stack": 10,
+    "food": 30,
+    "water": 20,
+    "heal": 5,
+    "desc": "Caldo caliente: hambre, sed y algo de vida.",
+    "weight": 0.5
+  },
+  "conserva_carne": {
+    "name": "Conserva de carne",
+    "type": "consumable",
+    "stack": 10,
+    "food": 50,
+    "desc": "Carne cocida y enlatada. Llena muchísimo.",
+    "weight": 0.4
+  },
+  "conserva_bayas": {
+    "name": "Conserva de bayas",
+    "type": "consumable",
+    "stack": 10,
+    "food": 22,
+    "water": 15,
+    "desc": "Bayas en almíbar. Dulce y con algo de líquido.",
+    "weight": 0.35
+  },
+  "alcohol": {
+    "name": "Alcohol",
+    "type": "material",
+    "stack": 20,
+    "desc": "Bayas fermentadas y destiladas. Desinfecta y arde.",
+    "weight": 0.3,
+    "tier": "procesado"
+  },
+  "combustible": {
+    "name": "Combustible",
+    "type": "material",
+    "stack": 20,
+    "desc": "Bidón casero. Para molotovs, el generador y los fogones.",
+    "weight": 1.0,
+    "tier": "procesado"
+  },
+  "acido": {
+    "name": "Ácido",
+    "type": "material",
+    "stack": 20,
+    "desc": "Azufre disuelto en agua destilada. Para baterías.",
+    "weight": 0.3,
+    "tier": "procesado"
+  },
+  "cable_cobre": {
+    "name": "Cable de cobre",
+    "type": "material",
+    "stack": 50,
+    "desc": "Hilo de cobre estirado en el banco de electrónica.",
+    "weight": 0.05,
+    "tier": "componente"
+  },
+  "circuito": {
+    "name": "Circuito básico",
+    "type": "material",
+    "stack": 20,
+    "desc": "Placa sencilla con cables y componentes.",
+    "weight": 0.1,
+    "tier": "componente"
+  },
+  "circuito_avanzado": {
+    "name": "Circuito avanzado",
+    "type": "material",
+    "stack": 20,
+    "desc": "Placa de alta densidad para dispositivos y defensas.",
+    "weight": 0.15,
+    "tier": "componente"
+  },
+  "bateria": {
+    "name": "Batería",
+    "type": "material",
+    "stack": 20,
+    "desc": "Cobre, ácido y componentes. Da energía a los dispositivos.",
+    "weight": 0.6,
+    "tier": "componente"
+  },
+  "vendas_avanzadas": {
+    "name": "Vendas avanzadas",
+    "type": "consumable",
+    "stack": 10,
+    "heal": 45,
+    "cure_poison": true,
+    "desc": "Tela resistente empapada en alcohol. Cura 45 y el veneno.",
+    "weight": 0.1
+  },
+  "estimulante": {
+    "name": "Estimulante",
+    "type": "consumable",
+    "stack": 5,
+    "stamina": 100,
+    "heal": 5,
+    "desc": "Te devuelve toda la energía al momento.",
+    "weight": 0.1
+  },
+  "molotov": {
+    "name": "Cóctel molotov",
+    "type": "weapon",
+    "throw": true,
+    "stack": 5,
+    "damage": 14,
+    "fire_radius": 2.6,
+    "fire_time": 5.0,
+    "desc": "Equípalo y pulsa atacar: se lanza al enemigo más cercano y deja el suelo ardiendo.",
+    "weight": 0.6
+  },
+  "trampa_pinchos": {
+    "name": "Trampa de pinchos",
+    "type": "trap",
+    "stack": 1,
+    "damage": 40,
+    "durability": 4,
+    "desc": "Colócala en el suelo: hiere a lo que la pise. Aguanta 4 golpes; se puede recoger.",
+    "weight": 2.5
   }
 }

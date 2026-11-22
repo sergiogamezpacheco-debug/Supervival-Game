@@ -7,7 +7,8 @@ extends Node
 const M := preload("res://scripts/world/station_models.gd")
 const IDS := ["hacha_hierro", "pico_hierro", "machete", "casco_obra", "chaqueta_piel", "chaleco",
 	"pantalon_cargo", "zapatillas", "botas", "guantes", "fibra", "piel", "baya", "carne_cruda",
-	"carne_asada", "seta", "carbon", "clavos", "tela_resistente"]
+	"carne_asada", "seta", "carbon", "clavos", "tela_resistente", "botella_vacia", "lata_vacia", "cantimplora_vacia",
+	"conserva_bayas", "acido", "cable_cobre", "circuito", "bateria"]
 
 var vp: SubViewport
 var cam: Camera3D
@@ -317,3 +318,100 @@ func _tela_resistente() -> float:
 		_p(_box(Vector3(1.52, 0.012, 0.03)), Color("d9cfa2"), Vector3(k * 0.03, k * 0.11 + 0.056, 0.42 - k * 0.02), Vector3(0, k * 4, 0))
 	_p(_box(Vector3(0.2, 0.36, 1.04)), Color("7d7b52"), Vector3(0.74, 0.12, 0), Vector3(0, 0, 8))
 	return 2.1
+
+
+# ------------------------------------------------- cocina, destilería, química y electrónica
+
+func _clear(mesh: Mesh, color: Color, pos := Vector3.ZERO, rot := Vector3.ZERO, parent: Node3D = null) -> MeshInstance3D:
+	var m := M._clear(parent if parent else stage, mesh, color, pos, rot)
+	return m
+
+
+func _botella_vacia() -> float:
+	# botella de plástico vacía, tumbada, con tapón azul (como las de la destilería)
+	var g := _group(Vector3.ZERO, Vector3(0, 0, -60))
+	_clear(_cyl(0.24, 0.24, 0.9, 10), Color(0.78, 0.88, 0.95, 0.55), Vector3(0, -0.1, 0), Vector3.ZERO, g)
+	for k in 3:
+		_p(_cyl(0.245, 0.245, 0.04, 10), Color("b9d3e2"), Vector3(0, -0.4 + k * 0.22, 0), Vector3.ZERO, Vector3.ONE, g)
+	_clear(_cyl(0.1, 0.24, 0.3, 10), Color(0.78, 0.88, 0.95, 0.55), Vector3(0, 0.5, 0), Vector3.ZERO, g)
+	_p(_cyl(0.11, 0.11, 0.12, 10), Color("3f7fb5"), Vector3(0, 0.7, 0), Vector3.ZERO, Vector3.ONE, g)
+	return 1.6
+
+
+func _lata_vacia() -> float:
+	# lata abierta: cuerpo con aros, tapa doblada hacia atrás
+	_p(_cyl(0.42, 0.42, 0.95, 12), Color("b9bfc3"), Vector3(0, -0.05, 0))
+	for y in [-0.42, 0.0, 0.32]:
+		_p(_cyl(0.43, 0.43, 0.05, 12), Color("9aa1a6"), Vector3(0, y, 0))
+	_p(_cyl(0.38, 0.38, 0.02, 12), Color("4d5257"), Vector3(0, 0.43, 0))
+	_p(_cyl(0.4, 0.4, 0.02, 12), Color("cfd4d7"), Vector3(0, 0.62, 0.32), Vector3(-70, 0, 0))
+	return 1.6
+
+
+func _cantimplora_vacia() -> float:
+	# la cantimplora del diseño (cerámica clara con cinchas), destapada y con el tapón al lado
+	_blob(71, Color("d8dbd8"), Vector3(0, -0.05, 0), Vector3(0.62, 0.7, 0.5), 0.1)
+	_p(_cyl(0.6, 0.6, 0.2, 9), Color("b9a37f"), Vector3(0, -0.1, 0), Vector3.ZERO, Vector3(1.0, 1.0, 0.82))
+	_p(_cyl(0.16, 0.22, 0.28, 8), Color("c9ccc9"), Vector3(0, 0.55, 0))
+	_p(_cyl(0.14, 0.14, 0.04, 8), Color("2a2a2a"), Vector3(0, 0.7, 0))
+	_p(_cyl(0.13, 0.15, 0.2, 8), Color("b98a56"), Vector3(0.5, -0.6, -0.3), Vector3(0, 0, 80))
+	return 1.9
+
+
+func _conserva_bayas() -> float:
+	# lata con etiqueta morada y bayas pintadas
+	_p(_cyl(0.42, 0.42, 0.95, 12), Color("b9bfc3"), Vector3(0, -0.05, 0))
+	_p(_cyl(0.43, 0.43, 0.6, 12), Color("6a2a5a"), Vector3(0, -0.05, 0))
+	_p(_cyl(0.435, 0.435, 0.08, 12), Color("e7d8b8"), Vector3(0, 0.18, 0))
+	for k in 3:
+		_blob(30 + k, Color("8a2f4a"), Vector3(-0.12 + k * 0.12, -0.12 + (k % 2) * 0.08, -0.4), Vector3(0.1, 0.1, 0.05), 0.05)
+	_p(_cyl(0.4, 0.4, 0.04, 12), Color("cfd4d7"), Vector3(0, 0.44, 0))
+	return 1.6
+
+
+func _acido() -> float:
+	# frasco de cristal grueso con líquido amarillo verdoso y calavera simple en la etiqueta
+	_clear(_cyl(0.32, 0.36, 0.8, 8), Color(0.82, 0.9, 0.9, 0.45), Vector3(0, -0.1, 0))
+	_p(_cyl(0.3, 0.34, 0.5, 8), Color("c8d44a"), Vector3(0, -0.24, 0))
+	_p(_cyl(0.33, 0.35, 0.22, 8), Color("efe6d2"), Vector3(0, -0.12, 0))
+	_p(_box(Vector3(0.14, 0.1, 0.02)), Color("2a2a2a"), Vector3(0, -0.08, -0.35))
+	_p(_cyl(0.16, 0.2, 0.16, 8), Color(0.82, 0.9, 0.9), Vector3(0, 0.38, 0))
+	_p(_cyl(0.19, 0.19, 0.14, 8), Color("2d2d2d"), Vector3(0, 0.52, 0))
+	return 1.5
+
+
+func _cable_cobre() -> float:
+	# rollo de cable de cobre
+	for k in 5:
+		var t := TorusMesh.new()
+		t.inner_radius = 0.38
+		t.outer_radius = 0.46
+		t.rings = 14
+		t.ring_segments = 5
+		_p(t, Color("c57a45").lightened(0.06 * (k % 2)), Vector3(0, -0.12 + k * 0.06, 0), Vector3(4 * (k % 2), 0, 0))
+	_p(_cyl(0.025, 0.025, 0.6, 5), Color("d88b52"), Vector3(0.45, 0.1, -0.2), Vector3(70, 30, 0))
+	return 1.4
+
+
+func _circuito() -> float:
+	# placa verde sencilla con chips y pistas
+	_p(_box(Vector3(1.3, 0.06, 0.9)), Color("2f6b45"), Vector3.ZERO, Vector3(0, 20, 0))
+	var g := _group(Vector3.ZERO, Vector3(0, 20, 0))
+	for k in 4:
+		_p(_box(Vector3(0.22, 0.08, 0.16)), Color("1e2420"), Vector3(-0.4 + k * 0.27, 0.07, -0.18), Vector3.ZERO, Vector3.ONE, g)
+	_p(_box(Vector3(0.3, 0.1, 0.3)), Color("2a2a2a"), Vector3(-0.1, 0.08, 0.2), Vector3.ZERO, Vector3.ONE, g)
+	for k in 3:
+		_p(_cyl(0.06, 0.06, 0.14, 8), Color("c6a248"), Vector3(0.35 + k * 0.1, 0.1, 0.25), Vector3.ZERO, Vector3.ONE, g)
+	for k in 5:
+		_p(_box(Vector3(1.0, 0.012, 0.025)), Color("d1b25a"), Vector3(0, 0.035, -0.38 + k * 0.05), Vector3.ZERO, Vector3.ONE, g)
+	return 1.7
+
+
+func _bateria() -> float:
+	# pila de laboratorio: tapas metálicas y núcleo verde que brilla (como en el banco de electrónica)
+	_p(_cyl(0.36, 0.36, 0.14, 8), Color("6a6560"), Vector3(0, -0.45, 0))
+	_p(_cyl(0.3, 0.3, 0.75, 8), Color("47d56a"), Vector3(0, 0.0, 0))
+	_clear(_cyl(0.34, 0.34, 0.78, 8), Color(0.8, 0.95, 0.85, 0.35), Vector3(0, 0.0, 0))
+	_p(_cyl(0.36, 0.36, 0.14, 8), Color("6a6560"), Vector3(0, 0.45, 0))
+	_p(_cyl(0.12, 0.12, 0.1, 8), Color("8a8580"), Vector3(0, 0.56, 0))
+	return 1.5

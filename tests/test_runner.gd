@@ -37,6 +37,8 @@ func _ready() -> void:
 	await test_base()
 	print("== Estructuras del refugio (obra por fases)")
 	await test_shelter_structures()
+	print("== Cocina, destilería, química, electrónica, molotov y trampas")
+	await test_new_stations()
 	print("== Niveles y peso")
 	await test_levels_weight()
 	await test_crafting_tree()
@@ -618,6 +620,196 @@ func test_shelter_structures() -> void:
 	# El APK pide permiso de vibración (sin él, Android cierra el juego al vibrar)
 	var presets := FileAccess.get_file_as_string("res://export_presets.cfg")
 	check(presets.contains("permissions/vibrate=true"), "el APK tiene permiso de vibración")
+	world.queue_free()
+	await _frames(2)
+
+
+func _slot_of(id: String) -> int:
+	for i in GS.slots.size():
+		if GS.slots[i] != null and GS.slots[i]["id"] == id:
+			return i
+	return -1
+
+
+func _build_full(base: Node3D, id: String, pp: Vector3) -> Node3D:
+	for ph in DB.station_phases(id):
+		_give(ph["cost"])
+	if DB.station_phases(id).is_empty():
+		_give(DB.station_build_cost(id))
+	var st: Node3D = _place_any(base, id, pp)
+	while st != null and not st.is_built():
+		st.add_phase()
+	return st
+
+
+func _make(st: Node3D, rid: String, n := 1) -> bool:
+	var r := DB.recipe(rid)
+	_give(Dictionary(st.cost_times(r, n)))
+	var why: String = st.start(rid, n)
+	if why != "":
+		printerr("    ", rid, ": ", why)
+		return false
+	GS.time_offset += st.recipe_time(r) * n + 1.0
+	return st.collect()
+
+
+func test_new_stations() -> void:
+	DirAccess.remove_absolute(ProjectSettings.globalize_path(GS.save_path))
+	GS.new_game()
+	GS.forced_rain = 0
+	var world := await _new_world()
+	var base: Node3D = world.base
+	var pp := Vector3(30, 0, 30)
+	world.player.global_position = pp
+	GS.slots.resize(48)
+	for i in GS.slots.size():
+		GS.slots[i] = null
+
+	# Datos, modelos e iconos
+	for id in ["cocina", "destileria", "mesa_quimica", "banco_electronica"]:
+		check(DB.stations.has(id) and DB.recipes_for(id).size() >= 3, "estación %s con recetas" % id)
+		var m := StationModels.make(id, 1)
+		check(m != null and m.get_child_count() >= 6, "modelo 3D de %s" % id)
+		if m:
+			m.free()
+		check(ResourceLoader.exists("res://assets/icons/estaciones/%s.png" % id), "icono de cabecera de %s" % id)
+	for id in ["plato_cocinado", "conserva_carne", "agua_hervida", "guiso_setas", "agua_purificada", "alcohol", "combustible", "agua_sucia", "estimulante", "vendas_avanzadas", "circuito_avanzado", "molotov", "cantimplora", "trampa_pinchos"]:
+		check(DB.item_icon(id) != null and DB.item_icon(id).resource_path.ends_with(".png"), "icono de %s sacado del diseño" % id)
+	for rid in ["molotov", "cantimplora", "trampa_pinchos"]:
+		check(DB.recipe(rid).get("station", "") != "", "%s ya se fabrica en un banco (%s)" % [rid, DB.recipe(rid).get("station", "")])
+
+	# Cocina de campo: necesita fuego
+	var stove := _build_full(base, "cocina", pp)
+	check(stove != null and stove.is_built() and stove.burns(), "cocina de campo colocada (arde con leña)")
+	_give(DB.recipe("plato_cocinado")["cost"])
+	check(stove.start("plato_cocinado").begins_with("Echa leña"), "sin fuego no cocina")
+	GS.add_item("madera", 1)
+	check(stove.add_fuel("madera") == "" and int(stove.fuel) == 60, "un tronco da un minuto de fuego")
+	check(stove.add_fuel("piedra") == "Eso no sirve de combustible", "la piedra no arde")
+	check(stove.start("plato_cocinado") == "" and int(stove.fuel) == 50, "cocinar gasta el fuego que dura")
+	GS.time_offset += 11.0
+	check(stove.collect() and GS.count("plato_cocinado") == 1, "plato cocinado listo")
+	world.hud.open_station(stove)
+	await _pframes(2)
+	var scr: Control = world.hud._station_panel
+	check(scr.tabs == ["Platos", "Conservas", "Agua", "Fuego"], "pestañas de la cocina como en el diseño %s" % str(scr.tabs))
+	check(scr._energy_bar.visible and scr._energy_icon.texture.resource_path.ends_with("llama.png") and scr._energy_text.text == "%d/100" % roundi(100.0 * 50.0 / 1800.0), "barra de energía = fuego de la cocina")
+	scr.tab = "Fuego"
+	scr.refresh()
+	GS.add_item("carbon", 2)
+	scr._select(1)
+	check(scr.entries[1]["id"] == "carbon" and scr.action_btn.text == "ECHAR", "pestaña Fuego: echar carbón")
+	scr.set_qty(2)
+	scr.action_btn.pressed.emit()
+	check(int(stove.fuel) == 50 + 360 and GS.count("carbon") == 0, "echar 2 carbones de una vez")
+	world.hud.close_panels()
+
+	# Agua: botellas, beber sucia, hervir, cantimplora
+	var col := _build_full(base, "recolector_agua", pp)
+	col.water = 35.0
+	col.water_t = GS.now()
+	GS.add_item("botella_vacia", 5)
+	check(col.fill_bottles(5) == "" and GS.count("agua_sucia") == 3 and GS.count("botella_vacia") == 2, "el recolector llena tantas botellas como agua tenga (3)")
+	world.hud.open_station(col)
+	await _pframes(1)
+	check(scr.entries.size() == 2 and scr.entries[1]["kind"] == "fill", "el recolector tiene Llenar botellas")
+	world.hud.close_panels()
+	GS.water = 40.0
+	GS.health = 100.0
+	GS.use_slot(_slot_of("agua_sucia"))
+	check(GS.water >= 54.0 and GS.health < 100.0 and GS.count("botella_vacia") == 3, "el agua sucia quita sed, sienta mal y deja la botella")
+	check(_make(stove, "agua_hervida") and GS.count("agua_hervida") == 1, "hervir agua en la cocina")
+	check(_make(stove, "cantimplora_vacia") and _make(stove, "cantimplora") and GS.count("cantimplora") == 1, "cantimplora hecha y llena en la cocina")
+	GS.water = 20.0
+	var empties := GS.count("cantimplora_vacia")
+	GS.use_slot(_slot_of("cantimplora"))
+	check(GS.water >= 79.0 and GS.count("cantimplora") == 0 and GS.count("cantimplora_vacia") == empties + 1, "beber de la cantimplora la deja vacía para rellenarla")
+
+	# Destilería: agua purificada, alcohol; combustible en el nivel 2
+	var still := _build_full(base, "destileria", pp)
+	GS.add_item("madera", 20)
+	for i in 20:
+		still.add_fuel("madera")
+	check(_make(still, "agua_purificada") and _make(still, "alcohol"), "destilería: agua purificada y alcohol")
+	_give(DB.recipe("combustible")["cost"])
+	check(still.start("combustible") == "Mejora la estación a nivel 2", "el combustible pide la destilería de nivel 2")
+	still.set_level(2)
+	check(_make(still, "combustible") and GS.count("combustible") == 1, "destilería nivel 2: combustible")
+
+	# Mesa química y banco de electrónica: necesitan el generador
+	var lab := _build_full(base, "mesa_quimica", pp)
+	_give(DB.recipe("molotov")["cost"])
+	check(lab.start("molotov") == "Necesita un generador terminado", "la mesa química necesita generador")
+	var gen := _build_full(base, "generador", pp)
+	GS.add_item("combustible", 1)
+	check(gen.add_fuel("combustible") == "" and int(gen.fuel) == 1200, "el combustible da 20 minutos al generador")
+	check(_make(lab, "molotov", 3) and GS.count("molotov") == 3, "tres cócteles molotov")
+	check(_make(lab, "vendas_avanzadas") and _make(lab, "estimulante") and _make(lab, "acido"), "vendas avanzadas, estimulante y ácido")
+	GS.stamina = 5.0
+	GS.use_slot(_slot_of("estimulante"))
+	check(is_equal_approx(GS.stamina, GS.max_stamina()), "el estimulante devuelve toda la energía")
+	var elec := _build_full(base, "banco_electronica", pp)
+	check(elec != null and elec.is_built() and elec.phases().size() == 3, "banco de electrónica en 3 fases")
+	check(_make(elec, "cable_cobre") and GS.count("cable_cobre") == 4 and _make(elec, "circuito") and _make(elec, "bateria"), "cable, circuito y batería")
+	world.hud.open_station(lab)
+	await _pframes(1)
+	check(scr.tabs == ["Medicamentos", "Explosivos", "Alquimia"] and scr._energy_icon.texture.resource_path.ends_with("bateria.png"), "pestañas de la mesa química y energía del generador")
+	world.hud.close_panels()
+
+	# Molotov: se equipa y se lanza al enemigo más cercano a tiro
+	var player: Node3D = world.player
+	player.global_position = Vector3(-30, 0, -30)
+	player.floor_y = 0.0
+	var z: Node3D = world.CreatureScript.new()
+	z.setup("infectado")
+	z.home = player.global_position + Vector3(7, 0, 0)
+	z.position = z.home
+	world.add_child(z)
+	z.set_physics_process(false)
+	await _frames(2)
+	GS.equip_slot(_slot_of("molotov"))
+	check(GS.hand_throws() and int(GS.hand["qty"]) == 3, "molotov en la mano (3)")
+	check(world.find_target() == z and z.action_label() == "Lanzar", "a 7 m el botón apunta al infectado: Lanzar")
+	var fire: Node3D = world.throw_at(z)
+	check(fire != null and int(GS.hand["qty"]) == 2, "lanzar gasta un molotov")
+	fire.ignite()
+	var hp0: float = z.hp
+	var hit: int = fire.burn(7.0)
+	check(hit == 1 and z.hp < hp0, "el fuego quema al infectado (%d -> %d)" % [int(hp0), int(z.hp)])
+	var ph := GS.health
+	fire.burn(7.0)
+	check(GS.health == ph, "el fuego no te quema a ti")
+	z.hp = 1.0
+	fire.burn(7.0)
+	check(z.hp <= 0.0, "el fuego puede matar")
+	fire.queue_free()
+	GS.unequip()
+
+	# Trampa de pinchos: se coloca, hiere y se recoge
+	var carp := _build_full(base, "carpinteria", pp)
+	check(_make(carp, "trampa_pinchos"), "trampa fabricada en la carpintería")
+	player.global_position = Vector3(-30, 0, -30)
+	check(world.place_trap(_slot_of("trampa_pinchos")) == "" and GS.count("trampa_pinchos") == 0, "Colocar: la trampa sale del inventario")
+	var traps := get_tree().get_nodes_in_group("trap")
+	check(traps.size() == 1, "la trampa está en el suelo")
+	var trap: Node3D = traps[0]
+	var z2: Node3D = world.CreatureScript.new()
+	z2.setup("infectado")
+	z2.home = trap.global_position
+	z2.position = trap.global_position
+	world.add_child(z2)
+	z2.set_physics_process(false)
+	await _frames(2)
+	trap.check_creatures()
+	check(is_equal_approx(z2.hp, float(DB.creature("infectado")["health"]) - 40.0) and trap.uses == 3, "pisarla hace 40 y gasta un golpe")
+	trap.check_creatures()
+	check(trap.uses == 3, "no pincha dos veces seguidas a la misma criatura")
+	var saved: Array = world.world_dict().get("traps", [])
+	check(saved.size() == 1 and int(saved[0]["uses"]) == 3, "las trampas se guardan con sus golpes")
+	z2.queue_free()
+	await _frames(1)
+	trap.interact(player)
+	check(GS.count("trampa_pinchos") == 1 and int(GS.slots[_slot_of("trampa_pinchos")]["dur"]) == 3, "recogerla devuelve la trampa con los golpes que le quedan")
 	world.queue_free()
 	await _frames(2)
 

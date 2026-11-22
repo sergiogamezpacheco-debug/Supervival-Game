@@ -26,9 +26,9 @@ func _ready() -> void:
 		GS.add_item(id, 12)
 	var base: Node3D = world.base
 	var pp := Vector3(30, 0, 30)
-	var spots := [Vector2i(-6, 2), Vector2i(-2, 2), Vector2i(2, 2), Vector2i(6, 2), Vector2i(-6, 6), Vector2i(-2, 6), Vector2i(2, 6), Vector2i(6, 6), Vector2i(-6, -2)]
+	var spots := [Vector2i(-6, 2), Vector2i(-2, 2), Vector2i(2, 2), Vector2i(6, 2), Vector2i(-6, 6), Vector2i(-2, 6), Vector2i(2, 6), Vector2i(6, 6), Vector2i(-6, -2), Vector2i(-2, -2), Vector2i(2, -2), Vector2i(6, -2), Vector2i(-6, -6)]
 	var made := {}
-	for id in ["carpinteria", "horno", "banco_trabajo", "mesa_costura", "generador", "recicladora", "mesa_medica"]:
+	for id in ["carpinteria", "horno", "banco_trabajo", "mesa_costura", "generador", "recicladora", "mesa_medica", "cocina", "destileria", "mesa_quimica", "banco_electronica"]:
 		for c in spots:
 			if not made.has(id) and base.check_place(id, c, 0, pp) == "":
 				for ph in DB.station_phases(id):
@@ -74,4 +74,29 @@ func _ready() -> void:
 		r.add_phase()
 	world.hud.open_station(r)
 	await _shot(out + "/estacion_recicladora.png")
+	# Cocina, destilería, mesa química y banco de electrónica
+	for id in ["carne_cruda", "seta", "agua_sucia", "baya", "lata_vacia", "botella_vacia", "combustible", "alcohol", "tela_resistente", "agua_purificada", "lingote_cobre", "componentes"]:
+		GS.add_item(id, 6)
+	var stove: Node3D = made["cocina"]
+	stove.fuel = 720.0
+	world.hud.open_station(stove)
+	stove.start("plato_cocinado")
+	await _shot(out + "/estacion_cocina.png")
+	sc.tab = "Fuego"
+	sc.refresh()
+	await _shot(out + "/estacion_cocina_fuego.png")
+	var still: Node3D = made["destileria"]
+	still.fuel = 300.0
+	world.hud.open_station(still)
+	await _shot(out + "/estacion_destileria.png")
+	var lab: Node3D = made["mesa_quimica"]
+	world.hud.open_station(lab)
+	sc.tab = "Explosivos"
+	sc.refresh()
+	await _shot(out + "/estacion_quimica.png")
+	var el: Node3D = made["banco_electronica"]
+	while not el.is_built():
+		el.add_phase()
+	world.hud.open_station(el)
+	await _shot(out + "/estacion_electronica.png")
 	get_tree().quit()

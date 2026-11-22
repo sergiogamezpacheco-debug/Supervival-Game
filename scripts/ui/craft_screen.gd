@@ -151,7 +151,9 @@ static func card_tab(r: Dictionary) -> String:
 			return c
 		"Mochilas":
 			return "Ropa"
-		"Medicinas", "Comida":
+		"Trampas", "Explosivos":
+			return "Armas"
+		"Medicinas", "Comida", "Platos", "Conservas", "Agua", "Medicamentos":
 			return "Curas y comida"
 	return "Recursos"
 

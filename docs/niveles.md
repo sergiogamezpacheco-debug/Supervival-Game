@@ -87,15 +87,19 @@ cada nivel redondo.
 | 5 | Mesa de cantería, bloques de piedra, mochila de lona |
 | 6 | Horno de fundición, lingotes |
 | 7 | Secadero, carne seca, construcción de piedra |
-| 8 | **Viaje a la Cantera** (llevando un pico), gimnasio |
-| 9 | Recolector de agua |
+| 8 | **Viaje a la Cantera** (llevando un pico), gimnasio, trampa de pinchos |
+| 9 | Recolector de agua (llena botellas), cocina de campo, cantimplora, conservas |
+| 11 | Destilería: agua purificada, alcohol, carbón |
 | 10 | Hacha y pico de hierro, cuero, chaqueta de piel |
 | 12 | Banco de armas, machete, botas, pantalón cargo |
+| 13 | Combustible (destilería nivel 2) |
 | 14 | Huerto y cultivos, lingote de cobre |
 | 16 | Mesa médica, botiquín, antídoto, mochila de excursión |
 | 18 | Chaleco, componentes |
 | 20 | Generador, pólvora, construcción de metal |
+| 21 | Mesa química: cóctel molotov, vendas avanzadas, estimulante, ácido |
 | 22 | Recicladora |
+| 23 | Banco de electrónica: cable, circuitos, batería |
 | 25 | Mochila táctica |
 | 26-100 | Reservado para zonas (Puesto militar…), armas y estructuras nuevas |
 

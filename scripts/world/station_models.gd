@@ -31,6 +31,17 @@ static func _glow(root: Node3D, mesh: Mesh, color: Color, pos: Vector3, energy :
 	return m
 
 
+## Pieza transparente (cristal, vapor): color con alfa.
+static func _clear(root: Node3D, mesh: Mesh, color: Color, pos: Vector3, rot_deg := Vector3.ZERO, scl := Vector3.ONE) -> MeshInstance3D:
+	var m := Builder.part(mesh, color, pos)
+	m.set_meta("fase", _fase)
+	m.rotation_degrees = rot_deg
+	m.scale = scl
+	m.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	root.add_child(m)
+	return m
+
+
 static func _box(s: Vector3) -> Mesh:
 	return Builder.box(s)
 
@@ -84,6 +95,10 @@ static func make(kind: String, level: int) -> Node3D:
 		"mesa_medica": _mesa_medica(root)
 		"generador": _generador(root)
 		"recicladora": _recicladora(root)
+		"cocina": _cocina(root)
+		"destileria": _destileria(root, level)
+		"mesa_quimica": _mesa_quimica(root)
+		"banco_electronica": _banco_electronica(root)
 		_:
 			return null
 	_fase = 0
@@ -307,6 +322,174 @@ static func _recicladora(r: Node3D) -> void:
 		var a := float(i) * 2.4
 		var d := 0.08 + float(i % 5) * 0.06
 		_p(r, _box(Vector3(0.14, 0.03, 0.1)), cols[i % cols.size()], Vector3(0.45 + cos(a) * d, 0.03 + (i % 3) * 0.02, -0.75 + sin(a) * d), Vector3(i * 13 % 40 - 20, i * 47 % 180, i * 11 % 30))
+
+
+# ------------------------------------------------------- cocina de campo
+## Hornillo de camping con mampara plegada, olla humeante y plato (diseño de la cocina).
+static func _cocina(r: Node3D) -> void:
+	var body := Color("6d6a64")
+	var dark := Color("3e3c39")
+	# patas de tijera
+	for x in [-0.5, 0.5]:
+		for z in [-0.28, 0.28]:
+			_p(r, _box(Vector3(0.05, 0.62, 0.05)), dark, Vector3(x, 0.31, z))
+	_p(r, _box(Vector3(1.05, 0.04, 0.04)), dark, Vector3(0, 0.2, -0.28))
+	_p(r, _box(Vector3(1.05, 0.04, 0.04)), dark, Vector3(0, 0.2, 0.28))
+	# cuerpo del hornillo y rejilla
+	_p(r, _box(Vector3(1.15, 0.16, 0.66)), body, Vector3(0, 0.7, 0))
+	_p(r, _box(Vector3(1.1, 0.02, 0.6)), Color("4a4845"), Vector3(0, 0.79, 0))
+	for i in 5:
+		_p(r, _box(Vector3(1.05, 0.025, 0.025)), Color("2c2b29"), Vector3(0, 0.81, -0.24 + i * 0.12))
+	for x in [-0.27, 0.27]:
+		_p(r, _cyl(0.12, 0.13, 0.03, 10), Color("2c2b29"), Vector3(x, 0.8, 0))
+		_glow(r, _cyl(0.09, 0.09, 0.01, 10), Color(0.35, 0.55, 1.0), Vector3(x, 0.815, 0), 2.0)
+	# mandos delante
+	for x in [-0.3, 0.3]:
+		_p(r, _cyl(0.04, 0.04, 0.04, 8), Color("1f1e1d"), Vector3(x, 0.7, -0.35), Vector3(90, 0, 0))
+	# mampara: tapa de atrás levantada y alas
+	_p(r, _box(Vector3(1.15, 0.5, 0.03)), body.lightened(0.08), Vector3(0, 1.05, 0.36), Vector3(-12, 0, 0))
+	for x in [-0.59, 0.59]:
+		_p(r, _box(Vector3(0.03, 0.3, 0.62)), body.lightened(0.04), Vector3(x, 0.93, 0.02))
+	# olla con guiso
+	_p(r, _cyl(0.2, 0.19, 0.24, 10), Color("57595c"), Vector3(-0.27, 0.95, 0))
+	_p(r, _cyl(0.17, 0.17, 0.02, 10), Color("b8602e"), Vector3(-0.27, 1.05, 0))
+	_p(r, _box(Vector3(0.22, 0.03, 0.04)), Color("3a3b3d"), Vector3(-0.53, 1.03, 0))
+	# vapor
+	for k in 3:
+		_clear(r, Nature.blob(80 + k, 0.2, 6, 3), Color(0.95, 0.95, 0.93, 0.35), Vector3(-0.27 + k * 0.04, 1.14 + k * 0.1, 0.0), Vector3.ZERO, Vector3.ONE * (0.06 + k * 0.02))
+	# plato con comida
+	_p(r, _cyl(0.17, 0.13, 0.04, 10), Color("e9e4d8"), Vector3(0.27, 0.85, 0))
+	for k in 5:
+		var a := float(k) * 1.26
+		_p(r, Nature.blob(90 + k, 0.25, 5, 3), [Color("8a3b26"), Color("d88a2e"), Color("6d8a3a")][k % 3], Vector3(0.27 + cos(a) * 0.07, 0.89, sin(a) * 0.07), Vector3.ZERO, Vector3.ONE * 0.06)
+
+
+# ------------------------------------------------------------- destilería
+## Alambique de cobre sobre peana: caldera con fuego de cristal, cuello, serpentín y colector.
+static func _destileria(r: Node3D, level: int) -> void:
+	var copper := Color("b8693a")
+	var copper_d := Color("7f4424")
+	var wood := Color("5d4a3c")
+	_p(r, _cyl(0.72, 0.76, 0.12, 12), wood, Vector3(0, 0.06, 0))
+	_p(r, _cyl(0.6, 0.66, 0.08, 12), wood.lightened(0.1), Vector3(0, 0.16, 0))
+	# hogar de cristal con la llama dentro y patas
+	for i in 4:
+		var a := TAU * (float(i) + 0.5) / 4.0
+		_p(r, _box(Vector3(0.04, 0.5, 0.04)), Color("2d2622"), Vector3(-0.18 + cos(a) * 0.28, 0.43, sin(a) * 0.28))
+	_clear(r, _cyl(0.28, 0.3, 0.42, 8), Color(0.75, 0.85, 0.85, 0.3), Vector3(-0.18, 0.42, 0))
+	_glow(r, Nature.blob(5, 0.1, 6, 4), Color(1.0, 0.92, 0.7), Vector3(-0.18, 0.32, 0), 2.6).scale = Vector3.ONE * 0.16
+	_light(r, Vector3(-0.18, 0.5, -0.3), 4.0, 0.9)
+	# caldera de cobre con tejadillo
+	_p(r, _cyl(0.34, 0.34, 0.14, 8), copper_d, Vector3(-0.18, 0.7, 0))
+	_p(r, _cyl(0.12, 0.38, 0.42, 8), copper, Vector3(-0.18, 0.98, 0))
+	_p(r, _cyl(0.06, 0.12, 0.18, 8), copper_d, Vector3(-0.18, 1.28, 0))
+	# cuello que sube y cruza
+	_stick(r, Vector3(-0.18, 1.35, 0), Vector3(-0.1, 1.62, 0), 0.04, copper)
+	_stick(r, Vector3(-0.1, 1.62, 0), Vector3(0.42, 1.45, 0), 0.035, copper)
+	# serpentín
+	for k in 7:
+		var t := _p(r, TorusMesh.new(), copper.lightened(0.05), Vector3(0.45, 1.38 - k * 0.075, 0), Vector3(6 if k % 2 == 0 else -6, 0, 0), Vector3(0.15, 0.3, 0.15))
+		(t.mesh as TorusMesh).inner_radius = 0.75
+		(t.mesh as TorusMesh).outer_radius = 1.0
+		(t.mesh as TorusMesh).rings = 10
+		(t.mesh as TorusMesh).ring_segments = 5
+	# colector pequeño sobre trípode
+	for i in 3:
+		var a := TAU * float(i) / 3.0
+		_stick(r, Vector3(0.45 + cos(a) * 0.14, 0.2, sin(a) * 0.14), Vector3(0.45 + cos(a) * 0.07, 0.62, sin(a) * 0.07), 0.018, Color("2d2622"))
+	_p(r, _cyl(0.04, 0.16, 0.18, 8), copper, Vector3(0.45, 0.72, 0))
+	_p(r, _cyl(0.16, 0.12, 0.1, 8), copper_d, Vector3(0.45, 0.58, 0))
+	_stick(r, Vector3(0.45, 0.86, 0), Vector3(0.45, 0.93, 0), 0.03, copper)
+	if level >= 2:
+		# nivel 2: bidón de combustible al lado
+		_p(r, _box(Vector3(0.26, 0.34, 0.14)), Color("6f7348"), Vector3(0.3, 0.37, 0.45), Vector3(0, 20, 0))
+		_p(r, _cyl(0.035, 0.035, 0.06, 6), Color("3a3b2c"), Vector3(0.36, 0.57, 0.42))
+
+
+# ------------------------------------------------------------ mesa química
+## Mesa de laboratorio con matraces verdes que brillan, gradilla de tubos y mechero.
+static func _mesa_quimica(r: Node3D) -> void:
+	var top := Color("4b4f52")
+	_legs(r, 1.55, 0.85, 0.86, 0.07, Color("2e3133"))
+	_p(r, _box(Vector3(1.4, 0.04, 0.7)), Color("2e3133"), Vector3(0, 0.25, 0))
+	_p(r, _box(Vector3(1.6, 0.06, 0.88)), top, Vector3(0, 0.89, 0))
+	var green := Color(0.35, 1.0, 0.45)
+	var glass := Color(0.8, 0.9, 0.88, 0.4)
+	# matraz grande (frasco tallado con tapón)
+	_clear(r, _cyl(0.15, 0.17, 0.3, 6), glass, Vector3(-0.45, 1.07, 0.05))
+	_glow(r, _cyl(0.13, 0.15, 0.2, 6), green, Vector3(-0.45, 1.03, 0.05), 1.6)
+	_clear(r, _cyl(0.06, 0.09, 0.1, 6), glass, Vector3(-0.45, 1.27, 0.05))
+	_p(r, _cyl(0.07, 0.06, 0.06, 6), Color("8a6440"), Vector3(-0.45, 1.34, 0.05))
+	# matraz cónico
+	_clear(r, _cyl(0.03, 0.13, 0.24, 8), glass, Vector3(-0.1, 1.04, -0.15))
+	_glow(r, _cyl(0.07, 0.12, 0.1, 8), Color(0.95, 0.75, 0.2), Vector3(-0.1, 0.97, -0.15), 1.2)
+	# gradilla con tubos
+	_p(r, _box(Vector3(0.42, 0.05, 0.12)), Color("6b4a2f"), Vector3(0.3, 1.02, 0.18))
+	_p(r, _box(Vector3(0.42, 0.04, 0.12)), Color("6b4a2f"), Vector3(0.3, 0.94, 0.18))
+	for k in 5:
+		var c: Color = [green, Color(0.4, 0.7, 1.0), Color(1.0, 0.45, 0.3), green, Color(0.95, 0.85, 0.3)][k]
+		_clear(r, _cyl(0.025, 0.025, 0.24, 6), glass, Vector3(0.14 + k * 0.08, 1.06, 0.18))
+		_glow(r, _cyl(0.022, 0.022, 0.1, 6), c, Vector3(0.14 + k * 0.08, 1.0, 0.18), 1.4)
+	# mechero con llama azul
+	_p(r, _cyl(0.06, 0.08, 0.06, 8), Color("2b2b2b"), Vector3(0.5, 0.95, -0.2))
+	_p(r, _cyl(0.02, 0.02, 0.16, 6), Color("9aa0a4"), Vector3(0.5, 1.05, -0.2))
+	_glow(r, _cyl(0.0, 0.035, 0.1, 6), Color(0.35, 0.55, 1.0), Vector3(0.5, 1.18, -0.2), 2.5)
+	# libreta
+	_p(r, _box(Vector3(0.26, 0.02, 0.2)), Color("d8ccb0"), Vector3(0.05, 0.93, 0.2), Vector3(0, -12, 0))
+
+
+# ------------------------------------------------------- banco de electrónica
+## Mesa de metal con placa de circuitos, pila verde y (por fases) soldador y fuente.
+static func _banco_electronica(r: Node3D) -> void:
+	_legs(r, 1.65, 0.85, 0.86, 0.07, Color("3a3e42"))
+	_p(r, _box(Vector3(1.5, 0.04, 0.7)), Color("3a3e42"), Vector3(0, 0.25, 0))
+	_p(r, _box(Vector3(1.7, 0.06, 0.9)), Color("5a5550"), Vector3(0, 0.89, 0))
+	_p(r, _box(Vector3(1.7, 0.4, 0.04)), Color("4a4642"), Vector3(0, 1.12, 0.43))
+	# placa de circuitos con chips
+	_p(r, _box(Vector3(0.55, 0.03, 0.4)), Color("2f6b45"), Vector3(-0.2, 0.94, -0.02), Vector3(0, 12, 0))
+	for k in 8:
+		var cx := -0.38 + float(k % 4) * 0.12
+		var cz := -0.1 + float(k / 4) * 0.16
+		_p(r, _box(Vector3(0.08, 0.03, 0.06)), Color("1e2420"), Vector3(cx, 0.965, cz), Vector3(0, 12, 0))
+	_p(r, _box(Vector3(0.12, 0.04, 0.12)), Color("3a3532"), Vector3(-0.18, 0.97, 0.0), Vector3(0, 12, 0))
+	_fase = 1
+	# soldador en su soporte y lupa
+	_p(r, _cyl(0.05, 0.07, 0.04, 8), Color("2b2b2b"), Vector3(0.35, 0.94, -0.15))
+	_stick(r, Vector3(0.35, 0.96, -0.15), Vector3(0.5, 1.12, -0.05), 0.02, Color("c43a2e"))
+	_stick(r, Vector3(0.5, 1.12, -0.05), Vector3(0.58, 1.17, 0.0), 0.008, Color("c3c7ca"))
+	_stick(r, Vector3(-0.55, 0.92, 0.25), Vector3(-0.55, 1.25, 0.25), 0.015, Color("2b2b2b"))
+	var lens := _clear(r, _cyl(0.12, 0.12, 0.02, 12), Color(0.75, 0.9, 0.95, 0.5), Vector3(-0.45, 1.27, 0.15), Vector3(60, 0, 0))
+	lens.name = "lupa"
+	_fase = 2
+	# fuente de alimentación con pantalla y pila verde
+	_p(r, _box(Vector3(0.36, 0.24, 0.26)), Color("2c3034"), Vector3(0.55, 1.04, 0.22))
+	_glow(r, _box(Vector3(0.2, 0.08, 0.01)), Color(0.4, 1.0, 0.5), Vector3(0.52, 1.08, 0.085), 2.0)
+	_p(r, _cyl(0.08, 0.08, 0.04, 8), Color("6a6560"), Vector3(0.25, 0.94, 0.25))
+	_glow(r, _cyl(0.07, 0.07, 0.2, 8), Color(0.3, 1.0, 0.4), Vector3(0.25, 1.06, 0.25), 1.8)
+	_p(r, _cyl(0.08, 0.08, 0.04, 8), Color("6a6560"), Vector3(0.25, 1.18, 0.25))
+
+
+# ------------------------------------------------------ trampa de pinchos
+## Caballo de frisa: dos aspas de madera unidas por travesaños con estacas afiladas (diseño de objetos).
+static func trap() -> Node3D:
+	var r := Node3D.new()
+	var w := Color("8a5a32")
+	var tip := Color("d8c29a")
+	for x in [-0.45, 0.45]:
+		_p(r, _box(Vector3(0.07, 0.75, 0.07)), w, Vector3(x, 0.3, -0.12), Vector3(-30, 0, 0))
+		_p(r, _box(Vector3(0.07, 0.75, 0.07)), w, Vector3(x, 0.3, 0.12), Vector3(30, 0, 0))
+	for z in [-0.28, 0.28]:
+		_p(r, _box(Vector3(1.05, 0.06, 0.06)), Color("6e4526"), Vector3(0, 0.08, z))
+	_p(r, _box(Vector3(1.05, 0.08, 0.08)), Color("6e4526"), Vector3(0, 0.55, 0))
+	for k in 5:
+		var x := -0.36 + k * 0.18
+		for side in [-1.0, 1.0]:
+			var a := Vector3(x, 0.5, 0)
+			var b := Vector3(x, 0.95, side * 0.32)
+			_stick(r, a, b, 0.025, w)
+			var tipm := _stick(r, b, b + (b - a).normalized() * 0.12, 0.022, tip)
+			tipm.mesh = _cyl(0.0, 0.025, 0.12, 5)
+	return r
 
 
 # --------------------------------------------------------- obra a medias

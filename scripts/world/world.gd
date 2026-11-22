@@ -50,7 +50,12 @@ var _night_check := 0.0
 var _clock_t := 0.0
 
 
+const FireScript := preload("res://scripts/world/fire.gd")
+const TrapScript := preload("res://scripts/world/trap.gd")
+
+
 func _ready() -> void:
+	add_to_group("world")
 	randomize()
 	var world := GS.load_game()
 	map_id = GS.current_map
@@ -343,7 +348,73 @@ func find_target() -> Node3D:
 		elif d < best_d:
 			best_d = d
 			best = node
+	if best_enemy == null and GS.hand_throws():
+		# Con un molotov en la mano se apunta al enemigo más cercano a tiro
+		var rng := float(DB.bal("throw_range", 11.0))
+		for n in get_tree().get_nodes_in_group("enemy"):
+			var node := n as Node3D
+			if node == null or not node.is_inside_tree() or not node.visible or not node.can_interact():
+				continue
+			var d := Vector2(node.global_position.x - player.global_position.x,
+				node.global_position.z - player.global_position.z).length()
+			if d <= rng and d < best_enemy_d:
+				best_enemy_d = d
+				best_enemy = node
 	return best_enemy if best_enemy != null else best
+
+
+# ------------------------------------------------------- molotov y trampas
+
+## Lanza lo que llevas en la mano (molotov) hacia una criatura.
+func throw_at(t: Node3D) -> Node3D:
+	if not GS.hand_throws() or t == null:
+		return null
+	var d := DB.item(str(GS.hand["id"]))
+	var f := FireScript.new()
+	f.from = player.global_position + Vector3(0, 1.4, 0)
+	f.to = Vector3(t.global_position.x, player.floor_y, t.global_position.z)
+	f.radius = float(d.get("fire_radius", 2.6))
+	f.duration = float(d.get("fire_time", 5.0))
+	f.dps = float(d.get("damage", 14))
+	add_child(f)
+	GS.spend_hand()
+	SFX.play("lanzar")
+	player.make_noise(float(DB.bal("noise_hit", 9.0)))
+	return f
+
+
+func spawn_trap(pos: Vector3, uses: int, rot_y := 0.0) -> Node3D:
+	var t := TrapScript.new()
+	t.uses = uses
+	add_child(t)
+	t.global_position = pos
+	t.rotation.y = rot_y
+	return t
+
+
+## Coloca en el suelo, delante de ti, la trampa de la casilla i del inventario.
+func place_trap(i: int) -> String:
+	var s = GS.slots[i] if i >= 0 and i < GS.slots.size() else null
+	var why := ""
+	if s == null or str(DB.item(str(s["id"])).get("type", "")) != "trap":
+		why = "Eso no es una trampa"
+	var pos: Vector3 = player.global_position + player.facing() * 1.3
+	pos.y = base.floor_height(pos) if base else 0.0
+	for t in get_tree().get_nodes_in_group("trap"):
+		if why == "" and (t as Node3D).global_position.distance_to(pos) < 1.4:
+			why = "Ya hay una trampa ahí"
+	if why != "":
+		GS.message.emit(why)
+		return why
+	var max_uses := int(DB.item(str(s["id"])).get("durability", 4))
+	spawn_trap(pos, int(s.get("dur", max_uses)), player._visual.rotation.y)
+	s["qty"] = int(s["qty"]) - 1
+	if int(s["qty"]) <= 0:
+		GS.slots[i] = null
+	GS.inventory_changed.emit()
+	GS.message.emit("Trampa colocada")
+	hud.close_panels()
+	return ""
 
 
 ## Distancia de la cámara (1 = la de antes). Se cambia pellizcando con dos dedos o en Ajustes.
@@ -702,6 +773,7 @@ func world_dict() -> Dictionary:
 		"player": [player.global_position.x, player.global_position.z],
 		"bags": bags,
 		"base": base.to_list() if base else [],
+		"traps": get_tree().get_nodes_in_group("trap").filter(func(t): return not t.is_queued_for_deletion()).map(func(t): return t.to_dict()),
 	}
 
 
@@ -719,6 +791,11 @@ func _load_world(w: Dictionary) -> void:
 		spawn_bag(Vector3(float(pos[0]), 0, float(pos[1])), items, bool(b.get("player", false)))
 	if base:
 		base.load_list(w.get("base", []))
+	for t in w.get("traps", []):
+		var tp: Array = t.get("pos", [0, 0])
+		var tpos := Vector3(float(tp[0]), 0, float(tp[1]))
+		tpos.y = base.floor_height(tpos) if base else 0.0
+		spawn_trap(tpos, int(t.get("uses", 4)), float(t.get("rot", 0.0)))
 
 
 func save() -> void:

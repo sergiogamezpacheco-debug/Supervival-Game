@@ -25,7 +25,9 @@ func _ready() -> void:
 	ground.mesh = pm
 	ground.material_override = Builder.mat(Color("3a3f48"))
 	add_child(ground)
-	var ids := ["carpinteria", "horno", "banco_armas", "recolector_agua", "hoguera", "secadero", "huerto", "mesa_medica", "generador", "recicladora"]
+	var ids: Array = ["carpinteria", "horno", "banco_armas", "recolector_agua", "hoguera", "secadero", "huerto", "mesa_medica", "generador", "recicladora"]
+	if OS.get_cmdline_user_args().size() > 1:
+		ids = OS.get_cmdline_user_args().slice(1)   # solo las que se pidan
 	for i in ids.size():
 		var m := Builder.station_mesh(ids[i], 1)
 		var col := i % 4 if i < 8 else (i - 8) + 1

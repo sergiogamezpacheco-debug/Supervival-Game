@@ -59,6 +59,9 @@
 - Animaciones: captura de la Universal Animation Library (Quaternius, CC0, `third_party/ual/`) pasada a nuestras
   articulaciones con `godot --headless -s res://tools/bake_anims.gd` -> `assets/characters/animaciones.res`
   (46 clips). `CharacterModel.pose(clip, t, peso, solo_estas)`; andar/correr/agacharse/golpe/reposo las mezclan.
-- Fabricación: `docs/fabricacion.md` (árbol generado de `data/recipes.json`). A mano solo lo básico (≤6 recetas, hay
+- Fabricación: `docs/fabricacion.md` (tablas generadas de `data/recipes.json` con `python3 tools/fabricacion.py`). A mano solo lo básico (≤6 recetas, hay
   test); lo demás en bancos. Pantalla `scripts/ui/craft_screen.gd` (hereda estilos de `station_screen.gd`).
 - Hoja de ruta y estado: `README.md`.
+- Fuego y energía de estaciones: `"burns": true` (cocina, destilería) = fuego propio en `station.fuel` (`DB.bal("stove_fuel")`);
+  `"power": true` = gasta el del generador. Consumibles con `"empty"` devuelven el envase; `"throw": true` (molotov)
+  se lanza con `world.throw_at()` (`scripts/world/fire.gd`); `type: trap` se coloca con `world.place_trap(i)` (`trap.gd`).

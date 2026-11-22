@@ -238,6 +238,14 @@ static func tool_mesh(item_id: String) -> Node3D:
 	var root := Node3D.new()
 	if item_id == "":
 		return root
+	if item_id == "molotov":
+		# botella con líquido ámbar y trapo atado al cuello
+		root.add_child(part(cyl(0.09, 0.1, 0.26), Color(0.55, 0.75, 0.6, 0.6), Vector3(0, 0.13, 0)))
+		root.add_child(part(cyl(0.085, 0.095, 0.16), Color("d9a43a"), Vector3(0, 0.09, 0)))
+		root.add_child(part(cyl(0.035, 0.07, 0.12), Color(0.55, 0.75, 0.6, 0.6), Vector3(0, 0.32, 0)))
+		root.add_child(part(box(Vector3(0.1, 0.16, 0.05)), Color("e8dcc0"), Vector3(0.04, 0.42, 0)))
+		root.add_child(part(cyl(0.0, 0.05, 0.1), Color("ffb347"), Vector3(0.04, 0.54, 0), 3.0))
+		return root
 	root.add_child(part(cyl(0.04, 0.04, 0.9), Color("8b5a2b"), Vector3(0, 0, -0.2)))
 	match item_id:
 		"hacha_piedra":

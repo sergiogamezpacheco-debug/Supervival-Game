@@ -19,6 +19,10 @@ const SIZES := {
 	"mesa_medica": Vector3(1.6, 1.0, 0.9),
 	"generador": Vector3(1.2, 1.0, 0.8),
 	"recicladora": Vector3(1.6, 1.8, 1.4),
+	"cocina": Vector3(1.3, 1.2, 0.8),
+	"destileria": Vector3(1.5, 1.7, 1.0),
+	"mesa_quimica": Vector3(1.6, 1.1, 0.9),
+	"banco_electronica": Vector3(1.7, 1.2, 0.9),
 }
 
 var id := ""
@@ -30,7 +34,7 @@ var storage: Array = []      # solo cofres
 var stage := 0               # fases de obra hechas (estaciones grandes); completa si == phases().size()
 var water := 0.0             # recolector de agua: litros guardados…
 var water_t := 0.0           # …hasta este momento (unix)
-var fuel := 0.0              # generador: segundos de energía
+var fuel := 0.0              # generador: segundos de energía; cocina y destilería: segundos de fuego
 var _visual: Node3D
 
 
@@ -67,6 +71,11 @@ func is_collector() -> bool:
 
 func is_generator() -> bool:
 	return id == "generador"
+
+
+## Cocina y destilería: tienen su propio fuego (leña, carbón o combustible).
+func burns() -> bool:
+	return bool(DB.stations.get(id, {}).get("burns", false))
 
 
 # ----------------------------------------------------------- obra por fases
@@ -117,6 +126,25 @@ func water_capacity() -> float:
 	return float(DB.station_level(id, level).get("capacity", 100))
 
 
+## Llena botellas vacías con el agua guardada (agua sucia). Devuelve "" o el motivo.
+func fill_bottles(n: int) -> String:
+	var per := float(DB.bal("bottle_water", 10))
+	water = water_now()
+	water_t = GS.now()
+	n = mini(n, mini(GS.count("botella_vacia"), int(water / per)))
+	if GS.count("botella_vacia") <= 0:
+		return "No tienes botellas vacías"
+	if n <= 0:
+		return "No hay agua suficiente"
+	GS.remove_item("botella_vacia", n)
+	var left := GS.add_item("agua_sucia", n)
+	if left > 0:
+		GS.add_item("botella_vacia", left)
+	water -= per * float(n - left)
+	GS.message.emit("+%d %s" % [n - left, DB.item_name("agua_sucia")])
+	return "" if left == 0 else "Inventario lleno"
+
+
 ## Bebe lo que haga falta (y haya). Devuelve lo bebido.
 func drink() -> float:
 	water = water_now()
@@ -133,16 +161,27 @@ func drink() -> float:
 
 # ---------------------------------------------------------------- generador
 
-## Echa combustible (carbón o troncos) al generador.
+## Qué se puede echar y cuántos segundos de energía o de fuego da cada unidad.
+func fuel_table() -> Dictionary:
+	if burns():
+		return DB.bal("stove_fuel", {"madera": 60, "carbon": 180})
+	return DB.bal("generator_fuel", {"carbon": 300, "madera": 90})
+
+
+func fuel_max() -> float:
+	return float(DB.bal("stove_max", 1800)) if burns() else float(DB.bal("generator_max", 3600))
+
+
+## Echa combustible (troncos, carbón o bidón) al generador o al fuego de la estación.
 func add_fuel(item_id: String) -> String:
-	var per: Dictionary = DB.bal("generator_fuel", {"carbon": 300, "madera": 90})
+	var per := fuel_table()
 	if not per.has(item_id):
 		return "Eso no sirve de combustible"
-	if fuel >= float(DB.bal("generator_max", 3600)):
-		return "El depósito está lleno"
+	if fuel >= fuel_max():
+		return "El depósito está lleno" if not burns() else "El fuego ya está al máximo"
 	if not GS.remove_item(item_id, 1):
 		return "No tienes %s" % DB.item_name(item_id)
-	fuel = minf(fuel + float(per[item_id]), float(DB.bal("generator_max", 3600)))
+	fuel = minf(fuel + float(per[item_id]), fuel_max())
 	return ""
 
 
@@ -281,10 +320,14 @@ func start(recipe_id: String, count := 1) -> String:
 			return "Necesita un generador terminado"
 		if gen.fuel < t:
 			return "Al generador le falta combustible"
+	if burns() and fuel < t:
+		return "Echa leña: al fuego le falta para esto"
 	if not GS.pay(cost_times(r, count)):
 		return "Faltan materiales"
 	if gen:
 		gen.fuel -= t
+	if burns():
+		fuel -= t
 	job = {"recipe": recipe_id, "end": GS.now() + t, "time": t, "count": count}
 	return ""
 

@@ -551,6 +551,8 @@ func _refresh_detail() -> void:
 				acts.append(["Equipar", func(): GS.equip_slot(i)])
 			"wear":
 				acts.append(["Ponerse", func(): GS.wear_slot(i)])
+			"trap":
+				acts.append(["Colocar", func(): get_tree().call_group("world", "place_trap", i)])
 		acts.append(["Tirar", func(): GS.drop_slot(i)])
 	for k in acts.size():
 		var b := Button.new()

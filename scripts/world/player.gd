@@ -122,7 +122,11 @@ func _physics_process(delta: float) -> void:
 	var acting := action_held or Input.is_key_pressed(KEY_SPACE)
 	if acting and target != null and is_instance_valid(target) and _action_cd <= 0.0:
 		_face(target.global_position - global_position)
-		target.interact(self)
+		var w := get_tree().get_first_node_in_group("world")
+		if GS.hand_throws() and target.is_in_group("creature") and w != null:
+			w.throw_at(target)   # molotov: se lanza, no se golpea
+		else:
+			target.interact(self)
 		if target.is_in_group("resource") or target.is_in_group("creature"):
 			GS.exercise("fuerza", float(DB.bal("fitness_hit_gain", 0.0006)))
 			make_noise(float(DB.bal("noise_hit", 9.0)) * (0.6 if crouching else 1.0))

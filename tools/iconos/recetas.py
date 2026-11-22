@@ -20,12 +20,27 @@ RECETAS = {  # id: (lámina, x, y) del marco de 96x96 de la tarjeta
     "camiseta": ("costura", 718, 500),
     "antidoto": ("quimica", 718, 116),
     "botiquin": ("quimica", 718, 244),
+    "estimulante": ("quimica", 718, 372),
+    "vendas_avanzadas": ("quimica", 718, 500),
+    "circuito_avanzado": ("electronica", 718, 116),
+    # cocina y destilería: láminas de 1200x896, marcos de 115 px
+    "plato_cocinado": ("cocina", 637, 139, 115),
+    "conserva_carne": ("cocina", 637, 294, 115),
+    "agua_hervida": ("cocina", 637, 449, 115),
+    "guiso_setas": ("cocina", 637, 604, 115),
+    "agua_purificada": ("destileria", 637, 139, 115),
+    "alcohol": ("destileria", 637, 294, 115),
+    "combustible": ("destileria", 637, 449, 115),
+    "agua_sucia": ("destileria", 637, 604, 115),
 }
-TAMBIEN_ITEMS = ["mango", "viga", "acero", "pantalon_tela", "gorra", "camiseta", "antidoto", "botiquin"]
+TAMBIEN_ITEMS = ["mango", "viga", "acero", "pantalon_tela", "gorra", "camiseta", "antidoto", "botiquin",
+                 "estimulante", "vendas_avanzadas", "circuito_avanzado", "plato_cocinado", "conserva_carne", "agua_hervida",
+                 "guiso_setas", "agua_purificada", "alcohol", "combustible", "agua_sucia"]
 VISTAS = {  # id: (lámina, x, y, w, h)
     "lingote_hierro": ("horno", 180, 165, 330, 250),
     "tablon": ("carpinteria", 185, 200, 320, 230),
     "antidoto": ("quimica", 262, 128, 150, 158),
+    "circuito_avanzado": ("electronica", 205, 145, 255, 192),
 }
 
 
@@ -52,16 +67,23 @@ def cut(a, tol, size, only_biggest=False):
 
 if __name__ == "__main__":
     docs, out = sys.argv[1:3]
-    for k, (sheet, x, y) in RECETAS.items():
+    solo = sys.argv[3:]   # opcional: solo estos ids
+    for k, (sheet, x, y, *fr) in RECETAS.items():
+        if solo and k not in solo:
+            continue
+        f = fr[0] if fr else 96
+        m = round(f * 0.094)
         img = Image.open(f"{docs}/diseno_est_{sheet}.jpg").convert("RGB")
-        a = np.asarray(img.crop((x + 9, y + 9, x + 87, y + 87))).astype(float)
+        a = np.asarray(img.crop((x + m, y + m, x + f - m, y + f - m))).astype(float)
         ic = cut(a, 26, 128)
         ic.save(f"{out}/recetas/{k}.png")
         if k in TAMBIEN_ITEMS:
             ic.save(f"{out}/items/{k}.png")
         print("receta", k)
     for k, (sheet, x, y, w, h) in VISTAS.items():
+        if solo and k not in solo:
+            continue
         img = Image.open(f"{docs}/diseno_est_{sheet}.jpg").convert("RGB")
         a = np.asarray(img.crop((x, y, x + w, y + h))).astype(float)
-        cut(a, 30, 384, k == "antidoto").save(f"{out}/preview/{k}.png")
+        cut(a, 30, 384, k in ("antidoto", "circuito_avanzado")).save(f"{out}/preview/{k}.png")
         print("vista", k)

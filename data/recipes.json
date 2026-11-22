@@ -625,5 +625,301 @@
       "componentes": 2
     },
     "unlock": 22
+  },
+  {
+    "id": "plato_cocinado",
+    "result": "plato_cocinado",
+    "qty": 1,
+    "station": "cocina",
+    "level": 1,
+    "time": 10,
+    "cost": {
+      "carne_cruda": 2,
+      "seta": 1
+    },
+    "unlock": 9,
+    "cat": "Platos"
+  },
+  {
+    "id": "guiso_setas",
+    "result": "guiso_setas",
+    "qty": 1,
+    "station": "cocina",
+    "level": 1,
+    "time": 15,
+    "cost": {
+      "seta": 4,
+      "agua_sucia": 1
+    },
+    "unlock": 9,
+    "cat": "Platos"
+  },
+  {
+    "id": "conserva_carne",
+    "result": "conserva_carne",
+    "qty": 1,
+    "station": "cocina",
+    "level": 1,
+    "time": 30,
+    "cost": {
+      "carne_cruda": 3,
+      "lata_vacia": 1
+    },
+    "unlock": 9,
+    "cat": "Conservas"
+  },
+  {
+    "id": "conserva_bayas",
+    "result": "conserva_bayas",
+    "qty": 1,
+    "station": "cocina",
+    "level": 1,
+    "time": 25,
+    "cost": {
+      "baya": 5,
+      "lata_vacia": 1
+    },
+    "unlock": 9,
+    "cat": "Conservas"
+  },
+  {
+    "id": "agua_hervida",
+    "result": "agua_hervida",
+    "qty": 1,
+    "station": "cocina",
+    "level": 1,
+    "time": 8,
+    "cost": {
+      "agua_sucia": 1
+    },
+    "unlock": 9,
+    "cat": "Agua"
+  },
+  {
+    "id": "cantimplora_vacia",
+    "result": "cantimplora_vacia",
+    "qty": 1,
+    "station": "cocina",
+    "level": 1,
+    "time": 30,
+    "cost": {
+      "lingote_hierro": 1,
+      "cuero": 1,
+      "cuerda": 1
+    },
+    "unlock": 9,
+    "cat": "Agua"
+  },
+  {
+    "id": "cantimplora",
+    "result": "cantimplora",
+    "qty": 1,
+    "station": "cocina",
+    "level": 1,
+    "time": 12,
+    "cost": {
+      "cantimplora_vacia": 1,
+      "agua_sucia": 2
+    },
+    "unlock": 9,
+    "cat": "Agua"
+  },
+  {
+    "id": "agua_purificada",
+    "result": "agua_purificada",
+    "qty": 1,
+    "station": "destileria",
+    "level": 1,
+    "time": 16,
+    "cost": {
+      "agua_sucia": 2
+    },
+    "unlock": 11,
+    "cat": "Líquidos"
+  },
+  {
+    "id": "alcohol",
+    "result": "alcohol",
+    "qty": 1,
+    "station": "destileria",
+    "level": 1,
+    "time": 30,
+    "cost": {
+      "baya": 6,
+      "agua_purificada": 1
+    },
+    "unlock": 11,
+    "cat": "Líquidos"
+  },
+  {
+    "id": "carbon_destileria",
+    "result": "carbon",
+    "qty": 3,
+    "station": "destileria",
+    "level": 1,
+    "time": 20,
+    "cost": {
+      "madera": 3
+    },
+    "unlock": 11,
+    "cat": "Recursos"
+  },
+  {
+    "id": "combustible",
+    "result": "combustible",
+    "qty": 1,
+    "station": "destileria",
+    "level": 2,
+    "time": 40,
+    "cost": {
+      "alcohol": 2,
+      "carbon": 2
+    },
+    "unlock": 13,
+    "cat": "Combustible"
+  },
+  {
+    "id": "cable_cobre",
+    "result": "cable_cobre",
+    "qty": 4,
+    "station": "banco_electronica",
+    "level": 1,
+    "time": 10,
+    "cost": {
+      "lingote_cobre": 1
+    },
+    "unlock": 23,
+    "cat": "Componentes"
+  },
+  {
+    "id": "circuito",
+    "result": "circuito",
+    "qty": 1,
+    "station": "banco_electronica",
+    "level": 1,
+    "time": 20,
+    "cost": {
+      "componentes": 2,
+      "cable_cobre": 2
+    },
+    "unlock": 23,
+    "cat": "Circuitos"
+  },
+  {
+    "id": "circuito_avanzado",
+    "result": "circuito_avanzado",
+    "qty": 1,
+    "station": "banco_electronica",
+    "level": 1,
+    "time": 40,
+    "cost": {
+      "circuito": 2,
+      "cable_cobre": 3,
+      "lingote_cobre": 1
+    },
+    "unlock": 23,
+    "cat": "Circuitos"
+  },
+  {
+    "id": "bateria",
+    "result": "bateria",
+    "qty": 1,
+    "station": "banco_electronica",
+    "level": 1,
+    "time": 30,
+    "cost": {
+      "lingote_cobre": 1,
+      "acido": 1,
+      "componentes": 1
+    },
+    "unlock": 23,
+    "cat": "Energía"
+  },
+  {
+    "id": "vendas_avanzadas",
+    "result": "vendas_avanzadas",
+    "qty": 2,
+    "station": "mesa_quimica",
+    "level": 1,
+    "time": 12,
+    "cost": {
+      "tela_resistente": 1,
+      "alcohol": 1
+    },
+    "unlock": 21,
+    "cat": "Medicamentos"
+  },
+  {
+    "id": "antidoto_quimica",
+    "result": "antidoto",
+    "qty": 2,
+    "station": "mesa_quimica",
+    "level": 1,
+    "time": 15,
+    "cost": {
+      "agua_purificada": 1,
+      "seta": 2
+    },
+    "unlock": 21,
+    "cat": "Medicamentos"
+  },
+  {
+    "id": "estimulante",
+    "result": "estimulante",
+    "qty": 1,
+    "station": "mesa_quimica",
+    "level": 1,
+    "time": 20,
+    "cost": {
+      "agua_purificada": 1,
+      "baya": 3,
+      "azufre": 1
+    },
+    "unlock": 21,
+    "cat": "Medicamentos"
+  },
+  {
+    "id": "molotov",
+    "result": "molotov",
+    "qty": 1,
+    "station": "mesa_quimica",
+    "level": 1,
+    "time": 15,
+    "cost": {
+      "botella_vacia": 1,
+      "combustible": 1,
+      "tela": 1
+    },
+    "unlock": 21,
+    "cat": "Explosivos"
+  },
+  {
+    "id": "acido",
+    "result": "acido",
+    "qty": 1,
+    "station": "mesa_quimica",
+    "level": 1,
+    "time": 20,
+    "cost": {
+      "azufre": 2,
+      "agua_purificada": 1
+    },
+    "unlock": 21,
+    "cat": "Alquimia"
+  },
+  {
+    "id": "trampa_pinchos",
+    "result": "trampa_pinchos",
+    "qty": 1,
+    "station": "carpinteria",
+    "level": 1,
+    "time": 30,
+    "cost": {
+      "tablon": 4,
+      "clavos": 10,
+      "cuerda": 2
+    },
+    "unlock": 8,
+    "cat": "Trampas"
   }
 ]

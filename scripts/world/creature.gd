@@ -82,6 +82,8 @@ func can_interact() -> bool:
 
 
 func action_label() -> String:
+	if GS.hand_throws():
+		return "Lanzar"
 	return "Cazar" if behavior() != "aggressive" else "Atacar"
 
 
@@ -100,22 +102,30 @@ func interact(by: Node3D) -> void:
 		if _in_front(to_by, to_by.length()):
 			dmg *= 1.0 - stat("front_armor", 0.7)
 			blocked = true
-	hp -= dmg
 	GS.wear_hand()
+	take_damage(dmg, sneak, blocked)
+	if _player and hp > 0.0:
+		var push := global_position - _player.global_position
+		push.y = 0.0
+		global_position += push.normalized() * 0.4
+
+
+## Daño de cualquier origen (golpe, fuego del molotov, trampa). Se enfada y va a por ti.
+func take_damage(dmg: float, crit := false, blocked := false, sfx := "golpe") -> void:
+	if hp <= 0.0:
+		return
+	hp -= dmg
 	provoked = 15.0
 	aware = true
 	_lost = 0.0
-	_show_damage(dmg, sneak, blocked)
-	SFX.play("picar" if blocked else "golpe")
+	_show_damage(dmg, crit, blocked)
+	if sfx != "":
+		SFX.play("picar" if blocked else sfx)
 	_flash()
 	_bar_time = 4.0
 	var tw := create_tween()
 	_visual.scale = Vector3(1.2, 0.8, 1.2)
 	tw.tween_property(_visual, "scale", Vector3.ONE, 0.15)
-	if _player:
-		var push := global_position - _player.global_position
-		push.y = 0.0
-		global_position += push.normalized() * 0.4
 	if hp <= 0.0:
 		_on_death()
 		killed.emit(self)
