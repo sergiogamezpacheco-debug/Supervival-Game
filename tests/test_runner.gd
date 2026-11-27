@@ -45,6 +45,8 @@ func _ready() -> void:
 	await test_routes()
 	print("== Fase 1 del mapa: Arboleda, Pedregal, piezas y caminos a pie")
 	await test_phase1()
+	print("== Refugio: casi sin infectados")
+	await test_refugio_infectados()
 	print("== Niveles y peso")
 	await test_levels_weight()
 	await test_crafting_tree()
@@ -304,6 +306,52 @@ func test_world() -> void:
 	check(has_player_bag, "la mochila tirada se guarda en la partida")
 	world.queue_free()
 	await _frames(2)
+
+
+func test_refugio_infectados() -> void:
+	DirAccess.remove_absolute(ProjectSettings.globalize_path(GS.save_path))
+	GS.new_game()
+	var zs := 0
+	for g in DB.maps["refugio"]["creatures"]:
+		if DB.creatures[str(g["type"])].get("behavior") == "aggressive" and str(g["type"]) not in ["lobo"]:
+			zs += int(g["groups"]) * int(g["size"][1])
+			check(g.has("respawn") and float(g["respawn"][0]) >= 1200.0, "en el refugio el %s tarda mucho en volver" % g["type"])
+	check(zs <= 5, "en el refugio hay pocos infectados al entrar (%d)" % zs)
+	var world := await _new_world()
+	var z: Node3D = null
+	for c in get_tree().get_nodes_in_group("creature"):
+		if c.kind == "infectado" and c.has_meta("respawn_key"):
+			z = c
+			break
+	check(z != null and z.visible, "la primera vez que entras hay infectados")
+	var key := str(z.get_meta("respawn_key"))
+	world._on_creature_killed(z)
+	var back := float(GS.dead_until.get("refugio", {}).get(key, 0.0))
+	check(back - GS.now() >= 1200.0, "al matarlo tarda al menos 20 min (reloj real) en volver")
+	world.save()
+	world.queue_free()
+	await _frames(3)
+	GS.dead_until = {}
+	GS.load_game()
+	var world2 := await _new_world()
+	var z2: Node3D = null
+	for c in get_tree().get_nodes_in_group("creature"):
+		if c.has_meta("respawn_key") and str(c.get_meta("respawn_key")) == key:
+			z2 = c
+	check(z2 != null and not z2.visible and z2.process_mode == Node.PROCESS_MODE_DISABLED, "al volver al refugio sigue muerto (se guarda)")
+	world2.queue_free()
+	await _frames(3)
+	GS.time_offset += 3700.0
+	var world3 := await _new_world()
+	var z3: Node3D = null
+	for c in get_tree().get_nodes_in_group("creature"):
+		if c.has_meta("respawn_key") and str(c.get_meta("respawn_key")) == key:
+			z3 = c
+	check(z3 != null and z3.visible, "pasado el rato vuelve a aparecer")
+	world3.queue_free()
+	await _frames(3)
+	GS.time_offset = 0.0
+	DirAccess.remove_absolute(ProjectSettings.globalize_path(GS.save_path))
 
 
 func _new_world() -> Node3D:
@@ -1938,6 +1986,10 @@ func test_night_stealth() -> void:
 	GS.forced_hour = 23.0
 	var world := await _new_world()
 	var player: Node3D = world.player
+	check(float(world.map["night"].get("chance", 1.0)) <= 0.3, "en el refugio casi nunca llegan infectados de noche")
+	world.map = world.map.duplicate(true)
+	world.map["night"]["chance"] = 1.0
+	world._was_night = false
 	world._update_night()
 	await _frames(2)
 	var night_n := get_tree().get_nodes_in_group("night_spawn").size()
@@ -2140,6 +2192,13 @@ func test_action_hud(world: Node3D, player: Node3D, tree: Node3D) -> void:
 	tree.hits_left = 50
 	await _pframes(3)
 	check(hud.action_icon == "hacha_piedra" and hud.action_button.ring < 0.0 and not hud.action_button.enabled, "junto al pino sin hacha: icono del hacha en gris y sin borde")
+	check(player._hand_item == "", "sin hacha no le aparece ningún hacha en la mano")
+	player._action_cd = 0.0
+	player.action_held = true
+	await _frames(2)
+	await _pframes(1)
+	player.action_held = false
+	check(player._swing_t < 0.0 and GS.count("madera") == 0, "sin hacha: solo el aviso, sin gesto de golpear")
 	GS.add_item("hacha_piedra", 1)
 	GS.add_item("lanza", 1)
 	GS.equip_slot(1)
@@ -2155,6 +2214,32 @@ func test_action_hud(world: Node3D, player: Node3D, tree: Node3D) -> void:
 	check(hud.action_button.ring < 0.5 and hud.action_button.ring_color(hud.action_button.ring) == Color("f2c230"), "por debajo del 50 % el borde es amarillo")
 	check(hud.action_button.ring_color(0.2) == Color("e0463c") and hud.action_button.ring_color(0.8) == Color("6fd24a"), "rojo por debajo del 25 % y verde por encima del 50 %")
 	check(player._hand_item == "hacha_piedra", "el superviviente saca el hacha para talar")
+	player.target = tree
+	player._action_cd = 0.0
+	player._swing_t = -1.0
+	var arm0: Quaternion = player._visual.j["arm_r"].quaternion
+	player.action_held = true
+	await _frames(2)
+	await _pframes(1)
+	player.action_held = false
+	check(player._swing_kind == "axe", "con hacha: gesto de talar")
+	player._swing_t = 0.5
+	await _pframes(1)
+	var tool_node: Node3D = player._hand.get_child(0)
+	check(player._visual.j["arm_r"].quaternion.angle_to(arm0) > 0.3 and tool_node.rotation_degrees.x < -100.0, "al talar sube los brazos y coge el hacha por el mango")
+	player._swing_t = 0.99
+	await _pframes(2)
+	check(player._swing_t < 0.0 and is_equal_approx(tool_node.rotation_degrees.x, -80.0), "al acabar vuelve a llevar el hacha como siempre")
+	var cm := CharacterModel.new({"sex": "m"}, {}, {})
+	add_child(cm)
+	cm.animate_walk(0.0, 0.0)
+	var a0: Quaternion = cm.j["arm_r"].quaternion
+	cm.animate_chop(0.45, "pickaxe")
+	check(cm.j["arm_r"].quaternion.angle_to(a0) > 1.5, "al picar levanta el pico por encima de la cabeza")
+	cm.animate_walk(0.0, 0.0)
+	cm.animate_chop(0.6, "pickaxe")
+	check(cm.j["spine"].quaternion.get_euler().x < -0.4, "y al golpear se echa hacia delante")
+	cm.queue_free()
 	var pos: Vector3 = player.global_position
 	player.global_position = Vector3(0.5, 0, 9.5)
 	await _pframes(3)

@@ -1130,6 +1130,82 @@ func animate_swing(t: float) -> void:
 	pose("Sword_Attack", (0.15 + 0.55 * t) * clip_length("Sword_Attack"), w, UPPER if _move > 0.3 else [], false)
 
 
+## Picar (kind "pickaxe": de arriba abajo, con las dos manos) o talar (kind "axe": golpe
+## cruzado desde el hombro derecho). t 0..1: carga (hasta 0,45), golpe (0,45-0,6) y vuelta.
+## La librería no trae estos gestos: se hacen girando las articulaciones (ángulos en radianes,
+## signos de CLAUDE.md). Parado mueve también el tronco; andando, solo los brazos.
+const CHOP_KEYS := {
+	"pickaxe": [
+		[0.0, {}],
+		[0.45, {"spine": Vector3(0.18, 0, 0), "head": Vector3(0.2, 0, 0),
+			"arm_r": Vector3(2.75, 0, -0.35), "elbow_r": Vector3(1.3, 0, 0), "hand_r": Vector3(-0.95, 0, 0),
+			"arm_l": Vector3(2.6, 0, 0.55), "elbow_l": Vector3(1.35, 0, 0), "hand_l": Vector3(-0.8, 0, 0)}],
+		[0.6, {"spine": Vector3(-0.6, 0, 0), "head": Vector3(-0.2, 0, 0),
+			"arm_r": Vector3(1.0, 0, -0.2), "elbow_r": Vector3(0.15, 0, 0), "hand_r": Vector3(0.1, 0, 0),
+			"arm_l": Vector3(1.1, 0, 0.5), "elbow_l": Vector3(0.3, 0, 0), "hand_l": Vector3(0.1, 0, 0)}],
+		[0.75, {"spine": Vector3(-0.55, 0, 0), "head": Vector3(-0.15, 0, 0),
+			"arm_r": Vector3(0.95, 0, -0.2), "elbow_r": Vector3(0.2, 0, 0), "hand_r": Vector3(0.1, 0, 0),
+			"arm_l": Vector3(1.05, 0, 0.5), "elbow_l": Vector3(0.35, 0, 0), "hand_l": Vector3(0.1, 0, 0)}],
+	],
+	"axe": [
+		[0.0, {}],
+		[0.45, {"spine": Vector3(0.1, 0.75, 0), "head": Vector3(0, -0.45, 0),
+			"arm_r": Vector3(2.3, 0, 0.35), "elbow_r": Vector3(1.45, 0, 0), "hand_r": Vector3(-0.9, 0, 0),
+			"arm_l": Vector3(2.0, 0, 0.9), "elbow_l": Vector3(1.4, 0, 0), "hand_l": Vector3(-0.7, 0, 0)}],
+		[0.6, {"spine": Vector3(-0.3, -0.45, 0), "head": Vector3(-0.1, 0.3, 0),
+			"arm_r": Vector3(1.15, 0, -0.55), "elbow_r": Vector3(0.15, 0, 0), "hand_r": Vector3(0.0, 0, 0),
+			"arm_l": Vector3(1.15, 0, 0.1), "elbow_l": Vector3(0.3, 0, 0), "hand_l": Vector3(0.0, 0, 0)}],
+		[0.75, {"spine": Vector3(-0.28, -0.5, 0), "head": Vector3(-0.1, 0.3, 0),
+			"arm_r": Vector3(1.05, 0, -0.6), "elbow_r": Vector3(0.2, 0, 0), "hand_r": Vector3(0.0, 0, 0),
+			"arm_l": Vector3(1.05, 0, 0.1), "elbow_l": Vector3(0.35, 0, 0), "hand_l": Vector3(0.0, 0, 0)}],
+	],
+}
+
+
+## Cómo va la herramienta en la mano: w = 0 la lleva como siempre (mango hacia delante, cogido
+## por el medio); w = 1 cogida por el extremo del mango y apuntando hacia delante y abajo, para
+## que al picar o talar la cabeza llegue al suelo o al tronco.
+static func grip_tool(tool: Node3D, w: float) -> void:
+	var ang := deg_to_rad(lerpf(-80.0, -150.0, w))
+	var grip := Vector3(0, -0.36 * w, -0.2 * w)   # punto del mango que queda en el puño
+	tool.rotation = Vector3(ang, 0, 0)
+	tool.position = -(Basis(Vector3.RIGHT, ang) * grip)
+
+
+## Peso del agarre de golpear en el instante t de animate_chop (para grip_tool).
+static func chop_grip(t: float) -> float:
+	return smoothstep(0.0, 0.25, t) * (1.0 - smoothstep(0.85, 1.0, t))
+
+
+func animate_chop(t: float, kind: String) -> void:
+	if j.is_empty() or not CHOP_KEYS.has(kind):
+		return
+	var keys: Array = CHOP_KEYS[kind]
+	var w := smoothstep(0.0, 0.4, t) * (1.0 - smoothstep(0.8, 1.0, t))
+	# tramo de claves en el que cae t (la primera, vacía, es «como estaba»: solo entra el peso)
+	var k := 1
+	while k < keys.size() - 1 and t > float(keys[k][0]):
+		k += 1
+	var a: Dictionary = keys[maxi(k - 1, 1)][1]
+	var b: Dictionary = keys[k][1]
+	var t0 := float(keys[maxi(k - 1, 1)][0])
+	var t1 := float(keys[k][0])
+	var f := 1.0 if t1 <= t0 or t >= t1 else clampf((t - t0) / (t1 - t0), 0.0, 1.0)
+	if t <= float(keys[1][0]):
+		f = 1.0   # durante la carga se va hacia la primera clave con el peso
+	f = f * f * (3.0 - 2.0 * f)
+	for jn in b:
+		if _move > 0.3 and (jn == "spine" or jn == "head"):
+			continue
+		var e: Vector3 = (a.get(jn, b[jn]) as Vector3).lerp(b[jn], f)
+		var node: Node3D = j[jn]
+		var q := Quaternion.from_euler(e)
+		if jn.begins_with("arm_"):
+			# el brazo cuelga algo abierto: se respeta ese giro lateral de reposo
+			q = Quaternion.from_euler(Vector3(e.x, e.y, e.z + (-0.22 if jn == "arm_l" else 0.22)))
+		node.quaternion = node.quaternion.slerp(q, w)
+
+
 ## Reposo: respiración y pequeños movimientos (w 0..1). t en segundos.
 func animate_idle(t: float, w: float) -> void:
 	pose("Idle_Loop", t, w)

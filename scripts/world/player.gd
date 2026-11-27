@@ -15,6 +15,7 @@ var _walk_amount := 0.0
 var _run_amount := 0.0
 var _vel := Vector3.ZERO
 var _swing_t := -1.0
+var _swing_kind := ""   # "axe"/"pickaxe": talar o picar (animate_chop); "" = golpe normal
 var _idle_t := 0.0
 var _hand_item := ""
 var running := false
@@ -112,9 +113,14 @@ func _physics_process(delta: float) -> void:
 	if training > 0.0:
 		_visual.animate_swing(fmod(training, 0.75) / 0.75)
 	if _swing_t >= 0.0:
-		_swing_t += delta / 0.45   # lo que dura el gesto del golpe (solo visual)
+		# lo que dura el gesto (solo visual): picar y talar llevan carga y son algo más lentos
+		_swing_t += delta / (0.55 if _swing_kind != "" else 0.45)
 		if _swing_t >= 1.0:
 			_swing_t = -1.0
+			_grip(0.0)
+		elif _swing_kind != "":
+			_visual.animate_chop(_swing_t, _swing_kind)
+			_grip(CharacterModel.chop_grip(_swing_t))
 		else:
 			_visual.animate_swing(_swing_t)
 
@@ -123,14 +129,24 @@ func _physics_process(delta: float) -> void:
 	if acting and target != null and is_instance_valid(target) and _action_cd <= 0.0:
 		_face(target.global_position - global_position)
 		var w := get_tree().get_first_node_in_group("world")
+		var kind := ""   # herramienta que pide el recurso (hacha o pico)
+		if target.is_in_group("resource"):
+			kind = str(target.data.get("tool", ""))
+			if kind != "" and GS.best_tool(kind) < 0:
+				kind = ""
 		if GS.hand_throws() and target.is_in_group("creature") and w != null:
 			w.throw_at(target)   # molotov: se lanza, no se golpea
+		elif target.is_in_group("resource") and target.has_method("missing_tool") and target.missing_tool():
+			# sin hacha o pico: solo el aviso, sin gesto ni herramienta en la mano
+			target.interact(self)
+			_action_cd = 1.2
+			return
 		else:
 			target.interact(self)
 		if target.is_in_group("resource") or target.is_in_group("creature"):
 			GS.exercise("fuerza", float(DB.bal("fitness_hit_gain", 0.0006)))
 			make_noise(float(DB.bal("noise_hit", 9.0)) * (0.6 if crouching else 1.0))
-		_swing()
+		_swing(kind)
 		_action_cd = float(DB.bal("action_interval", 0.6))
 
 
@@ -246,8 +262,15 @@ func _face(dir: Vector3) -> void:
 	_visual.rotation.y = atan2(-dir.x, -dir.z)
 
 
-func _swing() -> void:
+func _swing(kind := "") -> void:
 	_swing_t = 0.0
+	_swing_kind = kind
+
+
+## Agarre de la herramienta en la mano (0 = llevarla, 1 = golpeando con ella).
+func _grip(w: float) -> void:
+	for c in _hand.get_children():
+		CharacterModel.grip_tool(c, w)
 
 
 ## Qué usa el botón de acción ahora mismo:
@@ -275,7 +298,7 @@ func action_info() -> Dictionary:
 func _refresh_hand() -> void:
 	var info := action_info()
 	var id := str(info["icon"])
-	if info["ui"]:   # sin herramienta que usar: se ve el arma equipada (o nada)
+	if info["ui"] or info.get("missing", false):   # sin herramienta que usar: se ve el arma equipada (o nada)
 		id = "" if GS.hand == null else str(GS.hand["id"])
 	if id == _hand_item:
 		return

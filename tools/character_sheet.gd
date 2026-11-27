@@ -46,6 +46,8 @@ func _ready() -> void:
 		await _inventory()
 	elif OS.get_cmdline_user_args().size() > 1 and OS.get_cmdline_user_args()[1] == "clips":
 		await _clips(OS.get_cmdline_user_args().slice(2))
+	elif OS.get_cmdline_user_args().size() > 1 and OS.get_cmdline_user_args()[1] == "chop":
+		await _chop()
 	elif OS.get_cmdline_user_args().size() > 1 and OS.get_cmdline_user_args()[1] == "ref":
 		await _ref()
 	elif OS.get_cmdline_user_args().size() > 1 and OS.get_cmdline_user_args()[1] == "heads":
@@ -219,6 +221,28 @@ func _clips(names: Array) -> void:
 		for k in 6:
 			c.pose(nm, ln * k / 5.0, 1.0, [], false)
 			await _shot("clip_%s_%d" % [nm, k], Vector2i(300, 500), Vector3(-3.6, 1.1, -1.4), Vector3(0, 0.85, 0), 30)
+
+
+## Picar y talar (animate_chop) con su herramienta, de lado y de frente.
+func _chop() -> void:
+	var M := {"sex": "m", "skin": 1, "hair": 1, "hair_color": 1}
+	for kind in ["pickaxe", "axe"]:
+		_clear()
+		await get_tree().process_frame
+		var c := _char(M, {}, {}, Vector3.ZERO, 0.0)
+		var tool := Builder.tool_mesh("pico_piedra" if kind == "pickaxe" else "hacha_piedra")
+		tool.rotation_degrees.x = -80.0
+		c.hand.add_child(tool)
+		for k in 5:
+			var t: float = [0.0, 0.3, 0.45, 0.6, 0.75][k]
+			c.animate_walk(0.0, 0.0)
+			c.animate_idle(0.0, 1.0)
+			c.animate_chop(t, kind)
+			CharacterModel.grip_tool(tool, CharacterModel.chop_grip(t))
+			c.rotation.y = PI / 2.0
+			await _shot("chop_%s_%d_lado" % [kind, k], Vector2i(300, 450), Vector3(0.0, 1.1, -4.6), Vector3(0, 0.95, 0), 30)
+			c.rotation.y = 0.5
+			await _shot("chop_%s_%d_frente" % [kind, k], Vector2i(300, 450), Vector3(0.0, 1.1, -4.6), Vector3(0, 0.95, 0), 30)
 
 
 ## Superviviente básico (como el diseño del inventario): cuerpo, cara, lado y poses.

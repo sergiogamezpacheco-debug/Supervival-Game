@@ -40,6 +40,7 @@ var map_pieces := 1             # trozos del mapa cosidos (1 al empezar, 2 y 3 s
 var travel_energy := 100.0      # energía de viaje rápido al guardar
 var travel_energy_t := 0.0      # hora (unix) de ese valor: se recarga con el tiempo real
 var route_from := ""            # andando por un camino: de qué zona saliste
+var dead_until: Dictionary = {}  # mapa -> {criatura: hora (unix) en que vuelve} (grupos con "respawn")
 var train_ready: Dictionary = {} # ejercicio -> hora (unix) en que se puede volver a entrenar
 var testing := false           # los tests no muestran la pantalla de creación
 var pending_drop: Array = []
@@ -83,6 +84,7 @@ func new_game() -> void:
 	travel_energy = float(DB.bal("travel_energy_max", 100))
 	travel_energy_t = now()
 	route_from = ""
+	dead_until = {}
 	reset_stats()
 	inventory_changed.emit()
 
@@ -961,6 +963,7 @@ func to_dict() -> Dictionary:
 		"travel_energy": travel_energy_now(),
 		"travel_energy_t": now(),
 		"route_from": route_from,
+		"dead_until": dead_until,
 	}
 
 
@@ -1025,6 +1028,7 @@ func from_dict(d: Dictionary) -> void:
 	travel_energy = float(d.get("travel_energy", travel_energy))
 	travel_energy_t = float(d.get("travel_energy_t", now()))
 	route_from = str(d.get("route_from", ""))
+	dead_until = d.get("dead_until", {}) if d.get("dead_until") is Dictionary else {}
 	_resize_bag()
 	_sync_outfit()
 	health = float(d.get("health", health))

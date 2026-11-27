@@ -81,3 +81,9 @@
   (`"piece"` en `world_map.json`/`maps.json`). Viaje rápido gasta `GS.travel_energy` (`DB.travel_energy_cost`);
   "Ir andando" pone `GS.current_map` = id del tramo y `GS.route_from`. El HUD recorta el mapa con `MAP_VIEWS`
   (mismos rectángulos que `VISTAS` en `mapa.py`). Capturas de la fase 1: `tools/fase1_shots.tscn -- /tmp/fase1`.
+- Picar y talar: `CharacterModel.animate_chop(t, "pickaxe"|"axe")` (claves `CHOP_KEYS`, la librería no trae ese gesto) y
+  `grip_tool(herramienta, peso)` para cogerla por el mango; revisar con `tools/character_sheet.tscn -- <dir> chop`.
+  Sin la herramienta no se saca a la mano ni hay gesto: solo el aviso.
+- Reaparición lenta: `"respawn": [mín, máx]` (segundos reales) en un grupo de criaturas de `maps.json`; se guarda en
+  `GS.dead_until[mapa]` y sigue contando con el juego cerrado. El refugio la usa para que casi no haya infectados;
+  su noche lleva `"chance"` (probabilidad de que lleguen).

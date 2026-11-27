@@ -271,7 +271,9 @@ func _spawn_resources(avoid: float) -> void:
 
 
 func _spawn_creatures() -> void:
+	var gi := -1
 	for g in map.get("creatures", []):
+		gi += 1
 		var kind := str(g["type"])
 		if not DB.creatures.has(kind):
 			push_error("Criatura desconocida en el mapa: %s" % kind)
@@ -286,6 +288,15 @@ func _spawn_creatures() -> void:
 				c.position = c.home
 				c.killed.connect(_on_creature_killed)
 				add_child(c)
+				if g.has("respawn"):
+					# vuelve con el reloj real (también con el juego cerrado): ver _on_creature_killed
+					c.set_meta("respawn_key", "%d_%d" % [gi, j])
+					c.set_meta("respawn_range", g["respawn"])
+					var left := float(GS.dead_until.get(GS.current_map, {}).get("%d_%d" % [gi, j], 0.0)) - GS.now()
+					if left > 0.0:
+						c.visible = false
+						c.process_mode = Node.PROCESS_MODE_DISABLED
+						_respawns.append({"c": c, "t": left})
 
 
 func spawn_bag(pos: Vector3, items: Array, is_player: bool) -> Node3D:
@@ -524,7 +535,7 @@ func spawn_night() -> void:
 	var cfg: Dictionary = map.get("night", {})
 	var kinds: Array = cfg.get("types", [cfg.get("type", "infectado")])
 	var count := int(cfg.get("count", DB.bal("night_extra", 3)))
-	if count <= 0:
+	if count <= 0 or rng.randf() > float(cfg.get("chance", 1.0)):
 		return
 	for i in count:
 		var kind := str(kinds[i % kinds.size()])
@@ -878,6 +889,14 @@ func _on_creature_killed(c: Node3D) -> void:
 	c.process_mode = Node.PROCESS_MODE_DISABLED
 	if c.is_in_group("night_spawn"):
 		c.queue_free()    # los de la noche no vuelven
+	elif c.has_meta("respawn_key"):
+		# grupos con "respawn": [mín, máx] s de reloj real (el refugio: casi no vuelven)
+		var r: Array = c.get_meta("respawn_range")
+		var secs := rng.randf_range(float(r[0]), float(r[1]))
+		if not GS.dead_until.has(GS.current_map):
+			GS.dead_until[GS.current_map] = {}
+		GS.dead_until[GS.current_map][str(c.get_meta("respawn_key"))] = GS.now() + secs
+		_respawns.append({"c": c, "t": secs})
 	else:
 		_respawns.append({"c": c, "t": float(c.data.get("respawn", 45))})
 	GS.message.emit("%s abatido" % str(c.data.get("name", "Enemigo")))
