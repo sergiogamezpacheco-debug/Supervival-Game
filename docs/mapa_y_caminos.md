@@ -56,3 +56,18 @@ Coches abandonados con suministros también por los caminos (2 en la parte I, m�
    que carga el tramo con `RouteBuilder` y llega al otro extremo. Falta la recarga viendo vídeos (SDK de anuncios).
 3. Nuevas zonas: La Atalaya (confianza y puertas), Base Centinela, Marismas (traje de buzo), Puerto, Estación,
    Central y Villamuralla.
+
+## Casas con interior
+
+Las casas de los caminos (casa de labranza, casa de la playa, tienda de carretera, tienda de la gasolinera y
+las cuatro casitas del pueblo abandonado) se pueden recorrer: al entrar se quitan el tejado y lo alto de
+las paredes. Cada habitación tiene muebles que se registran:
+
+| Casa | Habitaciones y muebles |
+|---|---|
+| Casa de labranza / de la playa | Cocina (alacena, nevera, cajones), salón-baño (aparador, mueble del baño), dormitorio (ropero, mesilla) |
+| Tienda de carretera | Sala (2 estanterías de tienda, caja registradora) y almacén (cajas, bidón) |
+| Tienda de la gasolinera | Máquina de bebidas, estantería de tienda, caja registradora |
+| Pueblo abandonado | Cocina, dormitorio, baño y garaje (banco, bidón, cajas); una casa en ruinas |
+
+Lo que dejas en un mueble se queda un día (reloj real); después se vuelve a llenar.

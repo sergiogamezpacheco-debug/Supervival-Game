@@ -32,6 +32,7 @@ var _keepout: Array = []    # [Vector3 centro, radio] zonas sin recursos (edific
 var _respawns: Array = []   # [{ "c": criatura, "t": segundos }]
 var _death_timer := 0.0
 var _autosave := 0.0
+var _houses: Array = []      # casas de los caminos (para esconder el tejado al entrar)
 var _dirty := -1.0   # segundos desde que cambió la mochila sin guardar (-1 = nada pendiente)
 var _half := 45.0
 
@@ -332,6 +333,8 @@ func _process(delta: float) -> void:
 		player.position.z = clampf(player.position.z, -_half, _half)
 		if not route.is_empty():
 			_check_route_exit()
+			if not _houses.is_empty():
+				_update_houses()
 		if base:
 			player.floor_y = base.floor_height(player.global_position)
 		var t := find_target()
@@ -816,6 +819,21 @@ func _build_route() -> void:
 		node.position = r[1]
 		node.rotation.y = rng.randf_range(0, TAU)
 		add_child(node)
+	# muebles de las casas: lo que se dejó dentro se recuerda un día (reloj real); luego se rellenan
+	var refill := float(DB.bal("house_refill_seconds", 86400))
+	for f in info.get("containers", []):
+		if not DB.containers.has(str(f[0])):
+			continue
+		var key := "%s|%s" % [map_id, f[2]]
+		var saved: Dictionary = GS.route_loot.get(key, {})
+		var fresh := not saved.is_empty() and GS.now() - float(saved.get("t", 0.0)) < refill
+		var box := ContainerScript.new()
+		box.setup(str(f[0]), rng, saved.get("items") if fresh else null)
+		box.loot_key = key
+		box.opened_t = float(saved.get("t", 0.0)) if fresh else 0.0
+		add_child(box)
+		box.global_transform = f[1]
+	_houses = get_tree().get_nodes_in_group("casa")
 	for c in info["creatures"]:
 		if not DB.creatures.has(str(c[0])):
 			continue
@@ -985,7 +1003,34 @@ func _load_world(w: Dictionary) -> void:
 
 
 func save() -> void:
+	if not route.is_empty():
+		_save_route_loot()
 	GS.save_game(world_dict() if route.is_empty() else {})
+
+
+## Camino: lo que queda en los muebles ya registrados (y se olvida lo que lleva más de un día).
+func _save_route_loot() -> void:
+	var refill := float(DB.bal("house_refill_seconds", 86400))
+	for k in GS.route_loot.keys():
+		if GS.now() - float(GS.route_loot[k].get("t", 0.0)) >= refill:
+			GS.route_loot.erase(k)
+	for c in get_tree().get_nodes_in_group("container"):
+		if c.get("loot_key") != null and c.loot_key != "" and c.opened_t > 0.0:
+			GS.route_loot[c.loot_key] = {"t": c.opened_t, "items": c.storage.duplicate(true)}
+
+
+## Dentro de una casa se esconden el tejado y lo alto de las paredes para ver las habitaciones.
+func _update_houses() -> void:
+	var p: Vector3 = player.global_position
+	for h in _houses:
+		if not is_instance_valid(h):
+			continue
+		var lp: Vector3 = h.to_local(p)
+		var half: Vector2 = h.get_meta("half")
+		var inside := absf(lp.x) < half.x + 0.2 and absf(lp.z) < half.y + 0.2
+		if h.get_node("Tejado").visible == inside:
+			h.get_node("Tejado").visible = not inside
+			h.get_node("Alto").visible = not inside
 
 
 func _notification(what: int) -> void:

@@ -88,6 +88,9 @@
 - Registro: `GS.trace("...")` apunta en `user://logs/godot.log` (file logging + flush activados); el usuario lo ve en
   Ajustes > REGISTRO DE ERRORES (partida actual y anterior) y nos manda captura. Los cambios de zona pasan por
   `world._change_zone()` (pantalla «Cargando…» y apunte en el registro).
+- Casas de los caminos (`RouteBuilder.house(..., layout)`, `LAYOUTS`): se entra por la puerta; dentro, `world._update_houses()`
+  esconde "Tejado" y "Alto" (van aparte del `Builder.merge`, meta `no_merge`). Muebles = Marker3D con meta "tipo"
+  (contenedores de `containers.json`); su contenido se recuerda en `GS.route_loot` un día (`house_refill_seconds`).
 - Almacenaje: cofre en el menú de construir; el resto (baúles, estanterías, armarios) se fabrica en la estación
   `almacenamiento` (diseños `docs/diseno_est_almacen_*.jpg`) como objeto `type: storage` con `"place"`, y se coloca desde
   la mochila (`world.place_furniture`, modo construir pagando el mueble). En `stations.json` llevan `"item"` (no salen en

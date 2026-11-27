@@ -7,24 +7,34 @@ var id := ""
 var data: Dictionary = {}
 var storage: Array = []
 var _visual: Node3D
+var loot_key := ""      # muebles de las casas de los caminos: con qué nombre se recuerda su contenido
+var opened_t := 0.0     # cuándo se registró por primera vez (unix); 0 = sin tocar
 
 
-func setup(p_id: String, rng: RandomNumberGenerator) -> void:
+func setup(p_id: String, rng: RandomNumberGenerator, saved: Variant = null) -> void:
 	id = p_id
 	data = DB.containers.get(id, {})
 	add_to_group("interactable")
 	add_to_group("container")
 	storage.resize(int(data.get("slots", 6)))
-	_roll_loot(rng)
+	if saved is Array:
+		# ya se registró hace poco: está como se dejó
+		for i in mini(saved.size(), storage.size()):
+			storage[i] = saved[i]
+	else:
+		_roll_loot(rng)
 	var shape := CollisionShape3D.new()
 	var b := BoxShape3D.new()
 	b.size = Vector3(1.1, 0.9, 0.7)
-	if id.begins_with("coche"):
+	if data.has("size"):   # muebles: su tamaño en containers.json ("y" = altura si va colgado)
+		var sz: Array = data["size"]
+		b.size = Vector3(float(sz[0]), float(sz[1]), float(sz[2]))
+	elif id.begins_with("coche"):
 		b.size = Vector3(1.9, 1.4, 4.3)
 	elif id == "cadaver":
 		b.size = Vector3(0.9, 0.4, 1.8)
 	shape.shape = b
-	shape.position.y = b.size.y / 2.0
+	shape.position.y = b.size.y / 2.0 + float(data.get("y", 0.0))
 	add_child(shape)
 	_visual = Builder.container_mesh(id)
 	add_child(_visual)
@@ -88,6 +98,8 @@ var _xp_given := false
 
 
 func interact(_by: Node3D) -> void:
+	if opened_t <= 0.0:
+		opened_t = GS.now()
 	if not _xp_given and not is_chest() and not is_empty():
 		_xp_given = true
 		GS.add_xp(int(DB.xp_value("container_first", 3)))

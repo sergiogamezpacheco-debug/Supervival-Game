@@ -15,6 +15,17 @@ static var _merged_mats := {}
 ## "root" (con el color de cada una pasado a los vértices). Se ve igual, pero el móvil
 ## lo dibuja de una vez en lugar de pieza a pieza. Luces, fuego y transparencias se quedan aparte.
 ## Si "direct" es true, solo une los hijos directos (para modelos con articulaciones).
+## Lo que cuelga de un nodo con meta "no_merge" (tejado y parte alta de las casas, que se
+## esconden al entrar) no se junta con el resto.
+static func _kept_apart(n: Node, root: Node) -> bool:
+	var p := n.get_parent()
+	while p != null and p != root:
+		if p.has_meta("no_merge"):
+			return true
+		p = p.get_parent()
+	return false
+
+
 static func merge(root: Node3D, direct := false) -> Node3D:
 	var parts: Array = []
 	var nodes: Array = root.get_children() if direct else root.find_children("*", "MeshInstance3D", true, false)
@@ -28,6 +39,8 @@ static func merge(root: Node3D, direct := false) -> Node3D:
 		if m == null or m.emission_enabled or m.transparency != BaseMaterial3D.TRANSPARENCY_DISABLED or m.albedo_texture != null:
 			continue
 		if mi.material_overlay != null:
+			continue
+		if _kept_apart(mi, root):
 			continue
 		parts.append([mi, m])
 	if parts.size() < 2:
@@ -455,11 +468,103 @@ static func container_mesh(id: String) -> Node3D:
 			for x in [-0.36, 0.36]:
 				root.add_child(part(box(Vector3(0.14, 0.13, 0.6)), Color("5a6a4a"), Vector3(x, 0.08, -0.25)))
 			root.add_child(part(box(Vector3(0.42, 0.22, 0.4)), Color("7a5a32"), Vector3(0, 0.36, 0.05)))
+		"alacena", "nevera", "fregadero", "botiquin_pared", "ropero", "mesilla", "aparador", "banco_garaje", "bidon", \
+				"estanteria_tienda", "caja_registradora", "maquina_bebidas", "cajas_almacen":
+			_house_furniture(root, id)
 		_:
 			root.add_child(part(box(Vector3(1.1, 0.55, 0.65)), Color("4e3a26"), Vector3(0, 0.28, 0)))
 			root.add_child(part(box(Vector3(1.14, 0.2, 0.69)), Color("3b2c1d"), Vector3(0, 0.62, 0)))
 			root.add_child(part(box(Vector3(1.16, 0.06, 0.7)), Color("6b6b6b"), Vector3(0, 0.4, 0)))
 	return root
+
+
+## Muebles de las casas de los caminos (registrables). Miran hacia -Z, como todo.
+static func _house_furniture(root: Node3D, id: String) -> void:
+	var wood := Color("7a5a3a")
+	var dark := Color("3b2c1d")
+	var metal := Color("8c9399")
+	match id:
+		"alacena":   # alacena alta con puertas de cristal y latas dentro
+			root.add_child(part(box(Vector3(1.2, 1.9, 0.48)), wood, Vector3(0, 0.95, 0)))
+			for y in [0.55, 1.05, 1.5]:
+				root.add_child(part(box(Vector3(1.1, 0.04, 0.05)), dark, Vector3(0, y, -0.24)))
+			for k in 6:
+				root.add_child(part(cyl(0.06, 0.06, 0.14), [Color("b8b8b0"), Color("c43a2e"), Color("d8a24a")][k % 3], Vector3(-0.42 + (k % 3) * 0.3, 1.13 + (k / 3) * 0.47, -0.2)))
+			root.add_child(part(box(Vector3(0.02, 1.0, 0.02)), dark, Vector3(0, 1.3, -0.25)))
+		"nevera":   # nevera vieja sin luz, con manchas
+			root.add_child(part(box(Vector3(0.78, 1.8, 0.68)), Color("d9d4c4"), Vector3(0, 0.9, 0)))
+			root.add_child(part(box(Vector3(0.8, 0.03, 0.03)), Color("8a8676"), Vector3(0, 1.2, -0.35)))
+			root.add_child(part(box(Vector3(0.04, 0.4, 0.05)), Color("8a8676"), Vector3(0.3, 1.45, -0.36)))
+			root.add_child(part(box(Vector3(0.04, 0.3, 0.05)), Color("8a8676"), Vector3(0.3, 0.85, -0.36)))
+			root.add_child(part(box(Vector3(0.25, 0.18, 0.01)), Color("8a6a3a"), Vector3(-0.15, 0.5, -0.345)))
+		"fregadero":   # mueble bajo con encimera, pila y cajones
+			root.add_child(part(box(Vector3(1.4, 0.88, 0.58)), wood, Vector3(0, 0.44, 0)))
+			root.add_child(part(box(Vector3(1.46, 0.06, 0.64)), Color("b9b3a3"), Vector3(0, 0.91, 0)))
+			root.add_child(part(box(Vector3(0.5, 0.04, 0.4)), Color("6f777c"), Vector3(0.3, 0.93, 0)))
+			root.add_child(part(cyl(0.02, 0.02, 0.3), metal, Vector3(0.3, 1.08, 0.2)))
+			for k in 3:
+				root.add_child(part(box(Vector3(0.5, 0.02, 0.02)), dark, Vector3(-0.35, 0.25 + k * 0.22, -0.3)))
+		"botiquin_pared":   # mueble del baño con espejo encima y botiquín
+			root.add_child(part(box(Vector3(0.66, 0.85, 0.3)), Color("e8e4d8"), Vector3(0, 0.43, 0)))
+			root.add_child(part(box(Vector3(0.6, 0.02, 0.02)), Color("a8a498"), Vector3(0, 0.45, -0.16)))
+			root.add_child(part(box(Vector3(0.5, 0.42, 0.04)), Color("9fb8c2"), Vector3(0, 1.12, 0.12)))
+			root.add_child(part(box(Vector3(0.26, 0.18, 0.16)), Color("f2efe6"), Vector3(0.12, 0.94, 0.0)))
+			root.add_child(part(box(Vector3(0.1, 0.03, 0.01)), Color("c43a2e"), Vector3(0.12, 0.95, -0.085)))
+			root.add_child(part(box(Vector3(0.03, 0.1, 0.01)), Color("c43a2e"), Vector3(0.12, 0.95, -0.085)))
+		"ropero":   # armario ropero de dos puertas
+			root.add_child(part(box(Vector3(1.4, 2.0, 0.58)), Color("8e6238"), Vector3(0, 1.0, 0)))
+			root.add_child(part(box(Vector3(0.02, 1.8, 0.03)), dark, Vector3(0, 1.0, -0.3)))
+			for x in [-0.08, 0.08]:
+				root.add_child(part(box(Vector3(0.03, 0.18, 0.04)), Color("c9a24a"), Vector3(x, 1.05, -0.32)))
+			root.add_child(part(box(Vector3(1.46, 0.06, 0.62)), dark, Vector3(0, 2.02, 0)))
+		"mesilla":
+			root.add_child(part(box(Vector3(0.52, 0.56, 0.42)), wood, Vector3(0, 0.28, 0)))
+			root.add_child(part(box(Vector3(0.44, 0.02, 0.02)), dark, Vector3(0, 0.4, -0.22)))
+			root.add_child(part(cyl(0.08, 0.12, 0.25), Color("d8c89a"), Vector3(0.1, 0.7, 0.05)))
+		"aparador":   # mueble bajo del salón con tres puertas
+			root.add_child(part(box(Vector3(1.5, 0.86, 0.48)), Color("6e4a2a"), Vector3(0, 0.43, 0)))
+			for x in [-0.5, 0.0, 0.5]:
+				root.add_child(part(box(Vector3(0.44, 0.7, 0.02)), Color("7d5a36"), Vector3(x, 0.45, -0.25)))
+				root.add_child(part(box(Vector3(0.03, 0.08, 0.03)), Color("c9a24a"), Vector3(x + 0.15, 0.5, -0.27)))
+			root.add_child(part(box(Vector3(0.3, 0.25, 0.04)), Color("3b4a52"), Vector3(-0.4, 1.0, 0.1)))
+		"banco_garaje":   # banco con tornillo, herramientas y panel detrás
+			root.add_child(part(box(Vector3(1.6, 0.08, 0.68)), wood, Vector3(0, 0.9, 0)))
+			for x in [-0.72, 0.72]:
+				for z in [-0.28, 0.28]:
+					root.add_child(part(box(Vector3(0.07, 0.9, 0.07)), dark, Vector3(x, 0.45, z)))
+			root.add_child(part(box(Vector3(1.5, 0.05, 0.6)), dark, Vector3(0, 0.25, 0)))
+			root.add_child(part(box(Vector3(0.25, 0.2, 0.2)), Color("4a5a6a"), Vector3(-0.55, 1.04, 0)))
+			root.add_child(part(box(Vector3(0.4, 0.3, 0.3)), Color("b23a2e"), Vector3(0.35, 1.09, 0.05)))
+			root.add_child(part(box(Vector3(1.6, 0.9, 0.04)), Color("8a7a5a"), Vector3(0, 1.4, 0.32)))
+		"bidon":
+			root.add_child(part(cyl(0.28, 0.28, 0.88), Color("3f6a3a"), Vector3(0, 0.44, 0)))
+			for y in [0.25, 0.63]:
+				root.add_child(part(cyl(0.29, 0.29, 0.04), Color("2c4a28"), Vector3(0, y, 0)))
+			root.add_child(part(cyl(0.05, 0.05, 0.05), Color("b23a2e"), Vector3(0.12, 0.9, 0)))
+		"estanteria_tienda":   # góndola de tienda con productos
+			root.add_child(part(box(Vector3(1.8, 1.7, 0.08)), Color("cfc8b8"), Vector3(0, 0.85, 0.22)))
+			for y in [0.15, 0.6, 1.05, 1.5]:
+				root.add_child(part(box(Vector3(1.8, 0.04, 0.5)), Color("b9b3a3"), Vector3(0, y, 0)))
+			var cols := [Color("c43a2e"), Color("d8a24a"), Color("3f6a8a"), Color("e8e4d8"), Color("5f7a30")]
+			for k in 12:
+				var y := 0.15 + float(k / 4) * 0.45
+				root.add_child(part(box(Vector3(0.22, 0.22, 0.22)), cols[k % cols.size()], Vector3(-0.66 + (k % 4) * 0.44, y + 0.13, 0.0)))
+		"caja_registradora":   # mostrador con la caja
+			root.add_child(part(box(Vector3(1.4, 0.95, 0.58)), Color("8a6440"), Vector3(0, 0.48, 0)))
+			root.add_child(part(box(Vector3(1.44, 0.05, 0.62)), Color("5a4a3a"), Vector3(0, 0.97, 0)))
+			root.add_child(part(box(Vector3(0.4, 0.22, 0.34)), Color("3a3d40"), Vector3(0.3, 1.11, 0.05)))
+			root.add_child(part(box(Vector3(0.3, 0.12, 0.04)), Color("6fae6a"), Vector3(0.3, 1.27, -0.1)))
+		"maquina_bebidas":
+			root.add_child(part(box(Vector3(0.9, 1.8, 0.7)), Color("b8322a"), Vector3(0, 0.9, 0)))
+			root.add_child(part(box(Vector3(0.55, 1.1, 0.02)), Color("2a3a44"), Vector3(-0.1, 1.05, -0.36)))
+			for k in 6:
+				root.add_child(part(cyl(0.05, 0.05, 0.18), [Color("3f6a8a"), Color("e8e4d8"), Color("d8a24a")][k % 3], Vector3(-0.25 + (k % 3) * 0.15, 0.75 + (k / 3) * 0.45, -0.3)))
+			root.add_child(part(box(Vector3(0.12, 0.3, 0.04)), Color("d9d4c4"), Vector3(0.32, 1.1, -0.37)))
+		"cajas_almacen":   # pila de cajas de cartón y madera
+			root.add_child(part(box(Vector3(0.7, 0.55, 0.6)), Color("c79a62"), Vector3(-0.35, 0.28, 0)))
+			root.add_child(part(box(Vector3(0.6, 0.5, 0.55)), Color("a0703f"), Vector3(0.35, 0.25, 0.05)))
+			root.add_child(part(box(Vector3(0.6, 0.45, 0.5)), Color("b8885a"), Vector3(-0.2, 0.78, 0.02)))
+			root.add_child(part(box(Vector3(0.62, 0.04, 0.05)), Color("e8d8a8"), Vector3(-0.35, 0.56, -0.29)))
 
 
 ## Pieza sólida (malla + colisión) para las ruinas.

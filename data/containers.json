@@ -568,5 +568,776 @@
         "weight": 1
       }
     ]
+  },
+  "alacena": {
+    "name": "Alacena",
+    "size": [
+      1.2,
+      1.9,
+      0.5
+    ],
+    "slots": 6,
+    "rolls": [
+      0,
+      3
+    ],
+    "loot": [
+      {
+        "id": "conserva_carne",
+        "qty": [
+          1,
+          1
+        ],
+        "weight": 2
+      },
+      {
+        "id": "conserva_bayas",
+        "qty": [
+          1,
+          2
+        ],
+        "weight": 3
+      },
+      {
+        "id": "lata_vacia",
+        "qty": [
+          1,
+          3
+        ],
+        "weight": 4
+      },
+      {
+        "id": "sal",
+        "qty": [
+          1,
+          3
+        ],
+        "weight": 3
+      },
+      {
+        "id": "tarro_cristal",
+        "qty": [
+          1,
+          2
+        ],
+        "weight": 3
+      },
+      {
+        "id": "botella_vacia",
+        "qty": [
+          1,
+          2
+        ],
+        "weight": 2
+      },
+      {
+        "id": "carne_seca",
+        "qty": [
+          1,
+          2
+        ],
+        "weight": 1
+      }
+    ]
+  },
+  "nevera": {
+    "name": "Nevera sin luz",
+    "size": [
+      0.8,
+      1.8,
+      0.7
+    ],
+    "slots": 6,
+    "rolls": [
+      1,
+      3
+    ],
+    "loot": [
+      {
+        "id": "comida_podrida",
+        "qty": [
+          2,
+          5
+        ],
+        "weight": 8
+      },
+      {
+        "id": "carne_seca",
+        "qty": [
+          1,
+          1
+        ],
+        "weight": 1
+      },
+      {
+        "id": "agua_sucia",
+        "qty": [
+          1,
+          2
+        ],
+        "weight": 3
+      },
+      {
+        "id": "botella_vacia",
+        "qty": [
+          1,
+          2
+        ],
+        "weight": 2
+      }
+    ]
+  },
+  "fregadero": {
+    "name": "Cajones de la cocina",
+    "size": [
+      1.4,
+      0.95,
+      0.6
+    ],
+    "slots": 6,
+    "rolls": [
+      0,
+      2
+    ],
+    "loot": [
+      {
+        "id": "tela",
+        "qty": [
+          1,
+          2
+        ],
+        "weight": 3
+      },
+      {
+        "id": "botella_vacia",
+        "qty": [
+          1,
+          2
+        ],
+        "weight": 3
+      },
+      {
+        "id": "lata_vacia",
+        "qty": [
+          1,
+          2
+        ],
+        "weight": 2
+      },
+      {
+        "id": "cuerda",
+        "qty": [
+          1,
+          1
+        ],
+        "weight": 2
+      },
+      {
+        "id": "sal",
+        "qty": [
+          1,
+          1
+        ],
+        "weight": 2
+      },
+      {
+        "id": "alcohol",
+        "qty": [
+          1,
+          1
+        ],
+        "weight": 1
+      }
+    ]
+  },
+  "botiquin_pared": {
+    "name": "Mueble del baño",
+    "size": [
+      0.7,
+      0.9,
+      0.35
+    ],
+    "slots": 6,
+    "rolls": [
+      0,
+      2
+    ],
+    "loot": [
+      {
+        "id": "venda",
+        "qty": [
+          1,
+          3
+        ],
+        "weight": 6
+      },
+      {
+        "id": "antidoto",
+        "qty": [
+          1,
+          1
+        ],
+        "weight": 2
+      },
+      {
+        "id": "alcohol",
+        "qty": [
+          1,
+          1
+        ],
+        "weight": 2
+      },
+      {
+        "id": "botiquin",
+        "qty": [
+          1,
+          1
+        ],
+        "weight": 1
+      },
+      {
+        "id": "estimulante",
+        "qty": [
+          1,
+          1
+        ],
+        "weight": 1
+      }
+    ]
+  },
+  "ropero": {
+    "name": "Armario ropero",
+    "size": [
+      1.4,
+      2.0,
+      0.6
+    ],
+    "slots": 6,
+    "rolls": [
+      1,
+      3
+    ],
+    "loot": [
+      {
+        "id": "camiseta",
+        "qty": [
+          1,
+          1
+        ],
+        "weight": 4
+      },
+      {
+        "id": "pantalon_tela",
+        "qty": [
+          1,
+          1
+        ],
+        "weight": 4
+      },
+      {
+        "id": "gorra",
+        "qty": [
+          1,
+          1
+        ],
+        "weight": 3
+      },
+      {
+        "id": "zapatillas",
+        "qty": [
+          1,
+          1
+        ],
+        "weight": 3
+      },
+      {
+        "id": "pantalon_cargo",
+        "qty": [
+          1,
+          1
+        ],
+        "weight": 1
+      },
+      {
+        "id": "botas",
+        "qty": [
+          1,
+          1
+        ],
+        "weight": 1
+      },
+      {
+        "id": "chaqueta_piel",
+        "qty": [
+          1,
+          1
+        ],
+        "weight": 1
+      },
+      {
+        "id": "tela",
+        "qty": [
+          1,
+          3
+        ],
+        "weight": 3
+      }
+    ]
+  },
+  "mesilla": {
+    "name": "Mesilla de noche",
+    "size": [
+      0.55,
+      0.6,
+      0.45
+    ],
+    "slots": 4,
+    "rolls": [
+      0,
+      2
+    ],
+    "loot": [
+      {
+        "id": "bateria",
+        "qty": [
+          1,
+          1
+        ],
+        "weight": 2
+      },
+      {
+        "id": "cuerda",
+        "qty": [
+          1,
+          1
+        ],
+        "weight": 2
+      },
+      {
+        "id": "venda",
+        "qty": [
+          1,
+          1
+        ],
+        "weight": 3
+      },
+      {
+        "id": "componentes",
+        "qty": [
+          1,
+          1
+        ],
+        "weight": 2
+      },
+      {
+        "id": "botella_vacia",
+        "qty": [
+          1,
+          1
+        ],
+        "weight": 2
+      }
+    ]
+  },
+  "aparador": {
+    "name": "Aparador",
+    "size": [
+      1.5,
+      0.9,
+      0.5
+    ],
+    "slots": 6,
+    "rolls": [
+      0,
+      3
+    ],
+    "loot": [
+      {
+        "id": "componentes",
+        "qty": [
+          1,
+          2
+        ],
+        "weight": 3
+      },
+      {
+        "id": "cable_cobre",
+        "qty": [
+          1,
+          2
+        ],
+        "weight": 2
+      },
+      {
+        "id": "alcohol",
+        "qty": [
+          1,
+          1
+        ],
+        "weight": 2
+      },
+      {
+        "id": "tela",
+        "qty": [
+          1,
+          3
+        ],
+        "weight": 3
+      },
+      {
+        "id": "bateria",
+        "qty": [
+          1,
+          1
+        ],
+        "weight": 1
+      },
+      {
+        "id": "tarro_cristal",
+        "qty": [
+          1,
+          1
+        ],
+        "weight": 2
+      }
+    ]
+  },
+  "banco_garaje": {
+    "name": "Banco del garaje",
+    "size": [
+      1.6,
+      0.95,
+      0.7
+    ],
+    "slots": 6,
+    "rolls": [
+      1,
+      3
+    ],
+    "loot": [
+      {
+        "id": "chatarra",
+        "qty": [
+          2,
+          4
+        ],
+        "weight": 5
+      },
+      {
+        "id": "clavos",
+        "qty": [
+          3,
+          8
+        ],
+        "weight": 4
+      },
+      {
+        "id": "tornillos",
+        "qty": [
+          2,
+          6
+        ],
+        "weight": 3
+      },
+      {
+        "id": "placa_metal",
+        "qty": [
+          1,
+          2
+        ],
+        "weight": 2
+      },
+      {
+        "id": "componentes",
+        "qty": [
+          1,
+          1
+        ],
+        "weight": 2
+      },
+      {
+        "id": "hacha_piedra",
+        "qty": [
+          1,
+          1
+        ],
+        "weight": 1
+      },
+      {
+        "id": "pico_piedra",
+        "qty": [
+          1,
+          1
+        ],
+        "weight": 1
+      },
+      {
+        "id": "cuerda",
+        "qty": [
+          1,
+          2
+        ],
+        "weight": 2
+      }
+    ]
+  },
+  "bidon": {
+    "name": "Bidón",
+    "size": [
+      0.6,
+      0.9,
+      0.6
+    ],
+    "slots": 3,
+    "rolls": [
+      0,
+      1
+    ],
+    "loot": [
+      {
+        "id": "combustible",
+        "qty": [
+          1,
+          2
+        ],
+        "weight": 1
+      }
+    ]
+  },
+  "estanteria_tienda": {
+    "name": "Estantería de la tienda",
+    "size": [
+      1.8,
+      1.7,
+      0.55
+    ],
+    "slots": 6,
+    "rolls": [
+      1,
+      3
+    ],
+    "loot": [
+      {
+        "id": "conserva_bayas",
+        "qty": [
+          1,
+          2
+        ],
+        "weight": 3
+      },
+      {
+        "id": "conserva_carne",
+        "qty": [
+          1,
+          1
+        ],
+        "weight": 2
+      },
+      {
+        "id": "agua_hervida",
+        "qty": [
+          1,
+          2
+        ],
+        "weight": 3
+      },
+      {
+        "id": "agua_purificada",
+        "qty": [
+          1,
+          1
+        ],
+        "weight": 1
+      },
+      {
+        "id": "sal",
+        "qty": [
+          1,
+          2
+        ],
+        "weight": 2
+      },
+      {
+        "id": "lata_vacia",
+        "qty": [
+          1,
+          2
+        ],
+        "weight": 2
+      },
+      {
+        "id": "botella_vacia",
+        "qty": [
+          1,
+          2
+        ],
+        "weight": 2
+      },
+      {
+        "id": "venda",
+        "qty": [
+          1,
+          1
+        ],
+        "weight": 1
+      }
+    ]
+  },
+  "caja_registradora": {
+    "name": "Caja registradora",
+    "size": [
+      1.4,
+      1.0,
+      0.6
+    ],
+    "slots": 4,
+    "rolls": [
+      0,
+      2
+    ],
+    "loot": [
+      {
+        "id": "componentes",
+        "qty": [
+          1,
+          1
+        ],
+        "weight": 3
+      },
+      {
+        "id": "cable_cobre",
+        "qty": [
+          1,
+          1
+        ],
+        "weight": 2
+      },
+      {
+        "id": "bateria",
+        "qty": [
+          1,
+          1
+        ],
+        "weight": 2
+      },
+      {
+        "id": "tela",
+        "qty": [
+          1,
+          1
+        ],
+        "weight": 1
+      }
+    ]
+  },
+  "maquina_bebidas": {
+    "name": "Máquina de bebidas",
+    "size": [
+      0.9,
+      1.8,
+      0.7
+    ],
+    "slots": 6,
+    "rolls": [
+      0,
+      3
+    ],
+    "loot": [
+      {
+        "id": "agua_hervida",
+        "qty": [
+          1,
+          2
+        ],
+        "weight": 4
+      },
+      {
+        "id": "agua_purificada",
+        "qty": [
+          1,
+          1
+        ],
+        "weight": 2
+      },
+      {
+        "id": "botella_vacia",
+        "qty": [
+          1,
+          2
+        ],
+        "weight": 3
+      }
+    ]
+  },
+  "cajas_almacen": {
+    "name": "Cajas del almacén",
+    "size": [
+      1.4,
+      1.1,
+      0.9
+    ],
+    "slots": 6,
+    "rolls": [
+      1,
+      3
+    ],
+    "loot": [
+      {
+        "id": "tela",
+        "qty": [
+          1,
+          3
+        ],
+        "weight": 3
+      },
+      {
+        "id": "cuerda",
+        "qty": [
+          1,
+          2
+        ],
+        "weight": 3
+      },
+      {
+        "id": "chatarra",
+        "qty": [
+          1,
+          3
+        ],
+        "weight": 3
+      },
+      {
+        "id": "conserva_bayas",
+        "qty": [
+          1,
+          1
+        ],
+        "weight": 2
+      },
+      {
+        "id": "lata_vacia",
+        "qty": [
+          1,
+          3
+        ],
+        "weight": 2
+      },
+      {
+        "id": "tarro_cristal",
+        "qty": [
+          1,
+          2
+        ],
+        "weight": 2
+      },
+      {
+        "id": "clavos",
+        "qty": [
+          2,
+          6
+        ],
+        "weight": 2
+      }
+    ]
   }
 }

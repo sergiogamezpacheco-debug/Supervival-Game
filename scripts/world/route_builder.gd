@@ -28,7 +28,7 @@ static func build(root: Node3D, route: Dictionary, visit_seed: int) -> Dictionar
 	var vrng := RandomNumberGenerator.new()
 	vrng.seed = visit_seed                               # cambia en cada visita
 	var out := {"spawn": Vector3(center_x(route, -4.0), 0, -4.0), "exit": Vector3(center_x(route, -L + 4.0), 0, -L + 4.0),
-		"creatures": [], "obstacles": [], "resources": []}
+		"creatures": [], "obstacles": [], "resources": [], "containers": []}
 	var stat := Node3D.new()
 	stat.name = "Estatico"
 	root.add_child(stat)
@@ -57,6 +57,7 @@ static func build(root: Node3D, route: Dictionary, visit_seed: int) -> Dictionar
 
 	# puntos de interés (fijos)
 	var keep := []
+	var avoid := []    # [posición, radio]: aquí no salen árboles ni rocas (casas, gasolinera...)
 	for poi in route.get("pois", []):
 		var z := -L * float(poi.get("at", 0.5))
 		var side := str(poi.get("side", "right"))
@@ -68,6 +69,16 @@ static func build(root: Node3D, route: Dictionary, visit_seed: int) -> Dictionar
 		node.rotation.y = 0.0 if side == "center" else (PI / 2.0 if side == "right" else -PI / 2.0)
 		stat.add_child(node)
 		keep.append(pos)
+		avoid.append([pos, {"pueblo_abandonado": 14.0, "gasolinera": 13.0, "casa_labranza": 6.5, "casa_playa": 6.5,
+			"tienda_carretera": 6.5}.get(str(poi.get("type", "")), 4.0)])
+		# muebles registrables de las casas: [tipo, transformación, clave fija del tramo]
+		var k := 0
+		for m in node.find_children("*", "Marker3D", true, false):
+			if not m.has_meta("tipo"):
+				continue
+			out["containers"].append([str(m.get_meta("tipo")), (m as Node3D).global_transform, "%d.%d" % [keep.size() - 1, k]])
+			k += 1
+			m.queue_free()
 
 	# cambios de cada visita: en unos puntos fijos del camino puede haber (o no) un árbol caído,
 	# un coche cruzado, un derrumbe... cada vez una cosa distinta
@@ -96,7 +107,12 @@ static func build(root: Node3D, route: Dictionary, visit_seed: int) -> Dictionar
 			var x := center_x(route, z) + vrng.randf_range(-HALF + 1.5, HALF - 1.5)
 			if absf(x - center_x(route, z)) < 3.2:
 				x += 4.0 * signf(x - center_x(route, z) + 0.01)
-			out["resources"].append([str(kind), Vector3(x, 0, z)])
+			var blocked := false
+			for av in avoid:
+				if Vector2(x - av[0].x, z - av[0].z).length() < float(av[1]):
+					blocked = true
+			if not blocked:
+				out["resources"].append([str(kind), Vector3(x, 0, z)])
 	# un grupito rondando cada sitio con botín (en otro sitio cada visita)
 	var guard := str((route.get("creatures", [{"type": "infectado"}]) as Array)[0].get("type", "infectado"))
 	for k in keep:
@@ -395,35 +411,152 @@ static func _box(r: Node3D, size: Vector3, pos: Vector3, col: Color, rot_y := 0.
 	return m
 
 
-static func house(r: Node3D, w: float, d: float, wall: Color, roof: Color, broken := false) -> void:
-	_box(r, Vector3(w, 2.6, d), Vector3(0, 1.3, 0), wall)
-	# tejado a dos aguas: cada faldón baja hacia su fachada (delante, -Z: giro -0,45; detrás +0,45)
-	# y su borde bajo queda justo encima de la pared
+# ------------------------------------------------------------- casas
+## Casas por dentro: se entra por la puerta; con el jugador dentro se esconden el tejado y la parte
+## alta de las paredes (world._update_houses) y se ven las habitaciones y sus muebles registrables.
+## Los muebles quedan como Marker3D «Mueble» con meta "tipo" (id de containers.json); el mundo pone
+## ahí el contenedor. Distribuciones (frente = -Z, puerta en la fachada):
+const LAYOUTS := {
+	# casa de labranza / de la playa (8 x 6): cocina a la izquierda; salón y dormitorio a la derecha
+	"casa": {"door": [-2.6, -1.4],
+		"walls": [[0.4, -3.0, 0.4, 3.0, [-2.2, -1.2]], [0.4, 0.2, 4.0, 0.2, [1.6, 2.6]]],
+		"floor": [["8a6a48", -4.0, -3.0, 0.4, 3.0], ["9a8a70", 0.4, -3.0, 4.0, 0.2], ["7a5a3a", 0.4, 0.2, 4.0, 3.0]],
+		"furniture": [["alacena", -3.2, 2.62, 0], ["nevera", -1.9, 2.55, 0], ["fregadero", -3.58, 0.3, -90],
+			["aparador", 2.2, -2.62, 180], ["botiquin_pared", 3.72, -1.3, 90], ["ropero", 2.4, 2.58, 0], ["mesilla", 3.6, 1.0, 90]]},
+	# tienda de carretera (8 x 6): sala con góndolas y mostrador; almacén al fondo
+	"tienda": {"door": [-0.6, 0.6],
+		"walls": [[-4.0, 1.4, 4.0, 1.4, [2.3, 3.4]]],
+		"floor": [["9a958a", -4.0, -3.0, 4.0, 1.4], ["7a6a58", -4.0, 1.4, 4.0, 3.0]],
+		"furniture": [["estanteria_tienda", -2.5, -0.4, 0], ["estanteria_tienda", -2.5, 0.85, 180], ["caja_registradora", 2.6, -1.6, 90],
+			["cajas_almacen", -2.6, 2.4, 0], ["bidon", -0.9, 2.45, 0], ["cajas_almacen", 1.0, 2.4, 0]]},
+	# tienda de la gasolinera (7 x 4)
+	"gasolinera": {"door": [-0.6, 0.6], "walls": [],
+		"floor": [["9a958a", -3.5, -2.0, 3.5, 2.0]],
+		"furniture": [["maquina_bebidas", -2.85, 1.5, 0], ["estanteria_tienda", 0.2, 1.62, 0], ["caja_registradora", 2.5, -0.9, 90]]},
+	# casitas del pueblo (5,5 x 4,5), una habitación cada una
+	"p_cocina": {"door": [-0.6, 0.6], "walls": [], "floor": [["8a6a48", -2.75, -2.25, 2.75, 2.25]],
+		"furniture": [["alacena", -1.6, 1.88, 0], ["nevera", 0.4, 1.8, 0], ["fregadero", -2.33, -0.6, -90]]},
+	"p_dormitorio": {"door": [-0.6, 0.6], "walls": [], "floor": [["7a5a3a", -2.75, -2.25, 2.75, 2.25]],
+		"furniture": [["ropero", -1.2, 1.86, 0], ["mesilla", 2.35, 1.3, 90], ["aparador", 1.4, 1.9, 0]]},
+	"p_bano": {"door": [-0.6, 0.6], "walls": [], "floor": [["c8c4b8", -2.75, -2.25, 2.75, 2.25]],
+		"furniture": [["botiquin_pared", 2.46, 0.6, 90], ["aparador", -1.3, 1.9, 0]]},
+	"p_garaje": {"door": [-0.9, 0.9], "walls": [], "floor": [["6a6a62", -2.75, -2.25, 2.75, 2.25]],
+		"furniture": [["banco_garaje", -1.0, 1.82, 0], ["bidon", 1.9, 1.75, 0], ["cajas_almacen", -2.1, -0.9, -90]]},
+}
+const WALL_T := 0.16
+const WALL_H := 2.6
+const WALL_LOW := 0.9      # lo que queda de pared al estar dentro
+
+
+static func house(r: Node3D, w: float, d: float, wall: Color, roof: Color, broken := false, layout := "") -> Node3D:
+	var c := Node3D.new()
+	c.name = "Casa"
+	c.add_to_group("casa")
+	c.set_meta("half", Vector2(w / 2.0, d / 2.0))
+	r.add_child(c)
+	var alto := Node3D.new()      # parte alta de las paredes, ventanas y dinteles
+	alto.name = "Alto"
+	c.add_child(alto)
+	var tejado := Node3D.new()
+	tejado.name = "Tejado"
+	c.add_child(tejado)
+	var body := StaticBody3D.new()
+	body.name = "Muros"
+	c.add_child(body)
+	var lay: Dictionary = LAYOUTS.get(layout, {"door": [-0.6, 0.6], "walls": [], "floor": [], "furniture": []})
+	# suelo
+	_box(c, Vector3(w, 0.06, d), Vector3(0, 0.03, 0), Color("6b5a44"))
+	for f in lay["floor"]:
+		var x0 := float(f[1])
+		var z0 := float(f[2])
+		var x1 := float(f[3])
+		var z1 := float(f[4])
+		_box(c, Vector3(x1 - x0 - 0.04, 0.02, z1 - z0 - 0.04), Vector3((x0 + x1) / 2.0, 0.07, (z0 + z1) / 2.0), Color(str(f[0])))
+	# fachadas: la de delante con la puerta
+	var hw := w / 2.0
+	var hd := d / 2.0
+	_wall(c, alto, body, Vector2(-hw, -hd), Vector2(hw, -hd), [lay["door"]], wall, true)
+	_wall(c, alto, body, Vector2(-hw, hd), Vector2(hw, hd), [], wall, false)
+	_wall(c, alto, body, Vector2(-hw, -hd), Vector2(-hw, hd), [], wall, false)
+	_wall(c, alto, body, Vector2(hw, -hd), Vector2(hw, hd), [], wall, false)
+	# tabiques con hueco de paso
+	for t in lay["walls"]:
+		_wall(c, alto, body, Vector2(float(t[0]), float(t[1])), Vector2(float(t[2]), float(t[3])), [t[4]], wall.lightened(0.12), false)
+	# ventanas de la fachada (arriba: se van con la parte alta)
+	var door: Array = lay["door"]
+	for k in [-1.0, 1.0]:
+		var x: float = k * w * 0.3
+		if x + 0.45 > float(door[0]) and x - 0.45 < float(door[1]):
+			continue
+		_box(alto, Vector3(0.8, 0.6, 0.06), Vector3(x, 1.6, -hd - WALL_T / 2.0 - 0.01), Color("2a3238") if not broken else Color("6b4a2c"))
+	# tejado a dos aguas y hastiales
 	var slope := 0.45
 	var half := d * 0.3
 	var rise := half * sin(slope)
-	var rf := _box(r, Vector3(w + 0.4, 0.2, d * 0.6), Vector3(0, 2.7 + rise, -d * 0.25), roof)
+	var rf := _box(tejado, Vector3(w + 0.4, 0.2, d * 0.6), Vector3(0, 2.7 + rise, -d * 0.25), roof)
 	rf.rotation.x = -slope
-	var rb := _box(r, Vector3(w + 0.4, 0.2, d * 0.6), Vector3(0, 2.7 + rise, d * 0.25), roof)
+	var rb := _box(tejado, Vector3(w + 0.4, 0.2, d * 0.6), Vector3(0, 2.7 + rise, d * 0.25), roof)
 	rb.rotation.x = slope
-	# hastiales: el triángulo de pared bajo el tejado (un prisma girado 45º y aplastado)
 	var gable := Node3D.new()
 	gable.position = Vector3(0, 2.6, 0)
 	gable.scale = Vector3(1, (rise * 2.0 + 0.2) / d, 1)
 	var g := _box(gable, Vector3(w - 0.02, d / sqrt(2.0), d / sqrt(2.0)), Vector3.ZERO, wall)
 	g.rotation.x = PI / 4.0
-	r.add_child(gable)
-	_box(r, Vector3(0.9, 1.8, 0.08), Vector3(w * 0.2, 0.9, -d / 2.0 - 0.02), Color("3b2a1a"))
-	for k in [-1.0, 1.0]:
-		_box(r, Vector3(0.7, 0.6, 0.08), Vector3(-w * 0.25 + k * 0.3 - 0.3, 1.6, -d / 2.0 - 0.03), Color("2a3238") if not broken else Color("6b4a2c"))
+	tejado.add_child(gable)
 	if broken:
-		var hole := _box(r, Vector3(w * 0.4, 0.25, d * 0.3), Vector3(w * 0.15, 2.75 + rise, -d * 0.2), Color("2a2620"))
+		var hole := _box(tejado, Vector3(w * 0.4, 0.25, d * 0.3), Vector3(w * 0.15, 2.75 + rise, -d * 0.2), Color("2a2620"))
 		hole.rotation.x = -slope
-	# no se puede atravesar
-	var body := StaticBody3D.new()
-	body.name = "Muros"
-	_coll(body, Vector3(w, 2.6, d), Vector3(0, 1.3, 0))
-	r.add_child(body)
+		for k in 3:   # escombros dentro
+			_box(c, Vector3(0.5, 0.2, 0.4), Vector3(w * 0.15 + k * 0.4 - 0.4, 0.1, -d * 0.15 + k * 0.2), Color("5a5048"), k * 0.7)
+	# muebles registrables
+	for f in lay["furniture"]:
+		var m := Marker3D.new()
+		m.name = "Mueble"
+		m.set_meta("tipo", str(f[0]))
+		m.position = Vector3(float(f[1]), 0.06, float(f[2]))
+		m.rotation_degrees.y = float(f[3])
+		c.add_child(m)
+	# tejado y parte alta: cada uno en una sola malla, aparte del resto (se esconden al entrar)
+	Builder.merge(alto)
+	Builder.merge(tejado)
+	alto.set_meta("no_merge", true)
+	tejado.set_meta("no_merge", true)
+	return c
+
+
+## Un tramo de pared de a a b (en planta) con huecos [desde, hasta] medidos sobre el eje del tramo.
+## Abajo (hasta WALL_LOW) va en la casa; lo de arriba en "alto"; la colisión, entera.
+static func _wall(c: Node3D, alto: Node3D, body: StaticBody3D, a: Vector2, b: Vector2, gaps: Array, col: Color, lintel: bool) -> void:
+	var along_x := absf(b.x - a.x) > absf(b.y - a.y)
+	var s0 := minf(a.x, b.x) if along_x else minf(a.y, b.y)
+	var s1 := maxf(a.x, b.x) if along_x else maxf(a.y, b.y)
+	var fixed := a.y if along_x else a.x
+	var pieces: Array = []
+	var cur := s0 - (WALL_T / 2.0 if not along_x else 0.0)
+	var end := s1 + (WALL_T / 2.0 if not along_x else 0.0)
+	var sorted_gaps := gaps.duplicate()
+	sorted_gaps.sort_custom(func(p, q): return float(p[0]) < float(q[0]))
+	for gp in sorted_gaps:
+		pieces.append([cur, float(gp[0])])
+		cur = float(gp[1])
+		if lintel:   # dintel encima de la puerta
+			var mid := (float(gp[0]) + float(gp[1])) / 2.0
+			var ln := float(gp[1]) - float(gp[0])
+			var sz := Vector3(ln, 0.5, WALL_T) if along_x else Vector3(WALL_T, 0.5, ln)
+			_box(alto, sz, Vector3(mid, 2.35, fixed) if along_x else Vector3(fixed, 2.35, mid), col)
+	pieces.append([cur, end])
+	for pc in pieces:
+		var ln := float(pc[1]) - float(pc[0])
+		if ln <= 0.02:
+			continue
+		var mid := (float(pc[0]) + float(pc[1])) / 2.0
+		var low := Vector3(ln, WALL_LOW, WALL_T) if along_x else Vector3(WALL_T, WALL_LOW, ln)
+		var high := Vector3(ln, WALL_H - WALL_LOW, WALL_T) if along_x else Vector3(WALL_T, WALL_H - WALL_LOW, ln)
+		var p := Vector3(mid, 0, fixed) if along_x else Vector3(fixed, 0, mid)
+		_box(c, low, p + Vector3(0, WALL_LOW / 2.0, 0), col)
+		_box(alto, high, p + Vector3(0, WALL_LOW + (WALL_H - WALL_LOW) / 2.0, 0), col)
+		_box(c, Vector3(low.x, 0.04, low.z) + Vector3(0.01, 0, 0.01), p + Vector3(0, WALL_LOW, 0), col.darkened(0.25))   # canto
+		_coll(body, Vector3(low.x, WALL_H, low.z), p + Vector3(0, WALL_H / 2.0, 0))
 
 
 static func car(r: Node3D, col: Color, pos: Vector3, rot_y: float, tipped := false) -> void:
@@ -455,17 +588,18 @@ static func poi_mesh(kind: String, rng: RandomNumberGenerator) -> Node3D:
 			r.add_child(Builder.prefab("caseta"))
 		"casa_labranza", "casa_playa", "tienda_carretera":
 			var wall := Color("c9b48c") if kind != "casa_playa" else Color("e2dccb")
-			house(r, 6.0, 5.0, wall, Color("9a4a32") if kind != "tienda_carretera" else Color("5a6a72"))
+			house(r, 8.0, 6.0, wall, Color("9a4a32") if kind != "tienda_carretera" else Color("5a6a72"), false, "tienda" if kind == "tienda_carretera" else "casa")
 			if kind == "tienda_carretera":
-				_box(r, Vector3(4.0, 0.7, 0.1), Vector3(0, 3.6, -2.6), Color("c43a2e"))
+				_box(r, Vector3(4.0, 0.7, 0.1), Vector3(0, 3.1, -3.2), Color("c43a2e"))
 				for k in 3:
-					_box(r, Vector3(0.6, 0.5, 0.6), Vector3(-2.0 + k * 0.8, 0.25, -3.2), Color("8a6440"))
+					_box(r, Vector3(0.6, 0.5, 0.6), Vector3(2.0 + k * 0.7, 0.25, -3.7), Color("8a6440"))
 		"pueblo_abandonado":
 			for k in 4:
 				var h := Node3D.new()
-				h.position = Vector3((k % 2) * 8.0 - 4.0, 0, (k / 2) * 9.0 - 4.5)
-				h.rotation.y = rng.randf_range(-0.2, 0.2)
-				house(h, 5.5, 4.5, Color("b9a684").darkened(0.05 * k), Color("7a3a2a"), k == 1)
+				# en fila junto al camino (2 x 2 se salían del paso y pisaban el camino)
+				h.position = Vector3(-9.75 + k * 6.5, 0, rng.randf_range(-0.3, 0.3))
+				h.rotation.y = rng.randf_range(-0.06, 0.06)
+				house(h, 5.5, 4.5, Color("b9a684").darkened(0.05 * k), Color("7a3a2a"), k == 1, ["p_cocina", "p_dormitorio", "p_bano", "p_garaje"][k])
 				r.add_child(h)
 		"gasolinera":
 			_box(r, Vector3(9.0, 0.3, 6.0), Vector3(0, 4.0, 0), Color("d8d0c0"))
@@ -477,8 +611,8 @@ static func poi_mesh(kind: String, rng: RandomNumberGenerator) -> Node3D:
 				_box(r, Vector3(0.5, 0.3, 0.05), Vector3(x, 1.2, -0.33), Color("e8e2d2"))
 			_box(r, Vector3(9.0, 0.08, 6.0), Vector3(0, 0.04, 0), Color("5a5a5c"))
 			var shop := Node3D.new()
-			shop.position = Vector3(0, 0, 7.0)
-			house(shop, 7.0, 4.0, Color("d8d0c0"), Color("5a6a72"))
+			shop.position = Vector3(9.5, 0, 0.5)   # al lado de la marquesina, dentro del paso
+			house(shop, 7.0, 4.0, Color("d8d0c0"), Color("5a6a72"), false, "gasolinera")
 			r.add_child(shop)
 			car(r, Color("3f6a8a"), Vector3(-1.6, 0, -1.5), 0.1)
 		"coches_abandonados", "control_coches":

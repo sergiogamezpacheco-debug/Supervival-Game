@@ -1011,7 +1011,7 @@ func set_build_info(visible_bar: bool, mode: String, text: String, ok: bool) -> 
 func open_station(s: Node3D) -> void:
 	close_panels()
 	station = s
-	if s.is_gym():
+	if s.has_method("is_gym") and s.is_gym():   # los contenedores de las zonas no tienen gimnasio
 		_gym_panel.visible = true
 		_refresh_gym()
 	elif s.is_chest():
@@ -1239,7 +1239,8 @@ func _refresh_chest() -> void:
 	for it in station.storage:
 		if it != null:
 			used += 1
-	_chest_left.text = "%s  %d/%d" % [DB.station_name(station.id), used, station.storage.size()]
+	var nm: String = DB.station_name(station.id) if station.is_in_group("station") else str(station.data.get("name", station.id))
+	_chest_left.text = "%s  %d/%d" % [nm, used, station.storage.size()]
 	for c in _chest_grid.get_children():
 		c.queue_free()
 	for c in _chest_bag_grid.get_children():

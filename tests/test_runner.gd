@@ -1146,15 +1146,14 @@ func test_routes() -> void:
 	var casa: Node3D = RouteBuilder.poi_mesh("casa_labranza", hrng)
 	RouteBuilder._solidify(casa)
 	check(not casa.find_children("*", "CollisionShape3D", true, false).is_empty(), "las casas de los caminos no se atraviesan")
-	var roof_y := 0.0
-	for m in casa.find_children("*", "MeshInstance3D", true, false):
-		roof_y = maxf(roof_y, (m as MeshInstance3D).position.y)
-	check(roof_y > 2.9, "el tejado queda por encima de la pared (tejado a dos aguas)")
-	var front_slab_ok := false
-	for m in casa.get_children():
-		if m is MeshInstance3D and m.position.y > 2.7 and m.position.z < -0.5:
-			front_slab_ok = m.rotation.x < 0.0
-	check(front_slab_ok, "el faldón de delante baja hacia la fachada (no está invertido)")
+	# tejado (una sola malla): lo más alto tiene que ser la cumbrera, en el centro, no los aleros
+	var roof_mi: MeshInstance3D = casa.find_children("Tejado", "Node3D", true, false)[0].find_children("*", "MeshInstance3D", false, false)[0]
+	var top := Vector3(0, -99, 0)
+	for v in (roof_mi.mesh.surface_get_arrays(0)[Mesh.ARRAY_VERTEX] as PackedVector3Array):
+		if v.y > top.y:
+			top = v
+	check(top.y > 2.9, "el tejado queda por encima de la pared (tejado a dos aguas)")
+	check(absf(top.z) < 1.0, "la cumbrera está en el centro: el tejado no está invertido (z %.2f)" % top.z)
 	casa.free()
 	var tienda: Node3D = RouteBuilder.poi_mesh("gasolinera", hrng)
 	RouteBuilder._solidify(tienda)
@@ -1262,6 +1261,47 @@ func test_phase1() -> void:
 	await _pframes(1)
 	check(path.hud._map_selected == "refugio", "en el mapa sigues marcado en el refugio mientras andas")
 	path.hud.close_panels()
+	# La casa de labranza del sendero: se entra, se ven las habitaciones y sus muebles se registran
+	var boxes := get_tree().get_nodes_in_group("container").filter(func(c): return c.loot_key != "")
+	check(boxes.size() == 7, "la casa de labranza tiene 7 muebles registrables (%d)" % boxes.size())
+	var kinds_in := boxes.map(func(c): return c.id)
+	check(kinds_in.has("nevera") and kinds_in.has("alacena") and kinds_in.has("botiquin_pared") and kinds_in.has("ropero"), "cocina, baño y dormitorio con sus muebles")
+	var casa_n: Node3D = get_tree().get_nodes_in_group("casa")[0]
+	check(not casa_n.get_node("Muros").get_children().is_empty(), "las paredes de la casa tienen colisión")
+	path.player.global_position = casa_n.global_position
+	path.player.reset_physics_interpolation()
+	await _pframes(2)
+	check(not casa_n.get_node("Tejado").visible and not casa_n.get_node("Alto").visible, "dentro de la casa se quita el tejado y lo alto de las paredes")
+	path.player.global_position = casa_n.global_position + Vector3(12, 0, 0)
+	await _pframes(2)
+	check(casa_n.get_node("Tejado").visible, "al salir vuelve el tejado")
+	var fridge: Node3D = boxes.filter(func(c): return c.id == "nevera")[0]
+	var fkey: String = fridge.loot_key
+	fridge.storage[0] = GS.make_item("venda", 2)
+	fridge.interact(path.player)
+	await _pframes(1)
+	path.hud.close_panels()
+	check(fridge.opened_t > 0.0, "al registrar un mueble se apunta cuándo")
+	path.save()
+	check(GS.route_loot.has(fkey) and GS.route_loot[fkey]["items"][0]["id"] == "venda", "lo que queda en el mueble se guarda")
+	path.queue_free()
+	await _frames(3)
+	path = await _new_world()
+	var fridge2: Node3D = null
+	for c in get_tree().get_nodes_in_group("container"):
+		if c.loot_key == fkey:
+			fridge2 = c
+	check(fridge2 != null and fridge2.storage[0] != null and fridge2.storage[0]["id"] == "venda", "al volver por el camino la nevera está como la dejaste")
+	GS.route_loot[fkey]["t"] = GS.now() - 90000.0
+	fridge2.opened_t = GS.now() - 90000.0
+	path.save()
+	path.queue_free()
+	await _frames(3)
+	path = await _new_world()
+	for c in get_tree().get_nodes_in_group("container"):
+		if c.loot_key == fkey:
+			fridge2 = c
+	check(fridge2.opened_t == 0.0, "pasado un día los muebles se vuelven a llenar")
 	path.player.global_position = Vector3(RouteBuilder.center_x(path.route, -float(path.route["length"]) - 3.0), 0, -float(path.route["length"]) - 3.0)
 	await _pframes(2)
 	check(GS.current_map == "arboleda" and GS.route_from == "", "al final del camino entras en La Arboleda")
@@ -1284,6 +1324,10 @@ func test_phase1() -> void:
 		if body.storage[i] != null and body.storage[i]["id"] == "trozo_mapa_2":
 			piece_slot = i
 	check(piece_slot >= 0, "el muerto lleva el trozo de mapa II")
+	grove.hud.open_station(body)
+	await _pframes(1)
+	check(grove.hud._chest_panel.visible and grove.hud._chest_left.text.begins_with("Superviviente muerto"), "registrar el cadáver abre su ventana")
+	grove.hud.close_panels()
 	body.chest_to_bag(piece_slot)
 	check(GS.map_pieces == 2 and GS.count("trozo_mapa_2") == 0, "al cogerlo se cose al mapa (no ocupa la mochila)")
 	_creatures_away()

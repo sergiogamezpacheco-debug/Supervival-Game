@@ -83,5 +83,6 @@
   "travel_energy_max": 100,
   "travel_energy_per_hour": 20,
   "travel_energy_per_unit": 120,
-  "travel_energy_min": 10
+  "travel_energy_min": 10,
+  "house_refill_seconds": 86400
 }
