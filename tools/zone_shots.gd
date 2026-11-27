@@ -41,8 +41,11 @@ func _ready() -> void:
 	cam.look_at(Vector3(0, 0, -half * 0.05), Vector3.UP)
 	cam.make_current()
 	await _shot("%s/%s_vista.png" % [out, map_id])
-	cam.position = Vector3(0, 22, 46)
-	cam.look_at(Vector3(0, 0, 14), Vector3.UP)
+	var sp: Array = DB.maps[map_id].get("spawn", [0, 44])
+	var spv := Vector3(float(sp[0]), 0, float(sp[1]))
+	var inward := -spv.normalized() if spv.length() > 1.0 else Vector3(0, 0, -1)
+	cam.position = spv + Vector3(0, 22, 0) - inward * 4.0
+	cam.look_at(spv + inward * 32.0, Vector3.UP)
 	await _shot("%s/%s_llegada.png" % [out, map_id])
 	cam.clear_current()
 	w.camera.make_current()

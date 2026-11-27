@@ -88,5 +88,7 @@
   "archer_range": 20,
   "archer_cooldown": 1.8,
   "archer_damage": 40,
-  "trust_max": 100
+  "trust_max": 100,
+  "water_shallow_speed": 0.7,
+  "water_deep_speed": 0.6
 }

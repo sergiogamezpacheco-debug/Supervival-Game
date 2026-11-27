@@ -718,5 +718,411 @@
     },
     "unlock": 8,
     "piece": 2
+  },
+  "centinela": {
+    "name": "Base Centinela",
+    "size": 110,
+    "seed": 9090,
+    "spawn": [
+      50,
+      0
+    ],
+    "ground": "6b6a4c",
+    "fog": 0.013,
+    "camp": {
+      "name": "BASE CENTINELA",
+      "rect": [
+        -30,
+        -26,
+        26,
+        26
+      ],
+      "broken": [
+        -4,
+        4
+      ],
+      "gate": [
+        -3,
+        3
+      ]
+    },
+    "houses": [
+      [
+        "barracon",
+        -18,
+        -17,
+        2,
+        "8a8f7a",
+        "56603f"
+      ],
+      [
+        "barracon",
+        -4,
+        -17,
+        2,
+        "8a8f7a",
+        "56603f"
+      ],
+      [
+        "mando",
+        12,
+        -16,
+        2,
+        "8f8a7a",
+        "4a5054"
+      ]
+    ],
+    "prefabs": [
+      {
+        "type": "tienda_militar",
+        "pos": [
+          -20,
+          6
+        ],
+        "rot": 1,
+        "containers": [
+          {
+            "type": "caja_militar",
+            "offset": [
+              0,
+              -1.8
+            ]
+          }
+        ]
+      },
+      {
+        "type": "tienda_militar",
+        "pos": [
+          -12,
+          6
+        ],
+        "rot": 1,
+        "containers": [
+          {
+            "type": "taquilla_militar",
+            "offset": [
+              0.9,
+              1.6
+            ]
+          }
+        ]
+      },
+      {
+        "type": "tienda_militar",
+        "pos": [
+          -20,
+          16
+        ],
+        "rot": 1
+      },
+      {
+        "type": "helipuerto",
+        "pos": [
+          10,
+          10
+        ],
+        "rot": 0
+      },
+      {
+        "type": "sacos",
+        "pos": [
+          20,
+          -2
+        ],
+        "rot": 3
+      },
+      {
+        "type": "sacos",
+        "pos": [
+          -2,
+          20
+        ],
+        "rot": 2
+      },
+      {
+        "type": "",
+        "pos": [
+          0,
+          2
+        ],
+        "containers": [
+          {
+            "type": "camion_militar",
+            "offset": [
+              0,
+              0
+            ]
+          }
+        ]
+      },
+      {
+        "type": "",
+        "pos": [
+          18,
+          8
+        ],
+        "containers": [
+          {
+            "type": "caja_militar",
+            "offset": [
+              0,
+              0
+            ]
+          },
+          {
+            "type": "caja_militar",
+            "offset": [
+              1.4,
+              0.3
+            ]
+          }
+        ]
+      },
+      {
+        "type": "",
+        "pos": [
+          40,
+          -20
+        ],
+        "containers": [
+          {
+            "type": "coche",
+            "offset": [
+              0,
+              0
+            ]
+          }
+        ]
+      }
+    ],
+    "resources": {
+      "pino": 14,
+      "arbol": 10,
+      "roca": 8,
+      "chatarra": 14,
+      "hierba": 16,
+      "ramas": 10,
+      "piedras": 10,
+      "arbusto": 8
+    },
+    "creatures": [
+      {
+        "type": "soldado",
+        "groups": 5,
+        "size": [
+          1,
+          3
+        ],
+        "min_dist": 12
+      },
+      {
+        "type": "infectado",
+        "groups": 4,
+        "size": [
+          1,
+          2
+        ],
+        "min_dist": 14
+      },
+      {
+        "type": "blindado",
+        "groups": 1,
+        "size": [
+          1,
+          1
+        ],
+        "min_dist": 20
+      },
+      {
+        "type": "corredora",
+        "groups": 2,
+        "size": [
+          1,
+          1
+        ],
+        "min_dist": 16
+      }
+    ],
+    "night": {
+      "type": "soldado",
+      "count": 3
+    },
+    "unlock": 12,
+    "piece": 2
+  },
+  "marismas": {
+    "name": "Marismas del Guadal",
+    "size": 110,
+    "seed": 5151,
+    "spawn": [
+      0,
+      -50
+    ],
+    "ground": "55683e",
+    "fog": 0.022,
+    "water": {
+      "deep": [
+        [
+          2,
+          14,
+          17
+        ],
+        [
+          30,
+          30,
+          8
+        ]
+      ],
+      "shallow": [
+        [
+          2,
+          14,
+          25
+        ],
+        [
+          -30,
+          -8,
+          10
+        ],
+        [
+          30,
+          30,
+          13
+        ],
+        [
+          -22,
+          30,
+          9
+        ]
+      ],
+      "islands": [
+        [
+          2,
+          17,
+          5.5
+        ]
+      ],
+      "boardwalk": [
+        [
+          2,
+          -12
+        ],
+        [
+          2,
+          -4.5
+        ]
+      ]
+    },
+    "prefabs": [
+      {
+        "type": "palafito",
+        "pos": [
+          -30,
+          -8
+        ],
+        "rot": 0,
+        "containers": [
+          {
+            "type": "arcon_pescador",
+            "offset": [
+              0,
+              0.6
+            ]
+          }
+        ]
+      },
+      {
+        "type": "",
+        "pos": [
+          1,
+          18
+        ],
+        "containers": [
+          {
+            "type": "barca_hundida",
+            "offset": [
+              0,
+              0
+            ]
+          }
+        ]
+      },
+      {
+        "type": "",
+        "pos": [
+          30,
+          31
+        ],
+        "containers": [
+          {
+            "type": "cofre_hundido",
+            "offset": [
+              0,
+              0
+            ]
+          }
+        ]
+      },
+      {
+        "type": "",
+        "pos": [
+          -38,
+          -36
+        ],
+        "containers": [
+          {
+            "type": "cadaver",
+            "offset": [
+              0,
+              0
+            ]
+          }
+        ]
+      }
+    ],
+    "resources": {
+      "arbol": 12,
+      "arbusto": 14,
+      "hierba": 30,
+      "ramas": 14,
+      "piedras": 10,
+      "seta": 8,
+      "roca": 6
+    },
+    "creatures": [
+      {
+        "type": "ahogado",
+        "groups": 6,
+        "size": [
+          1,
+          2
+        ],
+        "min_dist": 12
+      },
+      {
+        "type": "vibora",
+        "groups": 5,
+        "size": [
+          1,
+          1
+        ],
+        "min_dist": 10
+      },
+      {
+        "type": "infectado",
+        "groups": 3,
+        "size": [
+          1,
+          2
+        ],
+        "min_dist": 14
+      }
+    ],
+    "night": {
+      "type": "ahogado",
+      "count": 3
+    },
+    "unlock": 10,
+    "piece": 2
   }
 }

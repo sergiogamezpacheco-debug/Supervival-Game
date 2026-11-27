@@ -19,6 +19,7 @@ var _swing_kind := ""   # "axe"/"pickaxe": talar o picar (animate_chop); "" = go
 var _idle_t := 0.0
 var _hand_item := ""
 var running := false
+var terrain_mult := 1.0   # agua de las marismas: frena (lo pone el mundo)
 var crouching := false            # agachado: lento, silencioso y con golpe crítico por sorpresa
 var shake := 0.0                  # sacudida de cámara al recibir un golpe (la lee el mundo)
 var _crouch_amount := 0.0
@@ -68,7 +69,7 @@ func _physics_process(delta: float) -> void:
 	_refresh_hand()
 	_noise_pulse = maxf(_noise_pulse - delta * 9.0, 0.0)
 	shake = maxf(shake - delta, 0.0)
-	var speed := float(DB.bal("player_speed", 4.5)) * GS.speed_factor()
+	var speed := float(DB.bal("player_speed", 4.5)) * GS.speed_factor() * terrain_mult
 	if running:
 		speed *= float(DB.bal("run_mult", 1.5))
 	if crouching:

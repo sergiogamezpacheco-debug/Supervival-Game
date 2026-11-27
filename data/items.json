@@ -870,5 +870,17 @@
     "stack": 500,
     "desc": "Ficha de madera sellada con la torre de La Atalaya. Los comerciantes del poblado la aceptan como pago.",
     "weight": 0.001
+  },
+  "traje_buzo": {
+    "name": "Traje de buzo",
+    "type": "wear",
+    "stack": 1,
+    "slot": "torso",
+    "model": "traje_buzo",
+    "armor": 3,
+    "durability": 150,
+    "dive": 1,
+    "desc": "Neopreno grueso con capucha y aletas plegadas. Deja meterse en el agua honda de las marismas.",
+    "weight": 2.0
   }
 }

@@ -1694,5 +1694,35 @@
     "cat": "Comprar",
     "trust_gain": 3,
     "trust": 25
+  },
+  {
+    "id": "traje_buzo",
+    "result": "traje_buzo",
+    "qty": 1,
+    "station": "mesa_costura",
+    "level": 2,
+    "time": 600,
+    "cost": {
+      "tela_resistente": 4,
+      "cuero": 4,
+      "cuerda": 2
+    },
+    "unlock": 12,
+    "cat": "Ropa"
+  },
+  {
+    "id": "comprar_traje_buzo",
+    "result": "traje_buzo",
+    "qty": 1,
+    "station": "puesto_mercader",
+    "level": 1,
+    "time": 0,
+    "cost": {
+      "vale_atalaya": 18
+    },
+    "unlock": 1,
+    "cat": "Comprar",
+    "trust_gain": 3,
+    "trust": 15
   }
 ]

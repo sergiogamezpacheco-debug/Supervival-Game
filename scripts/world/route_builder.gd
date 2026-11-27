@@ -442,7 +442,23 @@ const LAYOUTS := {
 		"furniture": [["botiquin_pared", 2.46, 0.6, 90], ["aparador", -1.3, 1.9, 0]]},
 	"p_garaje": {"door": [-0.9, 0.9], "walls": [], "floor": [["6a6a62", -2.75, -2.25, 2.75, 2.25]],
 		"furniture": [["banco_garaje", -1.0, 1.82, 0], ["bidon", 1.9, 1.75, 0], ["cajas_almacen", -2.1, -0.9, -90]]},
+	# Base Centinela: barracón (10 x 5) con taquillas y armero; puesto de mando (7 x 5)
+	"barracon": {"size": [10.0, 5.0], "door": [-0.7, 0.7], "walls": [], "floor": [["5f6450", -5.0, -2.5, 5.0, 2.5]],
+		"furniture": [["taquilla_militar", -3.6, 1.98, 0], ["taquilla_militar", -1.6, 1.98, 0], ["taquilla_militar", 1.6, 1.98, 0],
+			["taquilla_militar", 3.6, 1.98, 0], ["armero_militar", -4.6, -0.6, -90], ["caja_militar", 4.3, -1.5, 90]]},
+	"mando": {"size": [7.0, 5.0], "door": [-0.6, 0.6], "walls": [], "floor": [["6a6458", -3.5, -2.5, 3.5, 2.5]],
+		"furniture": [["mesa_mando", 0.0, 1.7, 0], ["armero_militar", 3.1, 0.6, 90], ["caja_militar", -2.6, 1.75, 0]]},
 }
+## Tamaño (ancho x fondo) de cada distribución.
+static func layout_size(lay: String) -> Vector2:
+	var sz: Array = LAYOUTS.get(lay, {}).get("size", [])
+	if sz.size() == 2:
+		return Vector2(float(sz[0]), float(sz[1]))
+	if lay.begins_with("p_"):
+		return Vector2(5.5, 4.5)
+	if lay == "gasolinera":
+		return Vector2(7.0, 4.0)
+	return Vector2(8.0, 6.0)
 const WALL_T := 0.16
 const WALL_H := 2.6
 const WALL_LOW := 0.9      # lo que queda de pared al estar dentro

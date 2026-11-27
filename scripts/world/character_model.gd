@@ -29,6 +29,7 @@ const CLOTH := {
 	"gorra": Color("6f6450"), "casco_obra": Color("d9a925"),
 	"guantes": Color("3d3732"), "mochila": Color("6b6243"),
 	"mochila_excursion": Color("3f5f73"), "mochila_tactica": Color("4b4d3f"),
+	"traje_buzo": Color("27313a"),
 }
 
 var look := {"sex": "m", "skin": 1, "hair": 1, "hair_color": 1, "eyes": 0, "eye_color": 0, "nose": 0, "mouth": 1}
@@ -951,7 +952,7 @@ func _build_outfit(d: Dictionary) -> void:
 				sl.append([-sleeve_len, float(end_r[1]), float(end_r[2])])
 				_p(arm, loft(sl, 8, false), c)
 				_p(arm, loft([[-sleeve_len + 0.018, float(end_r[1]) * 1.08, float(end_r[2]) * 1.08], [-sleeve_len, float(end_r[1]) * 1.08, float(end_r[2]) * 1.08]], 8, false), c.darkened(0.15))
-			if t == "chaqueta_piel":
+			if t == "chaqueta_piel" or t == "traje_buzo":
 				var elbow: Node3D = j["elbow_" + tag]
 				_p(elbow, loft(grow(_fore_arm(d).slice(0, 3), 1.2), 8, false), c)
 				_p(elbow, loft([[-float(d["fore"]) * 0.6, 0.041 * ar, 0.038 * ar], [-float(d["fore"]) * 0.7, 0.04 * ar, 0.037 * ar]], 8, false), c.darkened(0.2))
@@ -963,6 +964,11 @@ func _build_outfit(d: Dictionary) -> void:
 			_p(spine, box(Vector3(0.008, 0.42 * s, 0.01)), c.darkened(0.35), Vector3(0, 0.2 * s, -0.128 * ch))
 			for side in [-1, 1]:
 				_p(spine, box(Vector3(0.06, 0.05, 0.012)), c.darkened(0.12), Vector3(side * 0.07, 0.3 * s, -0.122 * ch))
+		elif t == "traje_buzo":   # neopreno: cuello alto, cremallera amarilla y franjas
+			_p(spine, loft([[0.0, 0.08, 0.068], [0.08, 0.075, 0.064]], 9, false), c, Vector3(0, 0.44 * s, 0.005))
+			_p(spine, box(Vector3(0.012, 0.4 * s, 0.01)), Color("d9a925"), Vector3(0, 0.22 * s, -0.128 * ch))
+			for side in [-1, 1]:
+				_p(spine, box(Vector3(0.025, 0.3 * s, 0.012)), Color("3f6a8a"), Vector3(side * 0.11, 0.25 * s, -0.12 * ch))
 		elif t == "chaleco":
 			_p(spine, box(Vector3(0.27, 0.3 * s, 0.035)), c, Vector3(0, 0.25 * s, -0.125 * ch))
 			_p(spine, box(Vector3(0.27, 0.32 * s, 0.035)), c, Vector3(0, 0.26 * s, 0.11 * ch))

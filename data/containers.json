@@ -1339,5 +1339,565 @@
         "weight": 2
       }
     ]
+  },
+  "caja_militar": {
+    "name": "Caja militar",
+    "size": [
+      1.2,
+      0.65,
+      0.65
+    ],
+    "slots": 6,
+    "rolls": [
+      1,
+      3
+    ],
+    "loot": [
+      {
+        "id": "vendas_avanzadas",
+        "qty": [
+          1,
+          2
+        ],
+        "weight": 3
+      },
+      {
+        "id": "polvora",
+        "qty": [
+          2,
+          5
+        ],
+        "weight": 3
+      },
+      {
+        "id": "molotov",
+        "qty": [
+          1,
+          2
+        ],
+        "weight": 2
+      },
+      {
+        "id": "conserva_carne",
+        "qty": [
+          1,
+          2
+        ],
+        "weight": 3
+      },
+      {
+        "id": "agua_purificada",
+        "qty": [
+          1,
+          2
+        ],
+        "weight": 3
+      },
+      {
+        "id": "componentes",
+        "qty": [
+          1,
+          2
+        ],
+        "weight": 2
+      },
+      {
+        "id": "bateria",
+        "qty": [
+          1,
+          1
+        ],
+        "weight": 1
+      },
+      {
+        "id": "estimulante",
+        "qty": [
+          1,
+          1
+        ],
+        "weight": 1
+      }
+    ]
+  },
+  "taquilla_militar": {
+    "name": "Taquilla de soldado",
+    "size": [
+      0.65,
+      1.9,
+      0.55
+    ],
+    "slots": 6,
+    "rolls": [
+      1,
+      2
+    ],
+    "loot": [
+      {
+        "id": "pantalon_cargo",
+        "qty": [
+          1,
+          1
+        ],
+        "weight": 3
+      },
+      {
+        "id": "botas",
+        "qty": [
+          1,
+          1
+        ],
+        "weight": 3
+      },
+      {
+        "id": "guantes",
+        "qty": [
+          1,
+          1
+        ],
+        "weight": 2
+      },
+      {
+        "id": "chaleco",
+        "qty": [
+          1,
+          1
+        ],
+        "weight": 1
+      },
+      {
+        "id": "casco_obra",
+        "qty": [
+          1,
+          1
+        ],
+        "weight": 1
+      },
+      {
+        "id": "venda",
+        "qty": [
+          1,
+          3
+        ],
+        "weight": 3
+      },
+      {
+        "id": "mochila_tactica",
+        "qty": [
+          1,
+          1
+        ],
+        "weight": 1
+      },
+      {
+        "id": "tela_resistente",
+        "qty": [
+          1,
+          2
+        ],
+        "weight": 2
+      }
+    ]
+  },
+  "armero_militar": {
+    "name": "Armero de la base",
+    "size": [
+      1.25,
+      1.75,
+      0.5
+    ],
+    "slots": 6,
+    "rolls": [
+      1,
+      2
+    ],
+    "loot": [
+      {
+        "id": "machete",
+        "qty": [
+          1,
+          1
+        ],
+        "weight": 3
+      },
+      {
+        "id": "garrote",
+        "qty": [
+          1,
+          1
+        ],
+        "weight": 2
+      },
+      {
+        "id": "molotov",
+        "qty": [
+          1,
+          2
+        ],
+        "weight": 2
+      },
+      {
+        "id": "polvora",
+        "qty": [
+          2,
+          4
+        ],
+        "weight": 3
+      },
+      {
+        "id": "acero",
+        "qty": [
+          1,
+          2
+        ],
+        "weight": 2
+      }
+    ]
+  },
+  "mesa_mando": {
+    "name": "Mesa del puesto de mando",
+    "size": [
+      1.7,
+      0.9,
+      0.85
+    ],
+    "slots": 6,
+    "rolls": [
+      1,
+      3
+    ],
+    "loot": [
+      {
+        "id": "circuito",
+        "qty": [
+          1,
+          1
+        ],
+        "weight": 3
+      },
+      {
+        "id": "bateria",
+        "qty": [
+          1,
+          2
+        ],
+        "weight": 3
+      },
+      {
+        "id": "cable_cobre",
+        "qty": [
+          1,
+          2
+        ],
+        "weight": 2
+      },
+      {
+        "id": "componentes",
+        "qty": [
+          1,
+          2
+        ],
+        "weight": 3
+      },
+      {
+        "id": "circuito_avanzado",
+        "qty": [
+          1,
+          1
+        ],
+        "weight": 1
+      },
+      {
+        "id": "estimulante",
+        "qty": [
+          1,
+          1
+        ],
+        "weight": 1
+      }
+    ]
+  },
+  "camion_militar": {
+    "name": "Camión militar",
+    "size": [
+      2.3,
+      2.4,
+      5.7
+    ],
+    "slots": 6,
+    "rolls": [
+      1,
+      3
+    ],
+    "loot": [
+      {
+        "id": "combustible",
+        "qty": [
+          1,
+          2
+        ],
+        "weight": 3
+      },
+      {
+        "id": "chatarra",
+        "qty": [
+          2,
+          4
+        ],
+        "weight": 3
+      },
+      {
+        "id": "componentes",
+        "qty": [
+          1,
+          2
+        ],
+        "weight": 2
+      },
+      {
+        "id": "tela_resistente",
+        "qty": [
+          1,
+          2
+        ],
+        "weight": 2
+      },
+      {
+        "id": "agua_purificada",
+        "qty": [
+          1,
+          2
+        ],
+        "weight": 2
+      },
+      {
+        "id": "conserva_carne",
+        "qty": [
+          1,
+          1
+        ],
+        "weight": 2
+      },
+      {
+        "id": "botiquin",
+        "qty": [
+          1,
+          1
+        ],
+        "weight": 1
+      }
+    ]
+  },
+  "arcon_pescador": {
+    "name": "Arcón del pescador",
+    "size": [
+      1.1,
+      0.7,
+      0.6
+    ],
+    "slots": 6,
+    "rolls": [
+      1,
+      3
+    ],
+    "loot": [
+      {
+        "id": "cuerda",
+        "qty": [
+          1,
+          3
+        ],
+        "weight": 4
+      },
+      {
+        "id": "tela",
+        "qty": [
+          1,
+          2
+        ],
+        "weight": 3
+      },
+      {
+        "id": "conserva_bayas",
+        "qty": [
+          1,
+          1
+        ],
+        "weight": 2
+      },
+      {
+        "id": "carne_seca",
+        "qty": [
+          1,
+          2
+        ],
+        "weight": 2
+      },
+      {
+        "id": "agua_hervida",
+        "qty": [
+          1,
+          1
+        ],
+        "weight": 2
+      },
+      {
+        "id": "venda",
+        "qty": [
+          1,
+          2
+        ],
+        "weight": 2
+      },
+      {
+        "id": "lata_vacia",
+        "qty": [
+          1,
+          2
+        ],
+        "weight": 2
+      }
+    ]
+  },
+  "barca_hundida": {
+    "name": "Barca hundida",
+    "size": [
+      1.8,
+      1.0,
+      4.2
+    ],
+    "slots": 6,
+    "rolls": [
+      2,
+      4
+    ],
+    "loot": [
+      {
+        "id": "botiquin",
+        "qty": [
+          1,
+          1
+        ],
+        "weight": 3
+      },
+      {
+        "id": "circuito_avanzado",
+        "qty": [
+          1,
+          1
+        ],
+        "weight": 2
+      },
+      {
+        "id": "acero",
+        "qty": [
+          1,
+          3
+        ],
+        "weight": 3
+      },
+      {
+        "id": "chaleco",
+        "qty": [
+          1,
+          1
+        ],
+        "weight": 1
+      },
+      {
+        "id": "mochila_tactica",
+        "qty": [
+          1,
+          1
+        ],
+        "weight": 1
+      },
+      {
+        "id": "molotov",
+        "qty": [
+          1,
+          2
+        ],
+        "weight": 2
+      },
+      {
+        "id": "estimulante",
+        "qty": [
+          1,
+          1
+        ],
+        "weight": 2
+      },
+      {
+        "id": "polvora",
+        "qty": [
+          2,
+          5
+        ],
+        "weight": 2
+      }
+    ]
+  },
+  "cofre_hundido": {
+    "name": "Cofre del fondo",
+    "size": [
+      1.1,
+      0.7,
+      0.7
+    ],
+    "slots": 6,
+    "rolls": [
+      2,
+      3
+    ],
+    "loot": [
+      {
+        "id": "lingote_cobre",
+        "qty": [
+          2,
+          4
+        ],
+        "weight": 3
+      },
+      {
+        "id": "acero",
+        "qty": [
+          1,
+          2
+        ],
+        "weight": 3
+      },
+      {
+        "id": "bateria",
+        "qty": [
+          1,
+          2
+        ],
+        "weight": 2
+      },
+      {
+        "id": "circuito",
+        "qty": [
+          1,
+          2
+        ],
+        "weight": 2
+      },
+      {
+        "id": "vendas_avanzadas",
+        "qty": [
+          1,
+          2
+        ],
+        "weight": 2
+      },
+      {
+        "id": "antidoto",
+        "qty": [
+          1,
+          2
+        ],
+        "weight": 2
+      }
+    ]
   }
 }

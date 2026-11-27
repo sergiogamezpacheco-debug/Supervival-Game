@@ -26,6 +26,14 @@ const KINDS := {
 	# Blindado: casco amarillo, ropa gris y placas de chatarra atadas con correas
 	"blindado": {"look": {"sex": "m", "hair": 1, "hair_color": 0, "eyes": 4, "mouth": 4, "skin_color": Color("85988a")}, "phys": {"fuerza": 0.6}, "outfit": {"cabeza": "casco_obra", "torso": "chaqueta_piel", "piernas": "pantalon_cargo", "pies": "botas", "manos": "guantes"},
 		"tint": {"chaqueta_piel": Color("5f666e"), "pantalon_cargo": Color("575d64"), "botas": Color("33302c"), "guantes": Color("3a3d40")}},
+	# Soldado infectado: uniforme de camuflaje oliva, casco y chaleco militar
+	"soldado": {"look": {"sex": "m", "hair": 0, "hair_color": 0, "eyes": 4, "mouth": 4, "skin_color": Color("8e9a7e")}, "phys": {"fuerza": 0.5},
+		"outfit": {"cabeza": "casco_obra", "torso": "chaleco", "piernas": "pantalon_cargo", "pies": "botas", "manos": "guantes"},
+		"tint": {"casco_obra": Color("4b5a3a"), "chaleco": Color("5a6545"), "pantalon_cargo": Color("4f5a3c"), "botas": Color("2e2a24"), "guantes": Color("2e2a24")}},
+	# Ahogado: hinchado, piel verdosa y empapada, ropa de faena rota y oscura
+	"ahogado": {"look": {"sex": "m", "hair": 1, "hair_color": 0, "eyes": 4, "mouth": 2, "skin_color": Color("6f8a74")}, "phys": {"fuerza": 0.3},
+		"outfit": {"torso": "camiseta", "piernas": "pantalon_tela", "pies": "botas"},
+		"tint": {"camiseta": Color("3d4a44"), "pantalon_tela": Color("394450"), "botas": Color("2a2a24")}, "scale": Vector3(1.15, 1.0, 1.15), "top": 2.0},
 	# Coloso: gigante azulado sin camisa, hombreras de chapa y cicatrices
 	"coloso": {"look": {"sex": "m", "hair": 0, "hair_color": 1, "eyes": 2, "mouth": 4, "skin_color": Color("7e8fa8")}, "phys": {"fuerza": 1.0}, "outfit": {"piernas": "pantalon_cargo", "pies": "botas"},
 		"tint": {"pantalon_cargo": Color("9a8a5e"), "botas": Color("4a3a2c")}, "scale": Vector3(1.95, 1.62, 1.95), "top": 3.2},

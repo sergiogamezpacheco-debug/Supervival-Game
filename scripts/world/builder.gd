@@ -469,7 +469,8 @@ static func container_mesh(id: String) -> Node3D:
 				root.add_child(part(box(Vector3(0.14, 0.13, 0.6)), Color("5a6a4a"), Vector3(x, 0.08, -0.25)))
 			root.add_child(part(box(Vector3(0.42, 0.22, 0.4)), Color("7a5a32"), Vector3(0, 0.36, 0.05)))
 		"alacena", "nevera", "fregadero", "botiquin_pared", "ropero", "mesilla", "aparador", "banco_garaje", "bidon", \
-				"estanteria_tienda", "caja_registradora", "maquina_bebidas", "cajas_almacen":
+				"estanteria_tienda", "caja_registradora", "maquina_bebidas", "cajas_almacen", "caja_militar", "taquilla_militar", \
+				"armero_militar", "mesa_mando", "camion_militar", "arcon_pescador", "barca_hundida", "cofre_hundido":
 			_house_furniture(root, id)
 		_:
 			root.add_child(part(box(Vector3(1.1, 0.55, 0.65)), Color("4e3a26"), Vector3(0, 0.28, 0)))
@@ -560,6 +561,80 @@ static func _house_furniture(root: Node3D, id: String) -> void:
 			for k in 6:
 				root.add_child(part(cyl(0.05, 0.05, 0.18), [Color("3f6a8a"), Color("e8e4d8"), Color("d8a24a")][k % 3], Vector3(-0.25 + (k % 3) * 0.15, 0.75 + (k / 3) * 0.45, -0.3)))
 			root.add_child(part(box(Vector3(0.12, 0.3, 0.04)), Color("d9d4c4"), Vector3(0.32, 1.1, -0.37)))
+		"caja_militar":   # caja de munición verde con estarcido y asas
+			root.add_child(part(box(Vector3(1.2, 0.55, 0.6)), Color("4b5a3a"), Vector3(0, 0.28, 0)))
+			root.add_child(part(box(Vector3(1.24, 0.08, 0.64)), Color("3a4530"), Vector3(0, 0.56, 0)))
+			root.add_child(part(box(Vector3(0.5, 0.12, 0.01)), Color("d8d0b0"), Vector3(0, 0.3, -0.305)))
+			for x in [-0.63, 0.63]:
+				root.add_child(part(box(Vector3(0.04, 0.06, 0.2)), Color("2a2e30"), Vector3(x, 0.4, 0)))
+		"taquilla_militar":
+			root.add_child(part(box(Vector3(0.6, 1.85, 0.5)), Color("5a6650"), Vector3(0, 0.93, 0)))
+			for k in 3:
+				root.add_child(part(box(Vector3(0.3, 0.02, 0.02)), Color("2e3428"), Vector3(0, 1.55 + k * 0.06, -0.26)))
+			root.add_child(part(box(Vector3(0.03, 0.16, 0.04)), Color("8c9399"), Vector3(0.2, 1.0, -0.27)))
+			root.add_child(part(box(Vector3(0.3, 0.1, 0.01)), Color("d8d0b0"), Vector3(0, 1.3, -0.255)))
+		"armero_militar":   # armero con rifles viejos y un candado
+			root.add_child(part(box(Vector3(1.2, 1.7, 0.45)), Color("4b5a3a"), Vector3(0, 0.85, 0)))
+			root.add_child(part(box(Vector3(1.1, 1.5, 0.02)), Color("2a2e30"), Vector3(0, 0.9, -0.23)))
+			for k in 4:
+				root.add_child(part(box(Vector3(0.06, 1.1, 0.06)), Color("3d2a1c"), Vector3(-0.4 + k * 0.27, 0.85, -0.18)))
+				root.add_child(part(box(Vector3(0.05, 0.4, 0.05)), Color("2b2b2b"), Vector3(-0.4 + k * 0.27, 1.45, -0.18)))
+			root.add_child(part(box(Vector3(0.08, 0.1, 0.04)), Color("c9a24a"), Vector3(0.45, 0.9, -0.26)))
+		"mesa_mando":   # escritorio con mapa, radio y cajones
+			root.add_child(part(box(Vector3(1.6, 0.08, 0.8)), Color("6a6458"), Vector3(0, 0.78, 0)))
+			root.add_child(part(box(Vector3(0.5, 0.75, 0.75)), Color("5a564c"), Vector3(-0.52, 0.38, 0)))
+			root.add_child(part(box(Vector3(0.08, 0.75, 0.75)), Color("5a564c"), Vector3(0.75, 0.38, 0)))
+			root.add_child(part(box(Vector3(0.9, 0.01, 0.6)), Color("d8c89a"), Vector3(0.2, 0.83, 0)))
+			root.add_child(part(box(Vector3(0.35, 0.22, 0.25)), Color("3d4230"), Vector3(-0.5, 0.94, 0.15)))
+			root.add_child(part(box(Vector3(0.02, 0.35, 0.02)), Color("2b2b2b"), Vector3(-0.42, 1.2, 0.2)))
+		"camion_militar":   # camión de la base con la caja de lona abierta
+			var olv := Color("4f5a3a")
+			root.add_child(part(box(Vector3(2.2, 0.5, 5.6)), Color("2b2b2b"), Vector3(0, 0.75, 0)))
+			root.add_child(part(box(Vector3(2.2, 1.5, 1.6)), olv, Vector3(0, 1.6, -2.0)))
+			root.add_child(part(box(Vector3(2.0, 0.6, 0.06)), Color("2a3238"), Vector3(0, 2.0, -2.82)))
+			root.add_child(part(box(Vector3(2.3, 0.6, 3.6)), olv.darkened(0.1), Vector3(0, 1.3, 0.9)))
+			for x in [-1.1, 1.1]:   # arcos de la lona
+				for z in [-0.5, 0.9, 2.3]:
+					root.add_child(part(box(Vector3(0.06, 1.2, 0.06)), Color("3a3d30"), Vector3(x, 2.2, z)))
+			root.add_child(part(box(Vector3(2.3, 0.06, 2.4)), olv.lightened(0.1), Vector3(0, 2.8, 0.3)))
+			for x in [-1.05, 1.05]:
+				for z in [-2.0, 0.6, 1.9]:
+					var wh := part(cyl(0.48, 0.48, 0.35), Color("1e1e1e"), Vector3(x, 0.48, z))
+					wh.rotation.z = PI / 2.0
+					root.add_child(wh)
+		"arcon_pescador":   # arcón de tablas con un rollo de cuerda y una nasa encima
+			root.add_child(part(box(Vector3(1.1, 0.6, 0.6)), Color("7a5a3a"), Vector3(0, 0.3, 0)))
+			root.add_child(part(box(Vector3(1.14, 0.08, 0.64)), Color("5a3e26"), Vector3(0, 0.62, 0)))
+			root.add_child(part(cyl(0.18, 0.18, 0.1), Color("c9b27a"), Vector3(-0.25, 0.72, 0)))
+			var nasa := part(cyl(0.12, 0.2, 0.5), Color("9a8a5a"), Vector3(0.3, 0.78, 0))
+			nasa.rotation.z = PI / 2.0
+			root.add_child(nasa)
+		"barca_hundida":   # barca de madera medio hundida, escorada, con cajas
+			var hull := Node3D.new()
+			hull.rotation = Vector3(0.08, 0, 0.25)
+			hull.position.y = -0.1
+			root.add_child(hull)
+			hull.add_child(part(box(Vector3(1.6, 0.6, 3.6)), Color("6b4a2c"), Vector3(0, 0.3, 0)))
+			hull.add_child(part(box(Vector3(1.3, 0.5, 3.3)), Color("3b2c1d"), Vector3(0, 0.4, 0)))
+			var bow := part(box(Vector3(1.1, 0.55, 1.1)), Color("6b4a2c"), Vector3(0, 0.3, -2.0))
+			bow.rotation.y = PI / 4.0
+			hull.add_child(bow)
+			for z in [-1.0, 0.2, 1.2]:
+				hull.add_child(part(box(Vector3(1.5, 0.06, 0.25)), Color("8a6440"), Vector3(0, 0.62, z)))
+			hull.add_child(part(box(Vector3(0.6, 0.4, 0.5)), Color("4b5a3a"), Vector3(0.2, 0.7, 0.6)))
+			hull.add_child(part(box(Vector3(0.5, 0.35, 0.4)), Color("8a6440"), Vector3(-0.3, 0.68, -0.4)))
+			var mast := part(cyl(0.05, 0.06, 2.2), Color("5a3e26"), Vector3(0, 1.4, -0.6))
+			mast.rotation.z = 0.5
+			hull.add_child(mast)
+		"cofre_hundido":   # cofre verdoso de algas con flejes oxidados
+			root.add_child(part(box(Vector3(1.0, 0.55, 0.62)), Color("4a5a3a"), Vector3(0, 0.28, 0)))
+			var lid := part(cyl(0.31, 0.31, 1.0), Color("3f5032"), Vector3(0, 0.55, 0))
+			lid.rotation.z = PI / 2.0
+			lid.scale = Vector3(0.6, 1, 1)
+			root.add_child(lid)
+			for x in [-0.4, 0.4]:
+				root.add_child(part(box(Vector3(0.07, 0.6, 0.66)), Color("7a4a2a"), Vector3(x, 0.3, 0)))
+			root.add_child(part(box(Vector3(0.6, 0.04, 0.3)), Color("5f8a3a"), Vector3(0.1, 0.02, -0.5)))
 		"cajas_almacen":   # pila de cajas de cartón y madera
 			root.add_child(part(box(Vector3(0.7, 0.55, 0.6)), Color("c79a62"), Vector3(-0.35, 0.28, 0)))
 			root.add_child(part(box(Vector3(0.6, 0.5, 0.55)), Color("a0703f"), Vector3(0.35, 0.25, 0.05)))
@@ -617,6 +692,78 @@ static func prefab(kind: String) -> StaticBody3D:
 			solid(b, Vector3(1.6, 2.4, 0.25), Vector3(-1.7, 1.2, 2.0), conc)
 			solid(b, Vector3(1.6, 2.4, 0.25), Vector3(1.7, 1.2, 2.0), conc)
 			solid(b, Vector3(1.6, 0.8, 0.8), Vector3(-1.3, 0.4, -1.3), Color("6b4a2a"))
+		"tienda_militar":   # tienda de campaña verde a dos aguas con la entrada abierta (frente -Z)
+			var olive := Color("56603f")
+			b.add_child(part(box(Vector3(3.6, 0.06, 4.6)), olive.darkened(0.3), Vector3(0, 0.03, 0)))
+			for k in [-1.0, 1.0]:
+				var side := part(box(Vector3(2.5, 0.08, 4.6)), olive if k < 0 else olive.darkened(0.12), Vector3(k * 0.88, 1.0, 0))
+				side.rotation.z = -k * 0.82
+				b.add_child(side)
+			var back := part(box(Vector3(1.85, 1.85, 0.06)), olive.darkened(0.15), Vector3(0, 0.0, 2.28))
+			back.rotation.z = PI / 4.0
+			b.add_child(back)
+			for k in [-1.0, 1.0]:   # faldones de la entrada recogidos
+				var flap := part(box(Vector3(0.9, 1.4, 0.05)), olive.darkened(0.3), Vector3(k * 0.95, 0.75, -2.32))
+				flap.rotation.z = -k * 0.5
+				b.add_child(flap)
+			b.add_child(part(cyl(0.04, 0.04, 2.0), Color("3a3d30"), Vector3(0, 1.0, -2.3)))
+			for x in [-0.9, 0.9]:   # catres
+				b.add_child(part(box(Vector3(0.7, 0.35, 1.8)), Color("6b6a52"), Vector3(x, 0.25, 0.6)))
+			for k in [-1.0, 1.0]:   # colisión: los dos lados y el fondo (por delante se entra)
+				var cs := CollisionShape3D.new()
+				var bx := BoxShape3D.new()
+				bx.size = Vector3(0.4, 1.6, 4.6)
+				cs.shape = bx
+				cs.position = Vector3(k * 1.55, 0.8, 0)
+				b.add_child(cs)
+			var cb := CollisionShape3D.new()
+			var bb := BoxShape3D.new()
+			bb.size = Vector3(3.4, 1.6, 0.3)
+			cb.shape = bb
+			cb.position = Vector3(0, 0.8, 2.3)
+			b.add_child(cb)
+		"palafito":   # cabaña de pescador sobre pilotes, con escalera y redes (frente -Z)
+			var wd := Color("6e5a42")
+			for x in [-2.0, 2.0]:
+				for z in [-1.6, 1.6]:
+					solid(b, Vector3(0.22, 1.2, 0.22), Vector3(x, 0.6, z), Color("4a3a26"))
+			b.add_child(part(box(Vector3(4.6, 0.14, 3.8)), wd, Vector3(0, 1.25, 0)))
+			solid(b, Vector3(4.0, 1.9, 0.14), Vector3(0, 2.25, 1.6), wd.darkened(0.1))
+			solid(b, Vector3(0.14, 1.9, 3.2), Vector3(-2.0, 2.25, 0), wd.darkened(0.1))
+			solid(b, Vector3(0.14, 1.9, 3.2), Vector3(2.0, 2.25, 0), wd.darkened(0.1))
+			b.add_child(part(box(Vector3(1.4, 1.9, 0.14)), wd.darkened(0.1), Vector3(-1.3, 2.25, -1.6)))
+			b.add_child(part(box(Vector3(1.4, 1.9, 0.14)), wd.darkened(0.1), Vector3(1.3, 2.25, -1.6)))
+			var rf1 := part(box(Vector3(4.8, 0.12, 2.3)), Color("8a7a4a"), Vector3(0, 3.55, -0.9))
+			rf1.rotation.x = -0.45
+			b.add_child(rf1)
+			var rf2 := part(box(Vector3(4.8, 0.12, 2.3)), Color("7a6a3e"), Vector3(0, 3.55, 0.9))
+			rf2.rotation.x = 0.45
+			b.add_child(rf2)
+			for k in 5:   # escalera
+				b.add_child(part(box(Vector3(0.9, 0.06, 0.25)), wd, Vector3(0, 0.2 + k * 0.24, -2.1 - (4 - k) * 0.25)))
+			var net := part(box(Vector3(1.4, 1.1, 0.02)), Color("9a9a7a"), Vector3(2.15, 1.9, -0.6))
+			net.rotation.y = PI / 2.0
+			b.add_child(net)
+			var deck := CollisionShape3D.new()   # el suelo de la cabaña no se pisa: se registra el arcón desde la escalera
+			var dbx := BoxShape3D.new()
+			dbx.size = Vector3(4.4, 1.2, 3.4)
+			deck.shape = dbx
+			deck.position = Vector3(0, 0.6, 0.2)
+			b.add_child(deck)
+		"sacos":   # parapeto de sacos terreros en U
+			var sand := Color("b8a77a")
+			for k in 3:
+				for y in 3:
+					solid(b, Vector3(0.9, 0.32, 0.5), Vector3(-0.95 + k * 0.95 + (0.45 if y % 2 else 0.0), 0.17 + y * 0.32, 0), sand.darkened(0.05 * ((k + y) % 3)))
+			for x in [-1.6, 1.6]:
+				for y in 3:
+					solid(b, Vector3(0.5, 0.32, 0.9), Vector3(x, 0.17 + y * 0.32, -0.7), sand.darkened(0.04 * y))
+		"helipuerto":   # explanada con la H
+			b.add_child(part(cyl(5.0, 5.0, 0.06), Color("5a5a5c"), Vector3(0, 0.03, 0)))
+			b.add_child(part(cyl(4.6, 4.6, 0.07), Color("6a6a6c"), Vector3(0, 0.035, 0)))
+			for x in [-1.0, 1.0]:
+				b.add_child(part(box(Vector3(0.5, 0.08, 3.2)), Color("e8e0c8"), Vector3(x, 0.04, 0)))
+			b.add_child(part(box(Vector3(2.0, 0.08, 0.5)), Color("e8e0c8"), Vector3(0, 0.04, 0)))
 		"excavadora":
 			var yel := Color("c9a227").darkened(0.15)
 			solid(b, Vector3(3.2, 1.2, 2.2), Vector3(0, 0.9, 0), yel)

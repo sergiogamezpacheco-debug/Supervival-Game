@@ -9,7 +9,7 @@ const IDS := ["hacha_hierro", "pico_hierro", "machete", "casco_obra", "chaqueta_
 	"pantalon_cargo", "zapatillas", "botas", "guantes", "fibra", "piel", "baya", "carne_cruda",
 	"carne_asada", "seta", "carbon", "clavos", "tela_resistente", "botella_vacia", "lata_vacia", "cantimplora_vacia",
 	"conserva_bayas", "acido", "cable_cobre", "circuito", "bateria", "sal", "tarro_cristal", "tarro_esterilizado", "comida_podrida", "hortalizas", "tierra", "madera_pino", "trozo_mapa_2", "trozo_mapa_3",
-	"placa_metal", "tornillos", "vale_atalaya"]
+	"placa_metal", "tornillos", "vale_atalaya", "traje_buzo"]
 
 var vp: SubViewport
 var cam: Camera3D
@@ -334,6 +334,25 @@ func _vale_atalaya() -> float:
 	for x in [-0.1, 0.0, 0.1]:
 		_p(_box(Vector3(0.05, 0.04, 0.06)), Color("2e1d10"), Vector3(x, 0.08, -0.29), Vector3.ZERO, Vector3.ONE, top)
 	return 1.8
+
+
+func _traje_buzo() -> float:
+	# neopreno tendido: cuerpo, mangas y perneras negras con franjas azules, cremallera y gafas
+	var rub := Color("27313a")
+	var blue := Color("3f6a8a")
+	var g := _group(Vector3.ZERO, Vector3(-60, 20, 0))
+	_p(_box(Vector3(0.75, 1.0, 0.2)), rub, Vector3(0, 0.2, 0), Vector3.ZERO, Vector3.ONE, g)
+	for x in [-0.55, 0.55]:
+		_p(_box(Vector3(0.22, 0.75, 0.18)), rub, Vector3(x, 0.38, 0), Vector3(0, 0, -x * 50), Vector3.ONE, g)
+		_p(_box(Vector3(0.06, 0.6, 0.19)), blue, Vector3(x * 1.05, 0.38, 0.01), Vector3(0, 0, -x * 50), Vector3.ONE, g)
+	for x in [-0.2, 0.2]:
+		_p(_box(Vector3(0.28, 0.85, 0.2)), rub, Vector3(x, -0.68, 0), Vector3.ZERO, Vector3.ONE, g)
+		_p(_box(Vector3(0.06, 0.75, 0.21)), blue, Vector3(x * 1.6, -0.68, 0.01), Vector3.ZERO, Vector3.ONE, g)
+	_p(_box(Vector3(0.05, 0.85, 0.22)), Color("d9a925"), Vector3(0, 0.25, 0.01), Vector3.ZERO, Vector3.ONE, g)
+	_p(_box(Vector3(0.42, 0.14, 0.12)), Color("2a3a44"), Vector3(0.45, 0.85, 0.15), Vector3(0, 0, 15), Vector3.ONE, g)
+	_p(_box(Vector3(0.16, 0.1, 0.05)), Color("9fc8d8"), Vector3(0.36, 0.85, 0.22), Vector3(0, 0, 15), Vector3.ONE, g)
+	_p(_box(Vector3(0.16, 0.1, 0.05)), Color("9fc8d8"), Vector3(0.55, 0.9, 0.22), Vector3(0, 0, 15), Vector3.ONE, g)
+	return 2.6
 
 
 func _tornillos() -> float:

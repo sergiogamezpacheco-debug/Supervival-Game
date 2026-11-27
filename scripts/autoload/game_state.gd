@@ -750,6 +750,11 @@ func armor() -> float:
 	return minf(a, float(DB.bal("max_armor", 60)))
 
 
+## Llevas puesto algo para meterte en el agua honda (traje de buzo).
+func can_dive() -> bool:
+	return wear_bonus("dive") > 0.0
+
+
 func wear_bonus(key: String) -> float:
 	var v := 0.0
 	for k in WEAR_SLOTS:

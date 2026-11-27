@@ -241,10 +241,136 @@ func _free_spot(min_dist: float, avoid_center: float, square := true) -> Vector3
 	return fallback
 
 
+## Agua de las marismas (maps.json "water"): círculos [x, z, radio] de agua honda y poco honda,
+## islotes secos dentro y una pasarela de tablas. 0 = seco, 1 = poco honda, 2 = honda.
+func water_depth(p: Vector3) -> int:
+	var w: Dictionary = map.get("water", {})
+	if w.is_empty():
+		return 0
+	for c in w.get("islands", []):
+		if Vector2(p.x - float(c[0]), p.z - float(c[1])).length() < float(c[2]):
+			return 0
+	var bw: Array = w.get("boardwalk", [])
+	if bw.size() == 2 and _on_segment(p, bw[0], bw[1], 1.0):
+		return 0
+	for c in w.get("deep", []):
+		if Vector2(p.x - float(c[0]), p.z - float(c[1])).length() < float(c[2]):
+			return 2
+	for c in w.get("shallow", []):
+		if Vector2(p.x - float(c[0]), p.z - float(c[1])).length() < float(c[2]):
+			return 1
+	return 0
+
+
+static func _on_segment(p: Vector3, a: Array, b: Array, half_w: float) -> bool:
+	var pa := Vector2(p.x - float(a[0]), p.z - float(a[1]))
+	var ab := Vector2(float(b[0]) - float(a[0]), float(b[1]) - float(a[1]))
+	var t := clampf(pa.dot(ab) / maxf(ab.length_squared(), 0.001), 0.0, 1.0)
+	return (pa - ab * t).length() < half_w
+
+
+static func _disc(r: float, h: float) -> CylinderMesh:
+	var c := Builder.cyl(r, r, h)
+	c.radial_segments = 40
+	return c
+
+
+func _build_water() -> void:
+	var w: Dictionary = map.get("water", {})
+	if w.is_empty():
+		return
+	var node := Node3D.new()
+	node.name = "Agua"
+	add_child(node)
+	var shallow := Color("5a8476")
+	var deep := Color("2f5a62")
+	for c in w.get("shallow", []):
+		node.add_child(Builder.part(_disc(float(c[2]), 0.04), shallow, Vector3(float(c[0]), 0.03, float(c[1]))))
+		node.add_child(Builder.part(_disc(float(c[2]) + 0.6, 0.02), Color("4a4630"), Vector3(float(c[0]), 0.015, float(c[1]))))
+	for c in w.get("deep", []):
+		node.add_child(Builder.part(_disc(float(c[2]), 0.04), deep, Vector3(float(c[0]), 0.05, float(c[1]))))
+	for c in w.get("islands", []):
+		node.add_child(Builder.part(_disc(float(c[2]) + 0.2, 0.2), Color("5a5a3a"), Vector3(float(c[0]), 0.08, float(c[1]))))
+	# juncos y eneas en las orillas
+	var rr := RandomNumberGenerator.new()
+	rr.seed = int(map.get("seed", 1))
+	for c in w.get("shallow", []):
+		var rad := float(c[2])
+		for k in int(rad * 1.6):
+			var a := rr.randf() * TAU
+			var d := rad + rr.randf_range(-1.2, 0.8)
+			var base := Vector3(float(c[0]) + cos(a) * d, 0, float(c[1]) + sin(a) * d)
+			for i in 4:
+				var h := rr.randf_range(0.7, 1.4)
+				var reed := Builder.part(Builder.box(Vector3(0.04, h, 0.04)), Color("7a8a4a").darkened(rr.randf() * 0.2), base + Vector3(rr.randf_range(-0.3, 0.3), h / 2.0, rr.randf_range(-0.3, 0.3)))
+				reed.rotation.z = rr.randf_range(-0.2, 0.2)
+				node.add_child(reed)
+				if i == 0:
+					node.add_child(Builder.part(Builder.box(Vector3(0.07, 0.2, 0.07)), Color("5a3e26"), reed.position + Vector3(0, h / 2.0 - 0.1, 0)))
+	# pasarela de tablas (llega hasta el agua honda; el islote queda al otro lado)
+	var bw: Array = w.get("boardwalk", [])
+	if bw.size() == 2:
+		var a := Vector3(float(bw[0][0]), 0, float(bw[0][1]))
+		var b := Vector3(float(bw[1][0]), 0, float(bw[1][1]))
+		var n := int(a.distance_to(b) / 0.45)
+		var dir := (b - a).normalized()
+		for k in n:
+			var pl := Builder.part(Builder.box(Vector3(1.6, 0.06, 0.38)), Color("7a5a3a").darkened(0.08 * (k % 3)), a + dir * (k * 0.45) + Vector3(0, 0.22, 0))
+			pl.rotation.y = atan2(dir.x, dir.z)
+			node.add_child(pl)
+		for k in int(n / 4) + 1:
+			for sd in [-0.75, 0.75]:
+				var post_p: Vector3 = a + dir * (k * 1.8) + dir.cross(Vector3.UP) * sd
+				node.add_child(Builder.part(Builder.cyl(0.06, 0.06, 0.6), Color("4a3a26"), post_p + Vector3(0, 0.2, 0)))
+	Builder.merge(node)
+	_keepout.append_array(w.get("deep", []).map(func(c): return [Vector3(float(c[0]), 0, float(c[1])), float(c[2]) + 1.0]))
+
+
+var _last_dry := Vector3.ZERO
+var _water_msg := 0.0
+
+
+## Cada fotograma: el agua frena y en la honda no se entra sin traje de buzo.
+func _update_water(delta: float) -> void:
+	var d := water_depth(player.global_position)
+	_water_msg = maxf(_water_msg - delta, 0.0)
+	if d == 2 and not GS.can_dive():
+		player.global_position = _last_dry
+		player.velocity = Vector3.ZERO
+		if _water_msg <= 0.0:
+			_water_msg = 3.0
+			GS.message.emit("El agua cubre demasiado: necesitas un traje de buzo")
+		d = 1
+	elif d < 2:
+		_last_dry = player.global_position
+	player.terrain_mult = 1.0 if d == 0 else float(DB.bal("water_deep_speed" if d == 2 else "water_shallow_speed", 0.7))
+
+
 func _spawn_prefabs() -> void:
+	_build_water()
 	# poblado amurallado (La Atalaya): empalizada, torres con arqueros, casas, huertos
 	if map.has("settlement"):
 		_keepout.append_array(Settlement.build(self, map["settlement"]))
+	if map.has("camp"):   # Base Centinela: valla con un tramo caído, puerta cerrada y torres
+		Settlement.build_camp(self, map["camp"])
+	# casas por dentro con sus muebles registrables (barracones, puesto de mando...)
+	for h in map.get("houses", []):
+		var lay := str(h[0])
+		var hn := Node3D.new()
+		hn.position = Vector3(float(h[1]), 0, float(h[2]))
+		hn.rotation_degrees.y = float(h[3]) * 90.0
+		add_child(hn)
+		var hs := RouteBuilder.layout_size(lay)
+		var casa := RouteBuilder.house(hn, hs.x, hs.y, Color(str(h[4])) if h.size() > 4 else Color("b9a684"),
+			Color(str(h[5])) if h.size() > 5 else Color("7a3a2a"), false, lay)
+		_keepout.append([hn.position, maxf(hs.x, hs.y) * 0.75])
+		for m in casa.find_children("*", "Marker3D", true, false):
+			if m.has_meta("tipo") and DB.containers.has(str(m.get_meta("tipo"))):
+				var box := ContainerScript.new()
+				box.setup(str(m.get_meta("tipo")), rng)
+				add_child(box)
+				box.global_transform = (m as Node3D).global_transform
+			m.queue_free()
 	# puestos de los comerciantes (estaciones de cambio, fuera de la construcción)
 	for st in map.get("stations", []):
 		var sp: Array = st.get("pos", [0, 0])
@@ -349,6 +475,8 @@ func _process(delta: float) -> void:
 			_check_route_exit()
 		if not _houses.is_empty():
 			_update_houses()
+		if map.has("water"):
+			_update_water(delta)
 		if base:
 			player.floor_y = base.floor_height(player.global_position)
 		var t := find_target()

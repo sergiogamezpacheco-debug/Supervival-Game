@@ -47,6 +47,10 @@ func _ready() -> void:
 	await test_phase1()
 	print("== Parte II: La Atalaya")
 	await test_atalaya()
+	print("== Parte II: Base Centinela")
+	await test_centinela()
+	print("== Parte II: Marismas del Guadal")
+	await test_marismas()
 	print("== Refugio: casi sin infectados")
 	await test_refugio_infectados()
 	print("== Niveles y peso")
@@ -352,6 +356,74 @@ func test_atalaya() -> void:
 		if z.hp < hp0:
 			break
 	check(z.hp < hp0, "los arqueros de las torres disparan al infectado de la puerta")
+	w.queue_free()
+	await _frames(3)
+	DirAccess.remove_absolute(ProjectSettings.globalize_path(GS.save_path))
+
+
+func test_centinela() -> void:
+	DirAccess.remove_absolute(ProjectSettings.globalize_path(GS.save_path))
+	GS.new_game()
+	GS.current_map = "centinela"
+	var w := await _new_world()
+	check(w.map_id == "centinela", "carga Base Centinela")
+	var fence: Node = w.get_node_or_null("Valla")
+	check(fence != null and fence.get_child_count() >= 6, "la base tiene valla con colisión")
+	var gap_free := true
+	for cs in fence.get_children():
+		var b: BoxShape3D = cs.shape
+		if AABB(cs.position - b.size / 2.0, b.size).has_point(Vector3(26, 1, 0)):
+			gap_free = false
+	check(gap_free, "el tramo caído de la valla deja pasar")
+	var boxes := get_tree().get_nodes_in_group("container")
+	var kinds := {}
+	for b in boxes:
+		kinds[b.id] = int(kinds.get(b.id, 0)) + 1
+	check(int(kinds.get("taquilla_militar", 0)) >= 8 and kinds.has("armero_militar") and kinds.has("mesa_mando") and kinds.has("camion_militar"),
+		"barracones con taquillas, armero, puesto de mando y camión (%s)" % str(kinds))
+	var soldiers := get_tree().get_nodes_in_group("creature").filter(func(c): return c.kind == "soldado")
+	check(soldiers.size() >= 5, "patrullan soldados infectados (%d)" % soldiers.size())
+	check(get_tree().get_nodes_in_group("casa").size() == 3, "dos barracones y el puesto de mando se pueden recorrer")
+	w.queue_free()
+	await _frames(3)
+	DirAccess.remove_absolute(ProjectSettings.globalize_path(GS.save_path))
+
+
+func test_marismas() -> void:
+	DirAccess.remove_absolute(ProjectSettings.globalize_path(GS.save_path))
+	GS.new_game()
+	GS.current_map = "marismas"
+	var w := await _new_world()
+	check(w.map_id == "marismas", "carga las Marismas del Guadal")
+	check(w.water_depth(Vector3(2, 0, 2)) == 2 and w.water_depth(Vector3(2, 0, 17)) == 0 and w.water_depth(Vector3(2, 0, -8)) == 0
+		and w.water_depth(Vector3(20, 0, 14)) == 1 and w.water_depth(Vector3(-40, 0, -40)) == 0,
+		"agua honda, islote seco, pasarela, agua poco honda y tierra")
+	check(get_tree().get_nodes_in_group("container").any(func(c): return c.id == "barca_hundida" and c.global_position.distance_to(Vector3(1, 0, 18)) < 2.0), "en el islote hay una barca hundida con botín")
+	check(get_tree().get_nodes_in_group("creature").filter(func(c): return c.kind == "ahogado").size() >= 6, "salen ahogados del agua")
+	_creatures_away()
+	# sin traje: no se entra en lo hondo
+	w.player.global_position = Vector3(2, 0, -5)
+	w.player.reset_physics_interpolation()
+	await _pframes(2)
+	w.player.global_position = Vector3(2, 0, 0)
+	await _pframes(2)
+	check(w.water_depth(w.player.global_position) < 2, "sin traje de buzo no te metes en el agua honda")
+	# en el agua poco honda se va más despacio
+	w.player.global_position = Vector3(20, 0, 14)
+	w.player.reset_physics_interpolation()
+	await _pframes(2)
+	check(w.player.terrain_mult < 1.0, "el agua poco honda frena")
+	# con el traje sí
+	GS.add_item("traje_buzo", 1)
+	for i in GS.slots.size():
+		if GS.slots[i] != null and GS.slots[i]["id"] == "traje_buzo":
+			GS.wear_slot(i)
+	check(GS.can_dive() and GS.outfit["torso"] == "traje_buzo", "te pones el traje de buzo")
+	w.player.global_position = Vector3(2, 0, 2)
+	w.player.reset_physics_interpolation()
+	await _pframes(2)
+	check(w.water_depth(w.player.global_position) == 2 and w.player.terrain_mult < 0.7, "con el traje nadas por lo hondo, despacio")
+	check(DB.recipe("traje_buzo").get("station", "") == "mesa_costura", "el traje se cose en la mesa de costura")
 	w.queue_free()
 	await _frames(3)
 	DirAccess.remove_absolute(ProjectSettings.globalize_path(GS.save_path))
