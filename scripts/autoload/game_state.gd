@@ -52,6 +52,11 @@ var _food_timer := 0.0
 var _water_timer := 0.0
 
 
+## Apunte en el registro (user://logs/godot.log; se ve en Ajustes > Registro de errores).
+func trace(msg: String) -> void:
+	print("[%s] %s" % [Time.get_time_string_from_system(), msg])
+
+
 ## Reloj real (sigue corriendo con el juego cerrado: las estaciones fabrican igual).
 func now() -> float:
 	return Time.get_unix_time_from_system() + time_offset

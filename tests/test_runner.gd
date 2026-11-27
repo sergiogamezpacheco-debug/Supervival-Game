@@ -2415,6 +2415,13 @@ func test_dodge_audio() -> void:
 	await _pframes(2)
 	st.select_tab("graficos")
 	await _pframes(2)
+	GS.trace("prueba del registro")
+	st.controls["log"].pressed.emit()
+	check(st._log.visible and st._log_body.text.length() > 0, "Ajustes: se puede ver el registro de errores")
+	st._log.visible = false
+	world.hud.show_loading("El Pedregal")
+	check(world.hud.loading.visible and world.hud.loading.get_node("Texto").text == "Cargando El Pedregal…", "al cambiar de zona sale «Cargando…»")
+	world.hud.loading.visible = false
 	st.controls["shadows"].button_pressed = false
 	check(SFX.settings["shadows"] == false and not world._sun.shadow_enabled, "quitar sombras se aplica")
 	st.controls["quality"].item_selected.emit(0)

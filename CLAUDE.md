@@ -85,6 +85,9 @@
   `grip_tool(herramienta, peso)` para cogerla por el mango; revisar con `tools/character_sheet.tscn -- <dir> chop`.
   Sin la herramienta no se saca a la mano ni hay gesto: solo el aviso. Recoger a mano: `animate_pickup(t, "ground"|"waist")`
   (`"pick": "waist"` en el recurso para cogerlo a la altura de la cintura, como el arbusto); `character_sheet ... pickup`.
+- Registro: `GS.trace("...")` apunta en `user://logs/godot.log` (file logging + flush activados); el usuario lo ve en
+  Ajustes > REGISTRO DE ERRORES (partida actual y anterior) y nos manda captura. Los cambios de zona pasan por
+  `world._change_zone()` (pantalla «Cargando…» y apunte en el registro).
 - Guardado: cada cambio en la mochila se guarda en <3 s (`world._dirty`) y también al perder el foco (Android cierra
   la app sin dar tiempo a PAUSED).
 - Reaparición lenta: `"respawn": [mín, máx]` (segundos reales) en un grupo de criaturas de `maps.json`; se guarda en

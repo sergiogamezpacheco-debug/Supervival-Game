@@ -348,6 +348,26 @@ func _build_levelup_banner() -> void:
 
 
 var _levelup_tween: Tween
+var loading: ColorRect = null   # pantalla de «Cargando…» al cambiar de zona
+
+
+func show_loading(where: String) -> void:
+	if loading == null:
+		loading = ColorRect.new()
+		loading.color = Color(0.05, 0.045, 0.035, 0.92)
+		loading.set_anchors_preset(Control.PRESET_FULL_RECT)
+		loading.mouse_filter = Control.MOUSE_FILTER_STOP
+		var l := Label.new()
+		l.name = "Texto"
+		l.set_anchors_preset(Control.PRESET_FULL_RECT)
+		l.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		l.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+		l.add_theme_font_size_override("font_size", 40)
+		l.add_theme_color_override("font_color", Color("f3ead2"))
+		loading.add_child(l)
+		_root.add_child(loading)
+	loading.get_node("Texto").text = "Cargando %s…" % where if where != "" else "Cargando…"
+	loading.visible = true
 func _on_level_up(lv: int, unlocks: Array, reward: Dictionary) -> void:
 	_levelup_title.text = "¡NIVEL %d!" % lv
 	var lines := PackedStringArray()

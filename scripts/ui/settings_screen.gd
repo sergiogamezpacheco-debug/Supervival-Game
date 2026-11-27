@@ -28,6 +28,8 @@ var _list: VBoxContainer
 var _pill_label: Label
 var _sys_values := {}
 var _wipe_btn: Button
+var _log: PanelContainer
+var _log_body: Label
 var _legal: PanelContainer
 var _cond: FontVariation
 var _knob: ImageTexture
@@ -57,6 +59,7 @@ func _ready() -> void:
 	_build_system()
 	_build_right()
 	_build_legal()
+	_build_log()
 	select_tab("general")
 	visibility_changed.connect(func():
 		if visible:
@@ -295,6 +298,17 @@ func _build_system() -> void:
 	contact.pressed.connect(_contact)
 	help.add_child(contact)
 	v.add_child(help)
+	# Registro: lo que ha pasado en las últimas partidas (errores, cargas de zona), para cuando
+	# el juego se queda colgado y hay que saber dónde
+	var logrow := HBoxContainer.new()
+	var ll := _lbl("REGISTRO DE ERRORES", 24)
+	ll.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	logrow.add_child(ll)
+	var see := _btn("VER", 22, 186, 50)
+	see.pressed.connect(open_log)
+	logrow.add_child(see)
+	controls["log"] = see
+	v.add_child(logrow)
 	var terms := _lbl("TÉRMINOS DE SERVICIO / POLÍTICA DE PRIVACIDAD", 24)
 	terms.autowrap_mode = TextServer.AUTOWRAP_WORD
 	terms.custom_minimum_size.x = 520
@@ -355,6 +369,68 @@ func _open_social(sname: String, url: String) -> void:
 		GS.message.emit("%s de Lost Anarchy Games: próximamente" % sname)
 		return
 	OS.shell_open(url)
+
+
+## Últimas líneas de los registros de Godot (user://logs): la partida anterior y la actual.
+static func log_text(lines_each := 70) -> String:
+	var dir := "user://logs"
+	var files: Array = []
+	if DirAccess.dir_exists_absolute(dir):
+		for f in DirAccess.get_files_at(dir):
+			if f.ends_with(".log"):
+				files.append(f)
+	if files.is_empty():
+		return "Todavía no hay registro."
+	# godot.log es la partida actual; las otras llevan la fecha en el nombre (la más reciente, la anterior)
+	files.sort()
+	var order: Array = []
+	if files.has("godot.log"):
+		order.append("godot.log")
+		files.erase("godot.log")
+	if not files.is_empty():
+		order.append(files[files.size() - 1])
+	var out := PackedStringArray()
+	for f in order:
+		var txt := FileAccess.get_file_as_string("%s/%s" % [dir, f])
+		var ls := txt.split("\n")
+		out.append("=== %s ===" % ("Partida actual" if f == "godot.log" else "Partida anterior (%s)" % f))
+		out.append("\n".join(ls.slice(maxi(0, ls.size() - lines_each))))
+	return "\n".join(out)
+
+
+func open_log() -> void:
+	_log_body.text = log_text()
+	_log.visible = true
+
+
+func _build_log() -> void:
+	_log = PanelContainer.new()
+	_log.position = Vector2(60, 50)
+	_log.size = Vector2(1160, 640)
+	var sb := _box(Color(0.08, 0.07, 0.055, 0.98), ORANGE.darkened(0.2), 18, 2)
+	sb.set_content_margin_all(22)
+	_log.add_theme_stylebox_override("panel", sb)
+	var v := VBoxContainer.new()
+	v.add_theme_constant_override("separation", 10)
+	_log.add_child(v)
+	var h := HBoxContainer.new()
+	var t := _lbl("REGISTRO (haz una captura y envíamela)", 26, PAPER)
+	t.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	h.add_child(t)
+	var x := _btn("X", 26, 54, 50)
+	x.pressed.connect(func(): _log.visible = false)
+	h.add_child(x)
+	v.add_child(h)
+	var sc := ScrollContainer.new()
+	sc.custom_minimum_size = Vector2(1110, 540)
+	sc.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	_log_body = _lbl("", 15, PAPER, false)
+	_log_body.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	_log_body.custom_minimum_size.x = 1090
+	sc.add_child(_log_body)
+	v.add_child(sc)
+	_log.visible = false
+	add_child(_log)
 
 
 func _build_legal() -> void:

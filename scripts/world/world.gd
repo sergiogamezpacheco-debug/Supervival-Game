@@ -64,8 +64,10 @@ func _ready() -> void:
 	# (cámara, interfaz, efectos) no se interpola.
 	physics_interpolation_mode = Node.PHYSICS_INTERPOLATION_MODE_OFF
 	randomize()
+	var t0 := Time.get_ticks_msec()
 	var world := GS.load_game()
 	map_id = GS.current_map
+	GS.trace("cargando zona %s" % map_id)
 	route = DB.routes.get(map_id, {})
 	if route.is_empty():
 		map = DB.maps.get(map_id, {})
@@ -103,10 +105,14 @@ func _ready() -> void:
 
 	if route.is_empty():
 		_spawn_prefabs()
+		GS.trace("  edificios y cajas")
 		_spawn_resources(base_half + 2.0 if base_half > 0.0 else 5.0)
+		GS.trace("  recursos")
 		_spawn_creatures()
+		GS.trace("  criaturas")
 	else:
 		_build_route()
+		GS.trace("  camino montado")
 
 	GS.died.connect(_on_player_died)
 	GS.inventory_changed.connect(func(): _dirty = maxf(_dirty, 0.0))
@@ -124,6 +130,7 @@ func _ready() -> void:
 	_update_camera(1.0)
 	GS.message.emit(str(map.get("name", "")))
 	GS.visit(map_id)
+	GS.trace("zona %s lista en %d ms" % [map_id, Time.get_ticks_msec() - t0])
 	if not GS.created and not GS.testing:
 		open_creator()
 
@@ -777,7 +784,7 @@ func walk_to(id: String) -> String:
 	GS.save_game({})
 	travelled.emit(rid)
 	if get_tree().current_scene == self:
-		get_tree().change_scene_to_file.call_deferred("res://scenes/main.tscn")
+		_change_zone()
 	return ""
 
 
@@ -810,6 +817,19 @@ func _build_route() -> void:
 
 
 ## Al llegar a un extremo del camino entras en esa zona.
+## Cambio de zona: aviso de «Cargando…» (se dibuja antes de que el móvil se ponga a montar la
+## zona nueva) y queda apuntado en el registro.
+func _change_zone() -> void:
+	GS.trace("cambio de zona -> %s" % GS.current_map)
+	set_process(false)
+	set_physics_process(false)
+	if hud:
+		hud.show_loading(DB.maps.get(GS.current_map, DB.routes.get(GS.current_map, {})).get("name", ""))
+	await get_tree().process_frame
+	await get_tree().process_frame
+	get_tree().change_scene_to_file("res://scenes/main.tscn")
+
+
 func _check_route_exit() -> void:
 	var L := float(route["length"])
 	if player.position.z > 1.5:
@@ -822,6 +842,7 @@ func _route_arrive(dest: String) -> void:
 	if _arriving:
 		return
 	_arriving = true
+	GS.trace("final del camino %s: entras en %s (z=%.1f)" % [map_id, dest, player.position.z])
 	var st: Dictionary = GS.maps_state.get(dest, {})
 	st.erase("player")   # apareces en la entrada de la zona
 	GS.route_from = ""
@@ -829,7 +850,7 @@ func _route_arrive(dest: String) -> void:
 	GS.save_game(st)
 	travelled.emit(dest)
 	if get_tree().current_scene == self:
-		get_tree().change_scene_to_file.call_deferred("res://scenes/main.tscn")
+		_change_zone()
 
 
 ## Viaje rápido desde el mapa: gasta energía de viaje (se recarga con el tiempo).
@@ -854,7 +875,7 @@ func travel_to(id: String) -> String:
 	GS.save_game(dest)
 	travelled.emit(id)
 	if get_tree().current_scene == self:
-		get_tree().change_scene_to_file.call_deferred("res://scenes/main.tscn")
+		_change_zone()
 	return ""
 
 
@@ -884,7 +905,7 @@ func _respawn_player() -> void:
 		GS.save_game(dest)
 		travelled.emit("refugio")
 		if get_tree().current_scene == self:
-			get_tree().change_scene_to_file.call_deferred("res://scenes/main.tscn")
+			_change_zone()
 		return
 	player.global_position = SPAWN
 	player.reset_physics_interpolation()
