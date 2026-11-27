@@ -40,6 +40,7 @@ var map_pieces := 1             # trozos del mapa cosidos (1 al empezar, 2 y 3 s
 var travel_energy := 100.0      # energía de viaje rápido al guardar
 var travel_energy_t := 0.0      # hora (unix) de ese valor: se recarga con el tiempo real
 var route_from := ""            # andando por un camino: de qué zona saliste
+var trust: Dictionary = {}       # confianza con cada poblado (0-100): {"atalaya": 12}
 var route_loot: Dictionary = {}  # muebles registrados en los caminos: clave -> {"t": unix, "items": [...]}
 var dead_until: Dictionary = {}  # mapa -> {criatura: hora (unix) en que vuelve} (grupos con "respawn")
 var train_ready: Dictionary = {} # ejercicio -> hora (unix) en que se puede volver a entrenar
@@ -51,6 +52,18 @@ var forced_rain := -1          # -1 según el reloj, 0 seco, 1 lloviendo   # obj
 
 var _food_timer := 0.0
 var _water_timer := 0.0
+
+
+## Confianza con un poblado (sube al comerciar; abre mejor género).
+func trust_of(town: String) -> int:
+	return int(trust.get(town, 0))
+
+
+func add_trust(town: String, n: int) -> void:
+	var before := trust_of(town)
+	trust[town] = clampi(before + n, 0, int(DB.bal("trust_max", 100)))
+	if trust_of(town) / 10 > before / 10:
+		message.emit("La confianza de %s sube a %d" % [str(DB.world_map.get(town, {}).get("name", town)), trust_of(town)])
 
 
 ## Apunte en el registro (user://logs/godot.log; se ve en Ajustes > Registro de errores).
@@ -92,6 +105,7 @@ func new_game() -> void:
 	route_from = ""
 	dead_until = {}
 	route_loot = {}
+	trust = {}
 	reset_stats()
 	inventory_changed.emit()
 
@@ -972,6 +986,7 @@ func to_dict() -> Dictionary:
 		"route_from": route_from,
 		"dead_until": dead_until,
 		"route_loot": route_loot,
+		"trust": trust,
 	}
 
 
@@ -1038,6 +1053,7 @@ func from_dict(d: Dictionary) -> void:
 	route_from = str(d.get("route_from", ""))
 	dead_until = d.get("dead_until", {}) if d.get("dead_until") is Dictionary else {}
 	route_loot = d.get("route_loot", {}) if d.get("route_loot") is Dictionary else {}
+	trust = d.get("trust", {}) if d.get("trust") is Dictionary else {}
 	_resize_bag()
 	_sync_outfit()
 	health = float(d.get("health", health))

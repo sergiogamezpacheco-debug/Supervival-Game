@@ -901,7 +901,7 @@ func _refresh_build_menu() -> void:
 	_section(_build_list, "Estaciones y almacenaje")
 	for id in DB.stations:
 		var d: Dictionary = DB.stations[id]
-		if d.has("item"):
+		if d.has("item") or d.has("trader"):
 			continue   # baúles, estanterías y armarios: se fabrican en Almacenamiento y se colocan desde la mochila
 		var nph := DB.station_phases(str(id)).size()
 		var extra := ("  (obra en %d fases)" % nph) if nph > 1 else ""

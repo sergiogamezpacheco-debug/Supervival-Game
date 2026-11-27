@@ -9,7 +9,7 @@ const IDS := ["hacha_hierro", "pico_hierro", "machete", "casco_obra", "chaqueta_
 	"pantalon_cargo", "zapatillas", "botas", "guantes", "fibra", "piel", "baya", "carne_cruda",
 	"carne_asada", "seta", "carbon", "clavos", "tela_resistente", "botella_vacia", "lata_vacia", "cantimplora_vacia",
 	"conserva_bayas", "acido", "cable_cobre", "circuito", "bateria", "sal", "tarro_cristal", "tarro_esterilizado", "comida_podrida", "hortalizas", "tierra", "madera_pino", "trozo_mapa_2", "trozo_mapa_3",
-	"placa_metal", "tornillos"]
+	"placa_metal", "tornillos", "vale_atalaya"]
 
 var vp: SubViewport
 var cam: Camera3D
@@ -320,6 +320,20 @@ func _placa_metal() -> float:
 			for z in [-0.29, 0.29]:
 				_p(_cyl(0.035, 0.035, 0.06, 8), Color("2b2f33"), Vector3(x, 0.01, z), Vector3.ZERO, Vector3.ONE, g)
 	return 2.6
+
+
+func _vale_atalaya() -> float:
+	# fichas redondas de madera apiladas, la de arriba con la torre de La Atalaya grabada
+	for k in 3:
+		var g := _group(Vector3(0.12 * k - 0.12, 0.13 * k, 0.05 * k), Vector3(0, k * 25, 0))
+		_p(_cyl(0.55, 0.55, 0.12, 16), WOOD.lightened(0.12 * (k % 2)), Vector3.ZERO, Vector3.ZERO, Vector3.ONE, g)
+		_p(_cyl(0.47, 0.47, 0.125, 16), WOOD.darkened(0.15), Vector3.ZERO, Vector3.ZERO, Vector3.ONE, g)
+	var top := _group(Vector3(0.12, 0.27, 0.1), Vector3(0, 50, 0))
+	_p(_box(Vector3(0.16, 0.04, 0.42)), Color("2e1d10"), Vector3(0, 0.08, 0.02), Vector3.ZERO, Vector3.ONE, top)
+	_p(_box(Vector3(0.3, 0.04, 0.1)), Color("2e1d10"), Vector3(0, 0.08, -0.2), Vector3.ZERO, Vector3.ONE, top)
+	for x in [-0.1, 0.0, 0.1]:
+		_p(_box(Vector3(0.05, 0.04, 0.06)), Color("2e1d10"), Vector3(x, 0.08, -0.29), Vector3.ZERO, Vector3.ONE, top)
+	return 1.8
 
 
 func _tornillos() -> float:

@@ -572,5 +572,151 @@
     "key_item": "pico_piedra|pico_hierro",
     "key_text": "un pico (para abrirte paso entre las rocas del camino)",
     "piece": 2
+  },
+  "atalaya": {
+    "name": "La Atalaya",
+    "size": 100,
+    "seed": 4242,
+    "spawn": [
+      0,
+      44
+    ],
+    "ground": "6d7a42",
+    "fog": 0.01,
+    "settlement": {
+      "name": "LA ATALAYA",
+      "rect": [
+        -22,
+        -26,
+        22,
+        18
+      ],
+      "gate": [
+        -3,
+        3
+      ],
+      "houses": [
+        [
+          "casa",
+          -12,
+          -19,
+          2
+        ],
+        [
+          "casa",
+          12,
+          -19,
+          2
+        ],
+        [
+          "tienda",
+          0,
+          -21,
+          2
+        ],
+        [
+          "p_dormitorio",
+          -17,
+          -4,
+          3
+        ],
+        [
+          "p_cocina",
+          17,
+          -4,
+          1
+        ]
+      ],
+      "fields": [
+        [
+          -33,
+          -12,
+          8,
+          12
+        ],
+        [
+          33,
+          -12,
+          8,
+          12
+        ]
+      ],
+      "fire": [
+        0,
+        -6
+      ]
+    },
+    "stations": [
+      {
+        "id": "puesto_mercader",
+        "pos": [
+          -7,
+          5
+        ],
+        "rot": 2
+      },
+      {
+        "id": "puesto_armero",
+        "pos": [
+          7,
+          5
+        ],
+        "rot": 2
+      }
+    ],
+    "prefabs": [
+      {
+        "type": "pozo",
+        "pos": [
+          6,
+          -9
+        ],
+        "rot": 0
+      }
+    ],
+    "resources": {
+      "arbol": 20,
+      "pino": 10,
+      "arbusto": 12,
+      "roca": 8,
+      "hierba": 20,
+      "ramas": 10,
+      "piedras": 10
+    },
+    "creatures": [
+      {
+        "type": "infectado",
+        "groups": 4,
+        "size": [
+          1,
+          2
+        ],
+        "min_dist": 14
+      },
+      {
+        "type": "conejo",
+        "groups": 3,
+        "size": [
+          1,
+          2
+        ],
+        "min_dist": 10
+      },
+      {
+        "type": "lobo",
+        "groups": 1,
+        "size": [
+          1,
+          2
+        ],
+        "min_dist": 30
+      }
+    ],
+    "night": {
+      "type": "infectado",
+      "count": 0
+    },
+    "unlock": 8,
+    "piece": 2
   }
 }

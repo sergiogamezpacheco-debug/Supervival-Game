@@ -863,5 +863,12 @@
     "stack": 50,
     "desc": "Tornillos de hierro con su tuerca: uniones que no se aflojan.",
     "weight": 0.02
+  },
+  "vale_atalaya": {
+    "name": "Vale de La Atalaya",
+    "type": "material",
+    "stack": 500,
+    "desc": "Ficha de madera sellada con la torre de La Atalaya. Los comerciantes del poblado la aceptan como pago.",
+    "weight": 0.001
   }
 }

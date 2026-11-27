@@ -1279,5 +1279,420 @@
     },
     "unlock": 20,
     "cat": "Armarios"
+  },
+  {
+    "id": "vender_madera",
+    "result": "vale_atalaya",
+    "qty": 2,
+    "station": "puesto_mercader",
+    "level": 1,
+    "time": 0,
+    "cost": {
+      "madera": 20
+    },
+    "unlock": 1,
+    "cat": "Vender",
+    "trust_gain": 1
+  },
+  {
+    "id": "vender_tablon",
+    "result": "vale_atalaya",
+    "qty": 3,
+    "station": "puesto_mercader",
+    "level": 1,
+    "time": 0,
+    "cost": {
+      "tablon": 10
+    },
+    "unlock": 1,
+    "cat": "Vender",
+    "trust_gain": 1
+  },
+  {
+    "id": "vender_carne",
+    "result": "vale_atalaya",
+    "qty": 2,
+    "station": "puesto_mercader",
+    "level": 1,
+    "time": 0,
+    "cost": {
+      "carne_cruda": 5
+    },
+    "unlock": 1,
+    "cat": "Vender",
+    "trust_gain": 1
+  },
+  {
+    "id": "vender_piel",
+    "result": "vale_atalaya",
+    "qty": 2,
+    "station": "puesto_mercader",
+    "level": 1,
+    "time": 0,
+    "cost": {
+      "piel": 3
+    },
+    "unlock": 1,
+    "cat": "Vender",
+    "trust_gain": 1
+  },
+  {
+    "id": "vender_tela",
+    "result": "vale_atalaya",
+    "qty": 2,
+    "station": "puesto_mercader",
+    "level": 1,
+    "time": 0,
+    "cost": {
+      "tela": 10
+    },
+    "unlock": 1,
+    "cat": "Vender",
+    "trust_gain": 1
+  },
+  {
+    "id": "vender_hortalizas",
+    "result": "vale_atalaya",
+    "qty": 2,
+    "station": "puesto_mercader",
+    "level": 1,
+    "time": 0,
+    "cost": {
+      "hortalizas": 6
+    },
+    "unlock": 1,
+    "cat": "Vender",
+    "trust_gain": 1
+  },
+  {
+    "id": "vender_carbon",
+    "result": "vale_atalaya",
+    "qty": 2,
+    "station": "puesto_mercader",
+    "level": 1,
+    "time": 0,
+    "cost": {
+      "carbon": 10
+    },
+    "unlock": 1,
+    "cat": "Vender",
+    "trust_gain": 1
+  },
+  {
+    "id": "comprar_conserva",
+    "result": "conserva_carne",
+    "qty": 1,
+    "station": "puesto_mercader",
+    "level": 1,
+    "time": 0,
+    "cost": {
+      "vale_atalaya": 4
+    },
+    "unlock": 1,
+    "cat": "Comprar",
+    "trust_gain": 1
+  },
+  {
+    "id": "comprar_agua",
+    "result": "agua_purificada",
+    "qty": 2,
+    "station": "puesto_mercader",
+    "level": 1,
+    "time": 0,
+    "cost": {
+      "vale_atalaya": 3
+    },
+    "unlock": 1,
+    "cat": "Comprar",
+    "trust_gain": 1
+  },
+  {
+    "id": "comprar_vendas",
+    "result": "venda",
+    "qty": 3,
+    "station": "puesto_mercader",
+    "level": 1,
+    "time": 0,
+    "cost": {
+      "vale_atalaya": 3
+    },
+    "unlock": 1,
+    "cat": "Comprar",
+    "trust_gain": 1
+  },
+  {
+    "id": "comprar_cuerda",
+    "result": "cuerda",
+    "qty": 5,
+    "station": "puesto_mercader",
+    "level": 1,
+    "time": 0,
+    "cost": {
+      "vale_atalaya": 2
+    },
+    "unlock": 1,
+    "cat": "Comprar",
+    "trust_gain": 1
+  },
+  {
+    "id": "comprar_sal",
+    "result": "sal",
+    "qty": 5,
+    "station": "puesto_mercader",
+    "level": 1,
+    "time": 0,
+    "cost": {
+      "vale_atalaya": 2
+    },
+    "unlock": 1,
+    "cat": "Comprar",
+    "trust_gain": 1
+  },
+  {
+    "id": "comprar_botiquin",
+    "result": "botiquin",
+    "qty": 1,
+    "station": "puesto_mercader",
+    "level": 1,
+    "time": 0,
+    "cost": {
+      "vale_atalaya": 10
+    },
+    "unlock": 1,
+    "cat": "Comprar",
+    "trust_gain": 2,
+    "trust": 10
+  },
+  {
+    "id": "comprar_mochila",
+    "result": "mochila_excursion",
+    "qty": 1,
+    "station": "puesto_mercader",
+    "level": 1,
+    "time": 0,
+    "cost": {
+      "vale_atalaya": 25
+    },
+    "unlock": 1,
+    "cat": "Comprar",
+    "trust_gain": 3,
+    "trust": 20
+  },
+  {
+    "id": "comprar_mapa_costa",
+    "result": "trozo_mapa_3",
+    "qty": 1,
+    "station": "puesto_mercader",
+    "level": 1,
+    "time": 0,
+    "cost": {
+      "vale_atalaya": 60
+    },
+    "unlock": 1,
+    "cat": "Comprar",
+    "trust_gain": 5,
+    "trust": 40
+  },
+  {
+    "id": "vender_lingote",
+    "result": "vale_atalaya",
+    "qty": 2,
+    "station": "puesto_armero",
+    "level": 1,
+    "time": 0,
+    "cost": {
+      "lingote_hierro": 3
+    },
+    "unlock": 1,
+    "cat": "Vender",
+    "trust_gain": 1
+  },
+  {
+    "id": "vender_acero",
+    "result": "vale_atalaya",
+    "qty": 2,
+    "station": "puesto_armero",
+    "level": 1,
+    "time": 0,
+    "cost": {
+      "acero": 1
+    },
+    "unlock": 1,
+    "cat": "Vender",
+    "trust_gain": 1
+  },
+  {
+    "id": "vender_componentes",
+    "result": "vale_atalaya",
+    "qty": 2,
+    "station": "puesto_armero",
+    "level": 1,
+    "time": 0,
+    "cost": {
+      "componentes": 3
+    },
+    "unlock": 1,
+    "cat": "Vender",
+    "trust_gain": 1
+  },
+  {
+    "id": "vender_polvora",
+    "result": "vale_atalaya",
+    "qty": 3,
+    "station": "puesto_armero",
+    "level": 1,
+    "time": 0,
+    "cost": {
+      "polvora": 5
+    },
+    "unlock": 1,
+    "cat": "Vender",
+    "trust_gain": 1
+  },
+  {
+    "id": "comprar_lanza",
+    "result": "lanza",
+    "qty": 1,
+    "station": "puesto_armero",
+    "level": 1,
+    "time": 0,
+    "cost": {
+      "vale_atalaya": 3
+    },
+    "unlock": 1,
+    "cat": "Comprar",
+    "trust_gain": 1
+  },
+  {
+    "id": "comprar_garrote",
+    "result": "garrote",
+    "qty": 1,
+    "station": "puesto_armero",
+    "level": 1,
+    "time": 0,
+    "cost": {
+      "vale_atalaya": 6
+    },
+    "unlock": 1,
+    "cat": "Comprar",
+    "trust_gain": 1
+  },
+  {
+    "id": "comprar_casco",
+    "result": "casco_obra",
+    "qty": 1,
+    "station": "puesto_armero",
+    "level": 1,
+    "time": 0,
+    "cost": {
+      "vale_atalaya": 8
+    },
+    "unlock": 1,
+    "cat": "Comprar",
+    "trust_gain": 1
+  },
+  {
+    "id": "comprar_trampa",
+    "result": "trampa_pinchos",
+    "qty": 1,
+    "station": "puesto_armero",
+    "level": 1,
+    "time": 0,
+    "cost": {
+      "vale_atalaya": 5
+    },
+    "unlock": 1,
+    "cat": "Comprar",
+    "trust_gain": 1
+  },
+  {
+    "id": "comprar_machete",
+    "result": "machete",
+    "qty": 1,
+    "station": "puesto_armero",
+    "level": 1,
+    "time": 0,
+    "cost": {
+      "vale_atalaya": 12
+    },
+    "unlock": 1,
+    "cat": "Comprar",
+    "trust_gain": 2,
+    "trust": 10
+  },
+  {
+    "id": "comprar_botas",
+    "result": "botas",
+    "qty": 1,
+    "station": "puesto_armero",
+    "level": 1,
+    "time": 0,
+    "cost": {
+      "vale_atalaya": 10
+    },
+    "unlock": 1,
+    "cat": "Comprar",
+    "trust_gain": 2,
+    "trust": 10
+  },
+  {
+    "id": "comprar_molotov",
+    "result": "molotov",
+    "qty": 2,
+    "station": "puesto_armero",
+    "level": 1,
+    "time": 0,
+    "cost": {
+      "vale_atalaya": 6
+    },
+    "unlock": 1,
+    "cat": "Comprar",
+    "trust_gain": 2,
+    "trust": 15
+  },
+  {
+    "id": "comprar_chaleco",
+    "result": "chaleco",
+    "qty": 1,
+    "station": "puesto_armero",
+    "level": 1,
+    "time": 0,
+    "cost": {
+      "vale_atalaya": 20
+    },
+    "unlock": 1,
+    "cat": "Comprar",
+    "trust_gain": 3,
+    "trust": 20
+  },
+  {
+    "id": "comprar_hacha_hierro",
+    "result": "hacha_hierro",
+    "qty": 1,
+    "station": "puesto_armero",
+    "level": 1,
+    "time": 0,
+    "cost": {
+      "vale_atalaya": 15
+    },
+    "unlock": 1,
+    "cat": "Comprar",
+    "trust_gain": 3,
+    "trust": 25
+  },
+  {
+    "id": "comprar_pico_hierro",
+    "result": "pico_hierro",
+    "qty": 1,
+    "station": "puesto_armero",
+    "level": 1,
+    "time": 0,
+    "cost": {
+      "vale_atalaya": 15
+    },
+    "unlock": 1,
+    "cat": "Comprar",
+    "trust_gain": 3,
+    "trust": 25
   }
 ]

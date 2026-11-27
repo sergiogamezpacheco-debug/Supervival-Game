@@ -12,6 +12,8 @@ const SIZES := {
 	"mesa_costura": Vector3(1.4, 1.0, 0.8),
 	"cofre": Vector3(1.2, 0.8, 0.7),
 	"almacenamiento": Vector3(1.8, 1.0, 0.9),
+	"puesto_mercader": Vector3(2.6, 1.1, 1.0),
+	"puesto_armero": Vector3(2.6, 1.1, 1.0),
 	"caja_suministros": Vector3(1.0, 0.8, 0.8),
 	"baul_madera": Vector3(1.3, 0.95, 0.8),
 	"cofre_reforzado": Vector3(1.4, 1.0, 0.85),
@@ -71,6 +73,15 @@ func setup(p_id: String, p_level: int, p_key: String, p_rot: int) -> void:
 ## Almacenaje: cofre, baúles, estanterías y armarios (los que tienen "storage" en stations.json).
 func is_chest() -> bool:
 	return DB.station_level(id, 1).has("storage")
+
+
+## Puesto de un comerciante (La Atalaya): las "recetas" son cambios al momento.
+func is_trader() -> bool:
+	return bool(DB.stations.get(id, {}).get("trader", false))
+
+
+func town() -> String:
+	return str(DB.stations.get(id, {}).get("town", ""))
 
 
 func is_gym() -> bool:
@@ -271,6 +282,8 @@ func action_label() -> String:
 		return "Construir"
 	if is_chest():
 		return "Abrir"
+	if is_trader():
+		return "Comerciar"
 	if is_gym():
 		return "Entrenar"
 	if is_done():
@@ -317,11 +330,13 @@ func start(recipe_id: String, count := 1) -> String:
 		return "Termina antes la obra"
 	if GS.level < DB.recipe_unlock(DB.recipe(recipe_id)):
 		return "Se desbloquea en el nivel %d" % DB.recipe_unlock(DB.recipe(recipe_id))
-	if not job.is_empty():
-		return "La estación está ocupada"
 	var r := DB.recipe(recipe_id)
 	if r.is_empty() or str(r.get("station", "")) != id:
 		return "Receta no disponible aquí"
+	if is_trader():
+		return _trade(r, count)
+	if not job.is_empty():
+		return "La estación está ocupada"
 	if not recipe_unlocked(r):
 		return "Mejora la estación a nivel %d" % int(r.get("level", 1))
 	var t := recipe_time(r) * count
@@ -341,6 +356,21 @@ func start(recipe_id: String, count := 1) -> String:
 	if burns():
 		fuel -= t
 	job = {"recipe": recipe_id, "end": GS.now() + t, "time": t, "count": count}
+	return ""
+
+
+## Cambio con un comerciante: al momento. Sube la confianza con el poblado.
+func _trade(r: Dictionary, count: int) -> String:
+	if GS.trust_of(town()) < int(r.get("trust", 0)):
+		return "Necesitas %d de confianza con el poblado" % int(r.get("trust", 0))
+	if not GS.pay(cost_times(r, count)):
+		return "No tienes lo que pide"
+	var left := GS.add_item(str(r["result"]), int(r.get("qty", 1)) * count)
+	if left > 0:
+		get_tree().call_group("world", "spawn_bag", global_position + Vector3(0, 0, -1.2), [GS.make_item(str(r["result"]), left)], false)
+		GS.message.emit("No te cabe todo: lo dejo en el suelo")
+	GS.add_trust(town(), int(r.get("trust_gain", 1)) * count)
+	SFX.play("fabricar")
 	return ""
 
 

@@ -45,6 +45,8 @@ func _ready() -> void:
 	await test_routes()
 	print("== Fase 1 del mapa: Arboleda, Pedregal, piezas y caminos a pie")
 	await test_phase1()
+	print("== Parte II: La Atalaya")
+	await test_atalaya()
 	print("== Refugio: casi sin infectados")
 	await test_refugio_infectados()
 	print("== Niveles y peso")
@@ -306,6 +308,53 @@ func test_world() -> void:
 	check(has_player_bag, "la mochila tirada se guarda en la partida")
 	world.queue_free()
 	await _frames(2)
+
+
+func test_atalaya() -> void:
+	DirAccess.remove_absolute(ProjectSettings.globalize_path(GS.save_path))
+	GS.new_game()
+	GS.current_map = "atalaya"
+	var w := await _new_world()
+	check(w.map_id == "atalaya", "carga La Atalaya")
+	var wall: Node = w.get_node_or_null("Empalizada")
+	check(wall != null and wall.get_child_count() >= 5, "La Atalaya tiene empalizada con colisión (y hueco para la puerta)")
+	check(get_tree().get_nodes_in_group("archer").size() == 6, "seis torres con arquero")
+	var traders := get_tree().get_nodes_in_group("station").filter(func(s): return s.is_trader())
+	check(traders.size() == 2, "mercader y armero")
+	var inside := 0
+	for c in get_tree().get_nodes_in_group("enemy"):
+		var p: Vector3 = c.global_position
+		if p.x > -22 and p.x < 22 and p.z > -26 and p.z < 18:
+			inside += 1
+	check(inside == 0, "dentro de la empalizada no hay infectados")
+	var merc: Node3D = traders.filter(func(s): return s.id == "puesto_mercader")[0]
+	check(merc.action_label() == "Comerciar", "a los comerciantes se les habla con Comerciar")
+	GS.add_item("madera", 40)
+	check(merc.start("vender_madera") == "" and GS.count("vale_atalaya") == 2 and GS.count("madera") == 20, "vender 20 troncos da 2 vales al momento")
+	check(GS.trust_of("atalaya") == 1, "comerciar sube la confianza")
+	GS.add_item("vale_atalaya", 20)
+	check(merc.start("comprar_botiquin") != "" and GS.count("botiquin") == 0, "el botiquín pide 10 de confianza")
+	GS.trust["atalaya"] = 10
+	check(merc.start("comprar_botiquin") == "" and GS.count("botiquin") == 1, "con confianza ya lo vende")
+	w.hud.open_station(merc)
+	await _pframes(2)
+	var sc: Control = w.hud._station_panel
+	check(sc.visible and sc._prog_label.text == "CONFIANZA" and sc.action_btn.text in ["CAMBIAR", "CONF. 10", "CONF. 20", "CONF. 40"], "la ventana del mercader enseña la confianza y el botón CAMBIAR")
+	w.hud.close_panels()
+	# los arqueros disparan a los infectados que se acercan
+	_creatures_away()
+	var z: Node3D = get_tree().get_nodes_in_group("enemy")[0]
+	z.home = Vector3(0, 0, 24)
+	z.global_position = Vector3(0, 0, 24)
+	var hp0: float = z.hp
+	for i in 150:
+		await get_tree().physics_frame
+		if z.hp < hp0:
+			break
+	check(z.hp < hp0, "los arqueros de las torres disparan al infectado de la puerta")
+	w.queue_free()
+	await _frames(3)
+	DirAccess.remove_absolute(ProjectSettings.globalize_path(GS.save_path))
 
 
 func test_refugio_infectados() -> void:

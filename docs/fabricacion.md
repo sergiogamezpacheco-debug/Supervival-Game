@@ -174,6 +174,43 @@ Datos: `data/recipes.json` (`station` vacío = a mano) y `"tier"` en `data/items
 | Armario de metal | Lingote de hierro 15, Placas de metal 8, Tornillos 10 | 18 |
 | Armario reforzado | Tablón 20, Lingote de hierro 12, Cuero curtido 6 | 20 |
 
+## Mercader
+| Resultado | Ingredientes | Nivel |
+|---|---|---|
+| Vale de La Atalaya x2 | Troncos 20 | 1 |
+| Vale de La Atalaya x3 | Tablón 10 | 1 |
+| Vale de La Atalaya x2 | Carne cruda 5 | 1 |
+| Vale de La Atalaya x2 | Piel 3 | 1 |
+| Vale de La Atalaya x2 | Tela 10 | 1 |
+| Vale de La Atalaya x2 | Hortalizas 6 | 1 |
+| Vale de La Atalaya x2 | Carbón 10 | 1 |
+| Conserva de carne | Vale de La Atalaya 4 | 1 |
+| Agua purificada x2 | Vale de La Atalaya 3 | 1 |
+| Vendas simples x3 | Vale de La Atalaya 3 | 1 |
+| Cuerda x5 | Vale de La Atalaya 2 | 1 |
+| Sal x5 | Vale de La Atalaya 2 | 1 |
+| Botiquín | Vale de La Atalaya 10 | 1 |
+| Mochila de excursión | Vale de La Atalaya 25 | 1 |
+| Trozo de mapa (III) | Vale de La Atalaya 60 | 1 |
+
+## Armero
+| Resultado | Ingredientes | Nivel |
+|---|---|---|
+| Vale de La Atalaya x2 | Lingote de hierro 3 | 1 |
+| Vale de La Atalaya x2 | Acero forjado 1 | 1 |
+| Vale de La Atalaya x2 | Componentes 3 | 1 |
+| Vale de La Atalaya x3 | Pólvora 5 | 1 |
+| Lanza de madera | Vale de La Atalaya 3 | 1 |
+| Garrote con clavos | Vale de La Atalaya 6 | 1 |
+| Casco de obra | Vale de La Atalaya 8 | 1 |
+| Trampa de pinchos | Vale de La Atalaya 5 | 1 |
+| Machete | Vale de La Atalaya 12 | 1 |
+| Botas de piel | Vale de La Atalaya 10 | 1 |
+| Cóctel molotov x2 | Vale de La Atalaya 6 | 1 |
+| Chaleco táctico | Vale de La Atalaya 20 | 1 |
+| Hacha de hierro | Vale de La Atalaya 15 | 1 |
+| Pico de hierro | Vale de La Atalaya 15 | 1 |
+
 ## Mecánicas
 - **Fuego propio** (cocina de campo y destilería): pestaña *Fuego* para echar troncos (1 min), carbón (3 min) o
   combustible (10 min); lo que fabricas gasta el fuego que dura. La barra *Energía* (llama) es ese fuego (máx. 30 min).

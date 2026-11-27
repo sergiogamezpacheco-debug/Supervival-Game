@@ -84,5 +84,9 @@
   "travel_energy_per_hour": 20,
   "travel_energy_per_unit": 120,
   "travel_energy_min": 10,
-  "house_refill_seconds": 86400
+  "house_refill_seconds": 86400,
+  "archer_range": 20,
+  "archer_cooldown": 1.8,
+  "archer_damage": 40,
+  "trust_max": 100
 }

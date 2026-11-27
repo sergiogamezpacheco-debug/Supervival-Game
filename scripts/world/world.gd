@@ -13,6 +13,7 @@ const HudScript := preload("res://scripts/ui/hud.gd")
 const ContainerScript := preload("res://scripts/world/container.gd")
 const CreatorScript := preload("res://scripts/ui/character_creator.gd")
 const DayNightScript := preload("res://scripts/world/daynight.gd")
+const StationScript := preload("res://scripts/world/station.gd")
 
 signal travelled(to_map: String)
 
@@ -111,6 +112,7 @@ func _ready() -> void:
 		GS.trace("  recursos")
 		_spawn_creatures()
 		GS.trace("  criaturas")
+		_houses = get_tree().get_nodes_in_group("casa")
 	else:
 		_build_route()
 		GS.trace("  camino montado")
@@ -240,6 +242,18 @@ func _free_spot(min_dist: float, avoid_center: float, square := true) -> Vector3
 
 
 func _spawn_prefabs() -> void:
+	# poblado amurallado (La Atalaya): empalizada, torres con arqueros, casas, huertos
+	if map.has("settlement"):
+		_keepout.append_array(Settlement.build(self, map["settlement"]))
+	# puestos de los comerciantes (estaciones de cambio, fuera de la construcción)
+	for st in map.get("stations", []):
+		var sp: Array = st.get("pos", [0, 0])
+		var node := StationScript.new()
+		node.stage = DB.station_phases(str(st["id"])).size()
+		node.setup(str(st["id"]), 1, "z|%s" % st["id"], int(st.get("rot", 0)))
+		node.position = Vector3(float(sp[0]), 0, float(sp[1]))
+		add_child(node)
+		_keepout.append([node.position, 3.0])
 	for pf in map.get("prefabs", []):
 		var pos_a: Array = pf.get("pos", [0, 0])
 		var pos := Vector3(float(pos_a[0]), 0, float(pos_a[1]))
@@ -333,8 +347,8 @@ func _process(delta: float) -> void:
 		player.position.z = clampf(player.position.z, -_half, _half)
 		if not route.is_empty():
 			_check_route_exit()
-			if not _houses.is_empty():
-				_update_houses()
+		if not _houses.is_empty():
+			_update_houses()
 		if base:
 			player.floor_y = base.floor_height(player.global_position)
 		var t := find_target()

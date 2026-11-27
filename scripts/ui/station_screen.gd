@@ -16,7 +16,7 @@ const ROW_BG := Color(0.13, 0.12, 0.095, 0.84)
 const ROW_LINE := Color("4d4536")
 const PANEL_BG := Color(0.07, 0.065, 0.05, 0.8)
 const W := 1280.0
-const TAB_ORDER := ["Obra", "Baúles", "Estanterías", "Armarios", "Herramientas", "Armas", "Trampas", "Ropa", "Mochilas", "Platos", "Comida", "Conservas",
+const TAB_ORDER := ["Obra", "Comprar", "Vender", "Baúles", "Estanterías", "Armarios", "Herramientas", "Armas", "Trampas", "Ropa", "Mochilas", "Platos", "Comida", "Conservas",
 	"Medicamentos", "Medicinas", "Explosivos", "Alquimia", "Líquidos", "Circuitos", "Energía", "Dispositivos",
 	"Componentes", "Recursos", "Compost", "Residuos", "Suelo", "Combustible", "Agua", "Fuego", "Reparar"]
 
@@ -503,6 +503,8 @@ func _locked_text(e: Dictionary) -> String:
 		return "Se desbloquea en el nivel %d" % DB.recipe_unlock(r)
 	if not station.recipe_unlocked(r):
 		return "Requiere %s de nivel %d" % [DB.station_name(station.id).to_lower(), int(r.get("level", 1))]
+	if station.is_trader() and GS.trust_of(station.town()) < int(r.get("trust", 0)):
+		return "Necesita %d de confianza" % int(r.get("trust", 0))
 	return ""
 
 
@@ -601,6 +603,9 @@ func _select(i: int) -> void:
 		# muebles de almacenaje: como en el diseño, la capacidad junto al nombre
 		var cap := int(DB.station_level(str(DB.item(str(e["r"]["result"])).get("place", "")), 1).get("storage", 0))
 		_time.text = "Capacidad: %d slots" % cap
+	elif e["kind"] == "recipe" and station.is_trader():
+		var need := int(e["r"].get("trust", 0))
+		_time.text = ("Confianza %d" % need) if need > 0 else ("x%d" % int(e["r"].get("qty", 1)))
 	elif e["kind"] == "recipe":
 		_time.text = "Tiempo: %s" % _clock(station.recipe_time(e["r"]))
 	else:
@@ -684,6 +689,12 @@ func tick() -> void:
 		_prog_bar.value = 0.0
 		_prog_text.text = ""
 		_prog_time.text = ""
+	elif station.is_trader():
+		var tv := GS.trust_of(station.town())
+		_prog_label.text = "CONFIANZA"
+		_prog_bar.value = float(tv) / float(DB.bal("trust_max", 100))
+		_prog_text.text = "%d/%d" % [tv, int(DB.bal("trust_max", 100))]
+		_prog_time.text = str(DB.world_map.get(station.town(), {}).get("name", ""))
 	elif station.job.is_empty():
 		_prog_bar.value = 0.0
 		_prog_text.text = "0%"
@@ -719,7 +730,10 @@ func tick() -> void:
 	match kind:
 		"recipe":
 			var lock := _locked_text(e)
-			if station.is_done():
+			if station.is_trader():
+				action_btn.text = "CAMBIAR" if lock == "" else ("CONF. %d" % int(e["r"].get("trust", 0)))
+				action_btn.disabled = lock != "" or not GS.has_cost(StationScript().cost_times(e["r"], qty))
+			elif station.is_done():
 				action_btn.text = "RECOGER"
 			elif lock != "":
 				action_btn.text = ("NIVEL %d" % DB.recipe_unlock(e["r"])) if GS.level < DB.recipe_unlock(e["r"]) else "MEJORAR"

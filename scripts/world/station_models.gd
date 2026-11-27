@@ -101,6 +101,8 @@ static func make(kind: String, level: int) -> Node3D:
 		"mesa_quimica": _mesa_quimica(root)
 		"banco_electronica": _banco_electronica(root)
 		"almacenamiento": _almacenamiento(root)
+		"puesto_mercader": _puesto(root, false)
+		"puesto_armero": _puesto(root, true)
 		"caja_suministros": _caja_suministros(root)
 		"baul_madera": _baul(root, false)
 		"cofre_reforzado": _baul(root, true)
@@ -261,6 +263,50 @@ static func _compostadora(r: Node3D) -> void:
 	# montón de compost caído delante, en una esquina (como en el diseño)
 	_p(r, Nature.blob(62, 0.25, 7, 4), Color("3b2a1e"), Vector3(0.45, 0.08, -0.72), Vector3.ZERO, Vector3(0.32, 0.18, 0.24))
 	_p(r, Nature.blob(63, 0.25, 6, 3), Color("4a3424"), Vector3(0.62, 0.05, -0.62), Vector3.ZERO, Vector3(0.14, 0.08, 0.12))
+
+
+# ------------------------------------------------------------ puestos de La Atalaya
+## Puesto de mercado: mostrador, toldo de rayas y el comerciante detrás. El del armero lleva
+## un armero de pared con armas; el del mercader, sacos, cestas y latas.
+static func _puesto(r: Node3D, armero: bool) -> void:
+	var cloth_a := Color("a8432e") if armero else Color("c9a24a")
+	var cloth_b := Color("e8e0c8")
+	_p(r, _box(Vector3(2.4, 0.95, 0.7)), WOOD, Vector3(0, 0.48, 0))
+	_p(r, _box(Vector3(2.5, 0.07, 0.8)), WOOD_D, Vector3(0, 0.98, 0))
+	for k in 3:
+		_p(r, _box(Vector3(2.41, 0.02, 0.71)), WOOD_D, Vector3(0, 0.2 + k * 0.25, 0))
+	for x in [-1.25, 1.25]:
+		for z in [-0.35, 1.3]:
+			_p(r, _box(Vector3(0.12, 2.5, 0.12)), WOOD_D, Vector3(x, 1.25, z))
+	for k in 7:   # toldo de rayas, inclinado hacia delante
+		var st := _p(r, _box(Vector3(0.39, 0.05, 2.0)), cloth_a if k % 2 == 0 else cloth_b, Vector3(-1.17 + k * 0.39, 2.45, 0.45))
+		st.rotation_degrees.x = -12.0
+	for k in 7:   # faldón del toldo
+		_p(r, _box(Vector3(0.39, 0.22, 0.03)), cloth_a if k % 2 == 0 else cloth_b, Vector3(-1.17 + k * 0.39, 2.12, -0.56))
+	if armero:
+		# armero de pared detrás y lo que hay en el mostrador
+		_p(r, _box(Vector3(2.2, 1.6, 0.08)), WOOD_D, Vector3(0, 1.4, 1.35))
+		for k in 4:
+			var x := -0.8 + k * 0.53
+			_stick(r, Vector3(x, 0.8, 1.28), Vector3(x + 0.05, 2.0, 1.28), 0.025, WOOD_L)
+			_p(r, _box(Vector3(0.08, 0.2, 0.03)), METAL, Vector3(x + 0.05, 2.05, 1.27))
+		_p(r, _box(Vector3(0.6, 0.06, 0.12)), METAL, Vector3(-0.6, 1.05, -0.05), Vector3(0, 20, 0))
+		_p(r, _box(Vector3(0.14, 0.06, 0.1)), WOOD_D, Vector3(-0.92, 1.05, -0.17), Vector3(0, 20, 0))
+		_p(r, _cyl(0.22, 0.22, 0.05, 10), Color("6a6f73"), Vector3(0.5, 1.04, 0.0))
+		_p(r, _box(Vector3(0.3, 0.2, 0.25)), Color("4b4d3f"), Vector3(0.9, 1.12, 0.05))
+	else:
+		for k in 3:   # sacos y cestas
+			_p(r, Nature.blob(80 + k, 0.25, 7, 4), Color("c9b27a").darkened(0.1 * k), Vector3(-0.8 + k * 0.45, 1.15, 0.05), Vector3.ZERO, Vector3(0.18, 0.2, 0.16))
+		_p(r, _cyl(0.22, 0.16, 0.18, 10), Color("8a6440"), Vector3(0.45, 1.1, 0.0))
+		for k in 5:
+			_p(r, _box(Vector3(0.1, 0.1, 0.1)), [Color("c43a2e"), Color("5f8a3a"), Color("d8a24a")][k % 3], Vector3(0.36 + (k % 3) * 0.09, 1.22, -0.05 + (k / 3) * 0.09))
+		for k in 4:
+			_p(r, _cyl(0.06, 0.06, 0.14, 8), Color("b8b8b0"), Vector3(0.85 + (k % 2) * 0.14, 1.08, -0.05 + (k / 2) * 0.14))
+		_p(r, _box(Vector3(0.8, 0.5, 0.5)), Color("a0703f"), Vector3(-0.7, 0.25, 1.0))
+		_p(r, _box(Vector3(0.6, 0.4, 0.45)), Color("c79a62"), Vector3(0.7, 0.2, 1.05))
+	var npc := Npc.new("armero" if armero else "mercader")
+	npc.position = Vector3(0, 0, 0.75)
+	r.add_child(npc)
 
 
 # ------------------------------------------------------------ almacenaje

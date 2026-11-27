@@ -135,8 +135,8 @@ static func blueprints() -> Array:
 	for r in DB.recipes:
 		var res := str(r["result"])
 		var st := str(r.get("station", ""))
-		if st in ["huerto", "recicladora"]:
-			continue   # cultivos y reciclaje: otras formas de sacar lo mismo
+		if st in ["huerto", "recicladora"] or bool(DB.stations.get(st, {}).get("trader", false)):
+			continue   # cultivos, reciclaje y comerciantes: otras formas de sacar lo mismo
 		var manual := st == ""
 		var prev: Dictionary = best.get(res, {})
 		if prev.is_empty() or (manual and not prev["manual"]) or (manual == prev["manual"] and DB.recipe_unlock(r) < DB.recipe_unlock(prev["r"])):
