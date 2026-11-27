@@ -47,11 +47,13 @@ def P(x, y):
 
 
 # ------------------------------------------------------------------ lugares
-# parte: 1 al empezar, 2 trozo del muerto del Pinar, 3 trozo de la Base Centinela
+# parte: 1 al empezar, 2 trozo del muerto de La Arboleda, 3 trozo de la Base Centinela
 LUGARES = {
     "refugio": {"name": "Refugio", "pos": (0.525, 0.53), "part": 1, "icon": "refugio"},
-    "pinar": {"name": "Pinar del Cuervo", "pos": (0.645, 0.335), "part": 1, "icon": "pino"},
-    "cantera": {"name": "Cantera del Tajo", "pos": (0.465, 0.29), "part": 1, "icon": "pico"},
+    "arboleda": {"name": "La Arboleda", "pos": (0.43, 0.465), "part": 1, "icon": "arbol"},
+    "pedregal": {"name": "El Pedregal", "pos": (0.665, 0.515), "part": 1, "icon": "rocas"},
+    "pinar": {"name": "Pinar del Cuervo", "pos": (0.645, 0.335), "part": 2, "icon": "pino"},
+    "cantera": {"name": "Cantera del Tajo", "pos": (0.465, 0.29), "part": 2, "icon": "pico"},
     "atalaya": {"name": "La Atalaya", "pos": (0.815, 0.235), "part": 2, "icon": "atalaya"},
     "marismas": {"name": "Marismas del Guadal", "pos": (0.85, 0.5), "part": 2, "icon": "juncos"},
     "centinela": {"name": "Base Centinela", "pos": (0.235, 0.42), "part": 2, "icon": "tienda"},
@@ -64,11 +66,13 @@ LUGARES = {
 
 # Trazado de cada camino (puntos intermedios); nombre y parte salen de data/routes.json
 TRAZADOS = {
+    "r_refugio_arboleda": [(0.525, 0.53), (0.485, 0.515), (0.45, 0.485)],
+    "r_refugio_pedregal": [(0.525, 0.53), (0.59, 0.54), (0.64, 0.525)],
     "r_refugio_pinar": [(0.525, 0.53), (0.575, 0.47), (0.615, 0.41)],
     "r_refugio_cantera": [(0.525, 0.53), (0.505, 0.44), (0.475, 0.335)],
     "r_pinar_atalaya": [(0.675, 0.30), (0.73, 0.27), (0.795, 0.25)],
     "r_atalaya_marismas": [(0.825, 0.27), (0.845, 0.36), (0.85, 0.45)],
-    "r_refugio_centinela": [(0.525, 0.53), (0.43, 0.545), (0.33, 0.49), (0.255, 0.435)],
+    "r_refugio_centinela": [(0.525, 0.53), (0.45, 0.575), (0.37, 0.56), (0.31, 0.49), (0.255, 0.435)],
     "r_centinela_puerto": [(0.23, 0.445), (0.205, 0.56), (0.19, 0.68), (0.185, 0.8)],
     "r_cantera_villamuralla": [(0.455, 0.27), (0.39, 0.22), (0.31, 0.185), (0.255, 0.17)],
     "r_via_puerto_estacion": None,   # van por la vía
@@ -79,12 +83,16 @@ VIA = [(0.0, 0.79), (0.1, 0.8), (0.2, 0.805), (0.28, 0.765), (0.36, 0.735), (0.4
 RIO = [(0.70, 0.0), (0.705, 0.1), (0.715, 0.2), (0.735, 0.32), (0.765, 0.42), (0.815, 0.5), (0.81, 0.6),
        (0.7, 0.645), (0.57, 0.665), (0.44, 0.665), (0.32, 0.7), (0.24, 0.76)]
 # Piezas del mapa (se cosen al encontrarlas)
-PIEZA1 = [(0.365, 0.2), (0.55, 0.165), (0.725, 0.19), (0.735, 0.41), (0.705, 0.61), (0.52, 0.625), (0.365, 0.585), (0.345, 0.4)]
+PIEZA1 = [(0.37, 0.42), (0.45, 0.38), (0.56, 0.405), (0.66, 0.43), (0.74, 0.48), (0.745, 0.58), (0.67, 0.625),
+          (0.52, 0.64), (0.4, 0.62), (0.355, 0.54)]
 PIEZA2 = [(0.135, 0.33), (0.355, 0.27), (0.395, 0.11), (0.6, 0.095), (0.985, 0.1), (0.985, 0.665), (0.7, 0.685),
           (0.45, 0.675), (0.3, 0.665), (0.135, 0.63)]
 # Casas sueltas con provisiones por los caminos (parte 2 y 3)
-CASAS = [(0.415, 0.565, 2), (0.71, 0.255, 2), (0.84, 0.405, 2), (0.29, 0.475, 2), (0.21, 0.6, 3), (0.33, 0.2, 3)]
-GASOLINERA = (0.375, 0.53)
+CASAS = [(0.335, 0.45, 2), (0.71, 0.255, 2), (0.84, 0.405, 2), (0.29, 0.475, 2), (0.21, 0.6, 3), (0.33, 0.2, 3)]
+GASOLINERA = (0.325, 0.545)
+# Coches abandonados con suministros (x, y, parte, giro)
+COCHES = [(0.47, 0.585, 1, 15), (0.595, 0.555, 1, -20), (0.295, 0.515, 2, 30), (0.53, 0.37, 2, 70),
+          (0.745, 0.315, 2, -10), (0.2, 0.66, 3, 80), (0.43, 0.755, 3, 10)]
 
 
 # ------------------------------------------------------------------ utilidades
@@ -290,9 +298,31 @@ def badge(d, x, y, kind, r=30):
             a0 = -90 + k * 120
             d.pieslice([x - s * 0.85, y - s * 0.85, x + s * 0.85, y + s * 0.85], a0 - 30, a0 + 30, fill=(40, 30, 20))
         d.ellipse([x - s * 0.18, y - s * 0.18, x + s * 0.18, y + s * 0.18], fill=(40, 30, 20))
+    elif kind == "arbol":
+        d.line([(x, y + s * 0.2), (x, y + s * 0.95)], fill=c, width=4)
+        d.ellipse([x - s * 0.75, y - s * 0.85, x + s * 0.75, y + s * 0.4], fill=c)
+    elif kind == "rocas":
+        d.polygon([(x - s * 0.95, y + s * 0.7), (x - s * 0.7, y - s * 0.2), (x - s * 0.1, y - s * 0.45), (x + s * 0.2, y + s * 0.7)], fill=c)
+        d.polygon([(x + s * 0.05, y + s * 0.7), (x + s * 0.3, y - s * 0.05), (x + s * 0.8, y + s * 0.1), (x + s * 0.95, y + s * 0.7)], fill=c)
     elif kind == "ruinas":
         d.rectangle([x - s * 0.8, y - s * 0.2, x - s * 0.1, y + s * 0.8], fill=c)
         d.polygon([(x + s * 0.1, y + s * 0.8), (x + s * 0.1, y - s * 0.6), (x + s * 0.5, y - s * 0.2), (x + s * 0.8, y - s * 0.5), (x + s * 0.8, y + s * 0.8)], fill=c)
+
+
+def car(img, x, y, rot, s=1.0):
+    """Coche visto desde arriba (cuerpo, cristales y ruedas), girado."""
+    t = Image.new("RGBA", (80, 80), (0, 0, 0, 0))
+    d = ImageDraw.Draw(t)
+    for wx in (22, 58):
+        for wy in (27, 53):
+            d.rectangle([wx - 5, wy - 3, wx + 5, wy + 3], fill=INK)
+    d.rounded_rectangle([14, 26, 66, 54], radius=8, fill=(150, 84, 60), outline=INK, width=2)
+    d.rectangle([28, 30, 36, 50], fill=(110, 150, 160), outline=INK)
+    d.rectangle([48, 30, 54, 50], fill=(110, 150, 160), outline=INK)
+    t = t.rotate(rot, resample=Image.BICUBIC)
+    if s != 1.0:
+        t = t.resize((int(80 * s), int(80 * s)), Image.LANCZOS)
+    img.alpha_composite(t, (int(x - t.width / 2), int(y - t.height / 2)))
 
 
 def label(d, x, y, txt, f=F_LABEL, dy=50):
@@ -370,20 +400,22 @@ def draw_full(routes):
 
     # Pinar del Cuervo (bosque grande, a la derecha del refugio)
     forest(d, *P(0.655, 0.32), 0.07 * W, 0.15 * H, 120, rng, size=30)
-    # zonas peligrosas (la mitad interior de Pinar y Cantera se abre con la parte 2)
-    lay = Image.new("RGBA", (W, H), (0, 0, 0, 0))
-    for poly in ([(0.6, 0.2), (0.7, 0.19), (0.715, 0.3), (0.66, 0.31), (0.6, 0.28)],
-                 [(0.4, 0.2), (0.5, 0.18), (0.52, 0.255), (0.44, 0.27), (0.39, 0.25)]):
-        mask, col = hatch(d, px(poly), width=3)
-        lay.paste(Image.new("RGBA", (W, H), col + (170,)), (0, 0), mask)
-        ImageDraw.Draw(lay).line(px(poly + [poly[0]]), fill=col + (200,), width=3)
-    img.alpha_composite(lay)
-    d = ImageDraw.Draw(img)
-    # arbolitos a la izquierda del refugio
-    forest(d, *P(0.43, 0.47), 0.035 * W, 0.05 * H, 14, rng, size=24, leaf=True)
+    # La Arboleda: arbolitos a la izquierda del refugio (zona de madera de la parte I)
+    forest(d, *P(0.43, 0.475), 0.05 * W, 0.065 * H, 30, rng, size=24, leaf=True)
+    X, Y = P(0.405, 0.505)   # el superviviente muerto con la pieza II
+    d.line([(X - 9, Y - 9), (X + 9, Y + 9)], fill=RED, width=4)
+    d.line([(X + 9, Y - 9), (X - 9, Y + 9)], fill=RED, width=4)
     # mini zona rocosa junto al bosque
-    for k in range(9):
-        rock(d, *P(0.665 + rng.uniform(-0.03, 0.03), 0.52 + rng.uniform(-0.03, 0.03)), rng.uniform(12, 20), rng)
+    for k in range(12):
+        rock(d, *P(0.665 + rng.uniform(-0.035, 0.035), 0.515 + rng.uniform(-0.035, 0.035)), rng.uniform(12, 20), rng)
+    X, Y = P(0.69, 0.545)
+    d.ellipse([X - 9, Y - 6, X + 9, Y + 6], fill=(150, 84, 52), outline=INK)   # la veta de hierro del pedregal
+    # cantera: vetas de colores alrededor del foso (hierro, cobre, azufre)
+    for k in range(14):
+        a = rng.uniform(0, math.tau)
+        X, Y = P(0.465 + math.cos(a) * 0.06, 0.29 + math.sin(a) * 0.07)
+        c = [(150, 84, 52), (150, 84, 52), (150, 84, 52), (60, 130, 110), (210, 190, 70)][k % 5]
+        d.ellipse([X - 8, Y - 5, X + 8, Y + 5], fill=c, outline=INK)
     # bosquecillos y árboles sueltos por el resto (relleno de los caminos)
     for cx, cy, rx, ry, n in [(0.3, 0.3, 0.05, 0.06, 18), (0.12, 0.5, 0.05, 0.08, 20), (0.62, 0.72, 0.05, 0.035, 12),
                               (0.9, 0.3, 0.04, 0.05, 12), (0.42, 0.6, 0.03, 0.03, 8), (0.95, 0.7, 0.03, 0.05, 10)]:
@@ -462,7 +494,9 @@ def draw_full(routes):
         line = px(smooth(pts, 14))
         d.line(line, fill=(236, 220, 186), width=12, joint="curve")
         dashed(d, line, dash=16, gap=8, fill=(120, 80, 46), width=5)
-        (mx, my), ang = point_at(line, 0.42)
+        if rid in ("r_refugio_arboleda", "r_refugio_pedregal"):
+            continue   # tramos cortos: sin nombre (no cabe)
+        (mx, my), ang = point_at(line, 0.42 if rid != "r_refugio_arboleda" else 0.3)
         deg = -math.degrees(ang)
         if deg > 90:
             deg -= 180
@@ -471,7 +505,8 @@ def draw_full(routes):
         t = Image.new("RGBA", (420, 60), (0, 0, 0, 0))
         ImageDraw.Draw(t).text((210, 30), r["name"], font=F_ROUTE, fill=INK_SOFT, anchor="mm", stroke_width=3, stroke_fill=(236, 220, 186))
         t = t.rotate(deg, expand=True, resample=Image.BICUBIC)
-        nx, ny = -math.sin(ang) * 26, math.cos(ang) * 26
+        flip = -1 if rid == "r_refugio_arboleda" else 1   # tramo corto: el nombre al otro lado
+        nx, ny = -math.sin(ang) * 26 * flip, math.cos(ang) * 26 * flip
         img.alpha_composite(t, (int(mx + nx - t.width / 2), int(my + ny - t.height / 2)))
     d = ImageDraw.Draw(img)
     for rid, pos in (("r_via_puerto_estacion", (0.275, 0.805)), ("r_via_estacion_central", (0.625, 0.79))):
@@ -485,6 +520,10 @@ def draw_full(routes):
             ox, oy = -math.sin(t) * 9 * side, math.cos(t) * 9 * side
             d.line([(X - math.cos(t) * 22 + ox, Y - math.sin(t) * 22 + oy), (X + math.cos(t) * 22 + ox, Y + math.sin(t) * 22 + oy)], fill=INK, width=4)
 
+    # coches abandonados con suministros
+    for x, y, _part, rot in COCHES:
+        car(img, *P(x, y), rot)
+    d = ImageDraw.Draw(img)
     # casas con provisiones y gasolinera
     for x, y, _part in CASAS:
         house(d, *P(x, y), 11)
@@ -499,15 +538,18 @@ def draw_full(routes):
     for k, l in LUGARES.items():
         x, y = P(*l["pos"])
         badge(d, x, y, l["icon"], 30 if k != "refugio" else 36)
-        label(d, x, y, l["name"], F_LABEL if k not in ("valdecruces",) else F_LABEL_S, dy=58 if k != "refugio" else 66)
+        label(d, x, y, l["name"], F_LABEL if k not in ("valdecruces",) else F_LABEL_S, dy=-56 if k == "arboleda" else (58 if k != "refugio" else 66))
 
     # notas a mano
-    notas = [((0.665, 0.205), "zona peligrosa", RED), ((0.43, 0.195), "zona peligrosa", RED),
-             ((0.2, 0.36), "valla rota: infectados", RED), ((0.92, 0.58), "solo con traje de buzo", RED),
+    notas = [((0.665, 0.185), "más botín, más peligro", RED), ((0.465, 0.195), "más botín, más peligro", RED),
+             ((0.465, 0.22), "de cada 10 rocas: 5 hierro, 2 mejores", INK_SOFT), ((0.665, 0.59), "1 de cada 10, hierro", INK_SOFT),
+             ((0.445, 0.54), "superviviente muerto", RED),
+             ((0.2, 0.36), "valla rota: infectados", RED), ((0.86, 0.582), "solo con traje de buzo", RED),
              ((0.83, 0.15), "flechas si te acercas", RED), ((0.7, 0.93), "radiación", (110, 70, 140)),
-             ((0.17, 0.95), "barco abandonado", INK_SOFT), ((0.665, 0.575), "rocas", INK_SOFT)]
+             ((0.17, 0.95), "barco abandonado", INK_SOFT), ((0.62, 0.6), "", INK_SOFT)]
     for (x, y), t, c in notas:
-        text_halo(d, P(x, y), t, F_NOTE, fill=c, sw=3)
+        if t:
+            text_halo(d, P(x, y), t, F_NOTE, fill=c, sw=3)
     return img
 
 
@@ -534,16 +576,18 @@ def decorate(img, routes):
         rr = math.radians(a - 90)
         text_halo(d, (cx + math.cos(rr) * r * 1.6, cy + math.sin(rr) * r * 1.6), t, F_LABEL_S, sw=3)
     # leyenda
-    lx, ly = W * 0.815, H * 0.62
-    d.rectangle([lx, ly, lx + 340, ly + 470], fill=(232, 214, 176), outline=INK, width=3)
+    lx, ly = W * 0.815, H * 0.638
+    ly -= 44
+    d.rectangle([lx, ly, lx + 340, ly + 514], fill=(232, 214, 176), outline=INK, width=3)
     d.text((lx + 170, ly + 28), "Leyenda", font=F_LABEL, fill=INK, anchor="mm")
     rows = [("refugio", "Refugio"), ("atalaya", "Poblado de supervivientes"), ("pino", "Zona de recolección"),
-            ("hatch", "Zona peligrosa (parte 2)"), ("camino", "Camino (tramo a pie)"), ("via", "Vía del tren"),
-            ("rio", "Río / agua"), ("casa", "Casa con provisiones"), ("pieza", "Pieza del mapa (I, II, III)")]
+            ("rocas", "Zona de rocas y vetas"), ("camino", "Camino (tramo a pie)"), ("via", "Vía del tren"),
+            ("rio", "Río / agua"), ("casa", "Casa con provisiones"), ("coche", "Coche con suministros"),
+            ("pieza", "Pieza del mapa (I, II, III)")]
     for i, (k, t) in enumerate(rows):
         y = ly + 72 + i * 44
         x = lx + 34
-        if k in ("refugio", "atalaya", "pino"):
+        if k in ("refugio", "atalaya", "pino", "rocas"):
             badge(d, x, y, k, 14)
         elif k == "hatch":
             for j in range(4):
@@ -559,6 +603,8 @@ def decorate(img, routes):
             d.line([(x - 18, y + 4), (x - 6, y - 4), (x + 6, y + 4), (x + 18, y - 4)], fill=WATER_D, width=8)
         elif k == "casa":
             house(d, x, y + 4, 10)
+        elif k == "coche":
+            car(img, x, y, 0, 0.7)
         elif k == "pieza":
             dashed(d, [(x - 18, y), (x + 18, y)], dash=5, gap=4, fill=RED, width=3)
         d.text((x + 34, y), t, font=F_LEG, fill=INK, anchor="lm")
@@ -634,7 +680,7 @@ def compose(full_img, masks, lines, upto, routes):
     if upto >= 3:
         stitches(out, lines["2"], m)
     d = ImageDraw.Draw(out)
-    for part, pos in [(1, (0.38, 0.4)), (2, (0.955, 0.2)), (3, (0.05, 0.96))]:
+    for part, pos in [(1, (0.385, 0.6)), (2, (0.955, 0.2)), (3, (0.05, 0.96))]:
         if part <= upto:
             text_halo(d, P(*pos), roman(part), F_ROMAN, fill=(120, 40, 30), sw=4)
     if upto >= 3:

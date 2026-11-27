@@ -254,14 +254,14 @@ func test_world() -> void:
 	ev.position = center
 	ev.pressed = true
 	Input.parse_input_event(ev)
-	await _frames(2)
+	await _pframes(2)
 	check(btn.held, "el botón de acción responde al toque")
 	var up := InputEventScreenTouch.new()
 	up.index = 3
 	up.position = center
 	up.pressed = false
 	Input.parse_input_event(up)
-	await _frames(2)
+	await _pframes(2)   # el evento se procesa en un fotograma de dibujo, no de física
 	check(not btn.held, "el botón se suelta")
 
 	# Matar un infectado deja botín.

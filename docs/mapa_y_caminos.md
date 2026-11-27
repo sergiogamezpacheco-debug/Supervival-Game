@@ -7,12 +7,23 @@ Imágenes: `docs/mapa/` (`python3 tools/mapa/mapa.py`) y `docs/caminos/` (fotos 
 
 | Parte | Cómo se consigue | Lugares |
 |---|---|---|
-| I | Al empezar | Refugio, Pinar del Cuervo y Cantera del Tajo (zona fácil de cada uno), arbolitos a la izquierda del refugio, mini zona rocosa junto al pinar |
-| II | Trozo del superviviente muerto en el Pinar del Cuervo | Zonas peligrosas del Pinar y la Cantera, La Atalaya (poblado tipo Hilltop), Marismas del Guadal (traje de buzo, zombis del pantano), Base Centinela (5 militares + valla rota con infectados), casas sueltas y gasolinera |
+| I | Al empezar (el círculo alrededor del refugio) | Refugio, **La Arboleda** (arbolitos a la izquierda) y **El Pedregal** (rocas a la derecha) |
+| II | Trozo del superviviente muerto en La Arboleda | Pinar del Cuervo y Cantera del Tajo (más botín y más peligro), La Atalaya (poblado tipo Hilltop), Marismas del Guadal (traje de buzo, zombis del pantano), Base Centinela (5 militares + valla rota con infectados), casas sueltas y gasolinera |
 | III | Trozo en la zona infectada de la Base Centinela (con ayuda de La Atalaya) | Villamuralla (arriba a la izquierda, tras la sierra), Puerto de la Caleta (playa y barco abandonado), Estación de tren, Central Nuclear, Valdecruces (pueblo abandonado) y la vía que los une |
 
 Las piezas se cosen al mapa al encontrarlas. Queda sitio libre al norte de la sierra, al este de las marismas y
 en la costa oeste para zonas futuras.
+
+## Zonas de recolección
+
+| Zona | Parte | Rocas y vetas | Árboles y madera | Botín |
+|---|---|---|---|---|
+| El Pedregal | I | de cada 10: 9 rocas, 1 veta de hierro | algún arbusto | 1 coche abandonado: chatarra, cuerda, tela, latas |
+| La Arboleda | I | pocas piedras sueltas | ~30 árboles pequeños, madera básica y ramas | coche abandonado y el superviviente muerto (pieza II) |
+| Cantera del Tajo | II | de cada 10: 3 rocas, 5 vetas básicas (hierro, carbón), 2 mejores (cobre, azufre) | pocos pinos | caseta y coches: herramientas, componentes, armas |
+| Pinar del Cuervo | II | pocas rocas | ~110 pinos grandes (más madera por árbol) | cabaña, aserradero y coches: armas, ropa, medicinas |
+
+Coches abandonados con suministros también por los caminos (2 en la parte I, más en la II y III).
 
 ## Moverse: zonas + caminos
 
