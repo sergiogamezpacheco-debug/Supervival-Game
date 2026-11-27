@@ -114,10 +114,12 @@ func _physics_process(delta: float) -> void:
 		_visual.animate_swing(fmod(training, 0.75) / 0.75)
 	if _swing_t >= 0.0:
 		# lo que dura el gesto (solo visual): picar y talar llevan carga y son algo más lentos
-		_swing_t += delta / (0.55 if _swing_kind != "" else 0.45)
+		_swing_t += delta / (0.45 if _swing_kind == "" else 0.6 if _swing_kind.begins_with("pick_") else 0.55)
 		if _swing_t >= 1.0:
 			_swing_t = -1.0
 			_grip(0.0)
+		elif _swing_kind.begins_with("pick_"):
+			_visual.animate_pickup(_swing_t, _swing_kind.trim_prefix("pick_"))
 		elif _swing_kind != "":
 			_visual.animate_chop(_swing_t, _swing_kind)
 			_grip(CharacterModel.chop_grip(_swing_t))
@@ -134,6 +136,9 @@ func _physics_process(delta: float) -> void:
 			kind = str(target.data.get("tool", ""))
 			if kind != "" and GS.best_tool(kind) < 0:
 				kind = ""
+			if str(target.data.get("tool", "")) == "" or kind == "":
+				# a mano: se agacha a cogerlo (o lo coge a la altura de la cintura, como las bayas)
+				kind = "pick_" + str(target.data.get("pick", "ground"))
 		if GS.hand_throws() and target.is_in_group("creature") and w != null:
 			w.throw_at(target)   # molotov: se lanza, no se golpea
 		elif target.is_in_group("resource") and target.has_method("missing_tool") and target.missing_tool():

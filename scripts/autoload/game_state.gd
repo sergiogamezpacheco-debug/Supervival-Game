@@ -1056,6 +1056,7 @@ func save_game(world: Dictionary) -> void:
 ## Carga la partida. Devuelve el bloque "world" (o {} si no había partida).
 func load_game() -> Dictionary:
 	if not FileAccess.file_exists(save_path):
+		_launched = true   # partida nueva: ya ha arrancado (si no, el primer camino te devolvería al refugio)
 		return {}
 	var f := FileAccess.open(save_path, FileAccess.READ)
 	if f == null:

@@ -32,6 +32,7 @@ var _keepout: Array = []    # [Vector3 centro, radio] zonas sin recursos (edific
 var _respawns: Array = []   # [{ "c": criatura, "t": segundos }]
 var _death_timer := 0.0
 var _autosave := 0.0
+var _dirty := -1.0   # segundos desde que cambió la mochila sin guardar (-1 = nada pendiente)
 var _half := 45.0
 
 # Modo construir
@@ -108,6 +109,7 @@ func _ready() -> void:
 		_build_route()
 
 	GS.died.connect(_on_player_died)
+	GS.inventory_changed.connect(func(): _dirty = maxf(_dirty, 0.0))
 	if not world.is_empty() and route.is_empty():
 		_load_world(world)
 	daynight = DayNightScript.new()
@@ -354,6 +356,14 @@ func _process(delta: float) -> void:
 			entry["c"].revive()
 
 	_autosave += delta
+	# Lo que entra o sale de la mochila se guarda enseguida (al pararte, o a los 3 s como mucho):
+	# si el móvil cierra el juego de golpe no se pierde lo recogido.
+	if _dirty >= 0.0:
+		_dirty += delta
+		if (_dirty >= 0.5 and player.move_input.length() < 0.1) or _dirty >= 3.0:
+			_dirty = -1.0
+			_autosave = 0.0
+			save()
 	# Se guarda con el jugador parado (guardar a mitad de carrera da un tirón); si no para, igualmente al rato
 	var every := float(DB.bal("autosave_seconds", 15))
 	if _autosave >= every and (player.move_input.length() < 0.1 or _autosave >= every * 4.0):
@@ -947,7 +957,9 @@ func save() -> void:
 
 
 func _notification(what: int) -> void:
-	if what == NOTIFICATION_APPLICATION_PAUSED or what == NOTIFICATION_WM_CLOSE_REQUEST:
+	# Android: al salir del juego (inicio, apps recientes) llega antes FOCUS_OUT que PAUSED, y PAUSED
+	# a veces ya no da tiempo: se guarda con cualquiera de los dos.
+	if what == NOTIFICATION_APPLICATION_PAUSED or what == NOTIFICATION_APPLICATION_FOCUS_OUT or what == NOTIFICATION_WM_CLOSE_REQUEST:
 		if player != null:
 			save()
 	elif what == NOTIFICATION_WM_GO_BACK_REQUEST:

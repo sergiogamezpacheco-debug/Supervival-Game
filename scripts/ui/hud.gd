@@ -672,6 +672,8 @@ func _process(delta: float) -> void:
 		fps_label.text = "%d FPS" % Engine.get_frames_per_second()
 	joystick.visible = not inv_open
 	action_button.visible = not inv_open
+	if inv_open and action_button.held:
+		action_button._set_held(false)   # aunque ya estuviera oculto al abrirse otra ventana
 	crouch_button.visible = not inv_open
 	dodge_button.visible = not inv_open
 	# Con una ventana abierta solo se ve el mundo detrás (sin barras ni minimapa encima)

@@ -83,7 +83,10 @@
   (mismos rectángulos que `VISTAS` en `mapa.py`). Capturas de la fase 1: `tools/fase1_shots.tscn -- /tmp/fase1`.
 - Picar y talar: `CharacterModel.animate_chop(t, "pickaxe"|"axe")` (claves `CHOP_KEYS`, la librería no trae ese gesto) y
   `grip_tool(herramienta, peso)` para cogerla por el mango; revisar con `tools/character_sheet.tscn -- <dir> chop`.
-  Sin la herramienta no se saca a la mano ni hay gesto: solo el aviso.
+  Sin la herramienta no se saca a la mano ni hay gesto: solo el aviso. Recoger a mano: `animate_pickup(t, "ground"|"waist")`
+  (`"pick": "waist"` en el recurso para cogerlo a la altura de la cintura, como el arbusto); `character_sheet ... pickup`.
+- Guardado: cada cambio en la mochila se guarda en <3 s (`world._dirty`) y también al perder el foco (Android cierra
+  la app sin dar tiempo a PAUSED).
 - Reaparición lenta: `"respawn": [mín, máx]` (segundos reales) en un grupo de criaturas de `maps.json`; se guarda en
   `GS.dead_until[mapa]` y sigue contando con el juego cerrado. El refugio la usa para que casi no haya infectados;
   su noche lleva `"chance"` (probabilidad de que lleguen).

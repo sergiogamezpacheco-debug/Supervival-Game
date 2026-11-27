@@ -67,7 +67,8 @@
     "tool": "",
     "hand_ok": true,
     "respawn": 45,
-    "radius": 0.0
+    "radius": 0.0,
+    "pick": "waist"
   },
   "hierba": {
     "name": "Hierba",

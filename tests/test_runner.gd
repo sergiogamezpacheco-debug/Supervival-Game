@@ -348,6 +348,16 @@ func test_refugio_infectados() -> void:
 		if c.has_meta("respawn_key") and str(c.get_meta("respawn_key")) == key:
 			z3 = c
 	check(z3 != null and z3.visible, "pasado el rato vuelve a aparecer")
+	# Guardado: lo que entra en la mochila se guarda enseguida y al salir del juego
+	world3.player.move_input = Vector2.ZERO
+	GS.add_item("cuerda", 3)
+	var t0 := Time.get_ticks_msec()
+	while Time.get_ticks_msec() - t0 < 1500:
+		await get_tree().process_frame
+	check(FileAccess.get_file_as_string(GS.save_path).contains("cuerda"), "lo que entra en la mochila se guarda enseguida")
+	GS.add_item("tela", 2)
+	world3._notification(Node.NOTIFICATION_APPLICATION_FOCUS_OUT)
+	check(FileAccess.get_file_as_string(GS.save_path).contains("tela"), "al salir del juego (pierde el foco) se guarda")
 	world3.queue_free()
 	await _frames(3)
 	GS.time_offset = 0.0
@@ -945,6 +955,31 @@ func test_fixes() -> void:
 			break
 	player.target = bush
 	check(player.action_info()["icon"] == "mano", "en un arbusto se recoge con la mano")
+	player.global_position = bush.global_position + Vector3(0.9, 0, 0)
+	player.reset_physics_interpolation()
+	player._action_cd = 0.0
+	world.hud.action_button.held = true
+	await _frames(2)
+	await _pframes(1)
+	world.hud.action_button.held = false
+	check(player._swing_kind == "pick_waist", "las bayas se cogen a la altura de la cintura")
+	player.target = stones
+	player.global_position = stones.global_position + Vector3(0.9, 0, 0)
+	player.reset_physics_interpolation()
+	player._action_cd = 0.0
+	world.hud.action_button.held = true
+	await _frames(2)
+	await _pframes(1)
+	world.hud.action_button.held = false
+	check(player._swing_kind == "pick_ground", "las piedras sueltas: se agacha a cogerlas")
+	var cmp := CharacterModel.new({"sex": "m"}, {}, {})
+	add_child(cmp)
+	cmp.animate_walk(0.0, 0.0)
+	var hips0: float = cmp.j["hips"].position.y
+	cmp.animate_pickup(0.5, "ground")
+	check(cmp.j["hips"].position.y < hips0 - 0.15 and cmp.j["spine"].quaternion.get_euler().x < -0.6, "al recoger del suelo baja la cadera y se inclina")
+	cmp.queue_free()
+	player.target = null
 	player.target = null
 
 	# Comida que caduca; las conservas no

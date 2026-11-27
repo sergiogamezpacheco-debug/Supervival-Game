@@ -1206,6 +1206,38 @@ func animate_chop(t: float, kind: String) -> void:
 		node.quaternion = node.quaternion.slerp(q, w)
 
 
+## Recoger con la mano (t 0..1): "waist" coge a la altura de la cintura (arbustos, bayas) con el
+## gesto de la librería; "ground" se agacha y estira el brazo hasta el suelo (piedras, ramas,
+## hierba, setas). Andando solo se mueve de cintura para arriba.
+func animate_pickup(t: float, kind: String) -> void:
+	if j.is_empty():
+		return
+	var still := _move <= 0.3
+	if kind == "waist":
+		var w := smoothstep(0.0, 0.12, t) * (1.0 - smoothstep(0.85, 1.0, t))
+		var ln := clip_length("PickUp_Table")
+		pose("PickUp_Table", (0.1 + 0.7 * t) * ln, w, [] if still else UPPER, false)
+		return
+	# abajo hasta 0,45, la mano en el suelo hasta 0,6 y vuelta arriba
+	var w := smoothstep(0.0, 0.45, t) * (1.0 - smoothstep(0.6, 1.0, t))
+	if still:
+		pose("Crouch_Idle_Loop", 0.0, w)
+	var reach := smoothstep(0.15, 0.5, t) * (1.0 - smoothstep(0.65, 1.0, t))
+	var target := {
+		"spine": Vector3(-1.0, 0.0, 0.0), "head": Vector3(-0.1, 0.0, 0.0),
+		"arm_r": Vector3(0.75, 0.0, -0.1), "elbow_r": Vector3(0.05, 0.0, 0.0), "hand_r": Vector3(0.3, 0.0, 0.0),
+		"arm_l": Vector3(0.35, 0.0, -0.4), "elbow_l": Vector3(0.6, 0.0, 0.0),
+	}
+	for jn in target:
+		if not still and (jn == "spine" or jn == "head"):
+			continue
+		var e: Vector3 = target[jn]
+		if jn.begins_with("arm_"):
+			e.z += -0.22 if jn == "arm_l" else 0.22
+		var node: Node3D = j[jn]
+		node.quaternion = node.quaternion.slerp(Quaternion.from_euler(e), reach)
+
+
 ## Reposo: respiración y pequeños movimientos (w 0..1). t en segundos.
 func animate_idle(t: float, w: float) -> void:
 	pose("Idle_Loop", t, w)

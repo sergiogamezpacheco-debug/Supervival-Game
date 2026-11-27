@@ -46,6 +46,8 @@ func _ready() -> void:
 		await _inventory()
 	elif OS.get_cmdline_user_args().size() > 1 and OS.get_cmdline_user_args()[1] == "clips":
 		await _clips(OS.get_cmdline_user_args().slice(2))
+	elif OS.get_cmdline_user_args().size() > 1 and OS.get_cmdline_user_args()[1] == "pickup":
+		await _pickup()
 	elif OS.get_cmdline_user_args().size() > 1 and OS.get_cmdline_user_args()[1] == "chop":
 		await _chop()
 	elif OS.get_cmdline_user_args().size() > 1 and OS.get_cmdline_user_args()[1] == "ref":
@@ -243,6 +245,24 @@ func _chop() -> void:
 			await _shot("chop_%s_%d_lado" % [kind, k], Vector2i(300, 450), Vector3(0.0, 1.1, -4.6), Vector3(0, 0.95, 0), 30)
 			c.rotation.y = 0.5
 			await _shot("chop_%s_%d_frente" % [kind, k], Vector2i(300, 450), Vector3(0.0, 1.1, -4.6), Vector3(0, 0.95, 0), 30)
+
+
+## Recoger del suelo y de un arbusto (animate_pickup).
+func _pickup() -> void:
+	var M := {"sex": "m", "skin": 1, "hair": 1, "hair_color": 1}
+	_clear()
+	await get_tree().process_frame
+	var c := _char(M, {}, {}, Vector3.ZERO, 0.0)
+	for kind in ["ground", "waist"]:
+		for k in 5:
+			var t: float = [0.0, 0.3, 0.5, 0.7, 0.9][k]
+			c.animate_walk(0.0, 0.0)
+			c.animate_idle(0.0, 1.0)
+			c.animate_pickup(t, kind)
+			c.rotation.y = PI / 2.0
+			await _shot("pick_%s_%d_lado" % [kind, k], Vector2i(300, 450), Vector3(0.0, 1.0, -4.6), Vector3(0, 0.8, 0), 30)
+			c.rotation.y = 0.5
+			await _shot("pick_%s_%d_frente" % [kind, k], Vector2i(300, 450), Vector3(0.0, 1.0, -4.6), Vector3(0, 0.8, 0), 30)
 
 
 ## Superviviente básico (como el diseño del inventario): cuerpo, cara, lado y poses.
