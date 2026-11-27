@@ -2477,6 +2477,34 @@ func test_dodge_audio() -> void:
 	world.hud.show_loading("El Pedregal")
 	check(world.hud.loading.visible and world.hud.loading.get_node("Texto").text == "Cargando El Pedregal…", "al cambiar de zona sale «Cargando…»")
 	world.hud.loading.visible = false
+	# arrastrar la lista empezando encima de un interruptor: se desplaza y el interruptor no cambia
+	var sw: Control = st.controls["shadows"]
+	var sh0: bool = sw.button_pressed
+	st._scroll.scroll_vertical = 0
+	await _pframes(2)
+	var xf := get_tree().root.get_final_transform()
+	var p0: Vector2 = sw.get_global_rect().get_center()
+	var tt := InputEventScreenTouch.new()
+	tt.index = 0
+	tt.pressed = true
+	tt.position = xf * p0
+	Input.parse_input_event(tt)
+	await _pframes(1)
+	for k in 8:
+		var dd := InputEventScreenDrag.new()
+		dd.index = 0
+		dd.position = xf * (p0 - Vector2(0, 20 * (k + 1)))
+		dd.relative = xf.basis_xform(Vector2(0, -20))
+		Input.parse_input_event(dd)
+		await _pframes(1)
+	var tup := InputEventScreenTouch.new()
+	tup.index = 0
+	tup.pressed = false
+	tup.position = xf * (p0 - Vector2(0, 160))
+	Input.parse_input_event(tup)
+	await _pframes(2)
+	check(st._scroll.scroll_vertical > 40 and sw.button_pressed == sh0, "la lista de ajustes se arrastra aunque se empiece encima de un interruptor (%d)" % st._scroll.scroll_vertical)
+	st._scroll.scroll_vertical = 0
 	st.controls["shadows"].button_pressed = false
 	check(SFX.settings["shadows"] == false and not world._sun.shadow_enabled, "quitar sombras se aplica")
 	st.controls["quality"].item_selected.emit(0)

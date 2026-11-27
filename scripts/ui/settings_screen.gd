@@ -36,6 +36,16 @@ var _knob: ImageTexture
 var _saved := {}                 # ajustes tal como están guardados (para descartar)
 var dirty := false               # hay cambios sin guardar
 var save_btn: Button
+var _scroll: ScrollContainer
+# Arrastrar la lista con el dedo aunque se empiece encima de un botón, interruptor o barra
+# (antes la lista solo se movía si el dedo caía en un hueco libre y parecía bloqueada)
+var _drag_idx := -1
+var _drag_from := Vector2.ZERO
+var _drag_scroll := 0
+var _drag_ctrl: Control = null    # lo que había bajo el dedo al empezar
+var _drag_value := 0.0            # valor de la barra antes de tocarla
+var dragging := false
+var _synth := false
 var _close_btn: Button
 
 
@@ -479,6 +489,8 @@ func _build_right() -> void:
 	var sc := ScrollContainer.new()
 	sc.custom_minimum_size = Vector2(590, 446)
 	sc.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	sc.mouse_filter = Control.MOUSE_FILTER_IGNORE   # el arrastre lo lleva _input
+	_scroll = sc
 	v.add_child(sc)
 	_list = VBoxContainer.new()
 	_list.size_flags_horizontal = Control.SIZE_EXPAND_FILL
@@ -507,6 +519,55 @@ func _build_right() -> void:
 	bottom.add_child(_wipe_btn)
 	controls["wipe"] = _wipe_btn
 	v.add_child(bottom)
+
+
+## Control de la lista que hay bajo un punto (botón, desplegable, interruptor o barra).
+func _control_at(p: Vector2) -> Control:
+	for c in _list.find_children("*", "Control", true, false):
+		if (c is BaseButton or c is Range) and c.is_visible_in_tree() and (c as Control).get_global_rect().has_point(p):
+			return c
+	return null
+
+
+func _input(ev: InputEvent) -> void:
+	if not visible or _scroll == null or _legal.visible or _log.visible or _synth:
+		return
+	var inv := _scroll.get_global_transform_with_canvas().affine_inverse()
+	if ev is InputEventScreenTouch:
+		if ev.pressed and _drag_idx == -1 and Rect2(Vector2.ZERO, _scroll.size).has_point(inv * ev.position):
+			_drag_idx = ev.index
+			_drag_from = ev.position
+			_drag_scroll = _scroll.scroll_vertical
+			dragging = false
+			_drag_ctrl = _control_at(get_global_transform_with_canvas().affine_inverse() * ev.position)
+			_drag_value = (_drag_ctrl as Range).value if _drag_ctrl is Range else 0.0
+		elif not ev.pressed and ev.index == _drag_idx:
+			_drag_idx = -1
+	elif ev is InputEventScreenDrag and ev.index == _drag_idx:
+		var d: Vector2 = inv.basis_xform(ev.position - _drag_from)
+		if not dragging and absf(d.y) > 14.0 and absf(d.y) > absf(d.x):
+			dragging = true
+			_cancel_press()
+		if dragging:
+			_scroll.scroll_vertical = _drag_scroll - int(d.y)
+			get_viewport().set_input_as_handled()
+	elif ev is InputEventMouseMotion and dragging and _drag_idx != -1:
+		get_viewport().set_input_as_handled()   # que la barra o el botón no sigan al dedo
+
+
+## Al empezar a arrastrar: lo que se tocó no cuenta (el botón no se pulsa, la barra vuelve a su valor).
+func _cancel_press() -> void:
+	if _drag_ctrl is Range:
+		(_drag_ctrl as Range).value = _drag_value
+	elif _drag_ctrl is BaseButton:
+		# el botón deja de estar «pulsado dentro» y al soltar no hace nada
+		var mm := InputEventMouseMotion.new()
+		mm.position = Vector2(-9999, -9999)
+		mm.global_position = mm.position
+		mm.button_mask = MOUSE_BUTTON_MASK_LEFT
+		_synth = true
+		get_viewport().push_input(mm)
+		_synth = false
 
 
 ## Guarda y cierra el juego (todavía no hay cuentas en línea).
@@ -621,6 +682,7 @@ func _look_row() -> void:
 
 func _dropdown(items: Array) -> OptionButton:
 	var o := OptionButton.new()
+	o.action_mode = BaseButton.ACTION_MODE_BUTTON_RELEASE   # al soltar: arrastrar la lista no lo abre
 	o.custom_minimum_size = Vector2(250, 50)
 	o.focus_mode = Control.FOCUS_NONE
 	o.alignment = HORIZONTAL_ALIGNMENT_CENTER
