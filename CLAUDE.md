@@ -73,3 +73,7 @@
 - Listas con dedo: `station_screen._input` desplaza `_scroll_box()` arrastrando (los ScrollContainer van con
   `MOUSE_FILTER_IGNORE`; los botones miran `dragged` para no contar el arrastre como toque).
 - Con cualquier ventana abierta (`hud.any_panel_open()`) se ocultan joystick y botones y no hay acción; Atrás cierra.
+- Mapa y caminos (`docs/mapa_y_caminos.md`): mapa en papel por código `tools/mapa/mapa.py` (piezas I-III cosidas);
+  tramos entre zonas en `data/routes.json` construidos por `RouteBuilder.build(root, tramo, semilla_visita)`
+  (pasillo con fronteras naturales + paredes invisibles, decorado repetido en MultiMesh, puntos de cambio por visita).
+  Fotos: `tools/route_shots.tscn -- /tmp/caminos` y láminas con `tools/mapa/laminas_caminos.py`.

@@ -1,0 +1,92 @@
+{
+  "r_refugio_pinar": {
+    "name": "Senda del Cuervo",
+    "from": "refugio", "to": "pinar", "part": 1, "length": 260,
+    "biome": "pinar", "road": "tierra",
+    "borders": {"left": "pinar_denso", "right": "arroyo"},
+    "pois": [{"type": "cabana_caza", "at": 0.35, "side": "left"}, {"type": "pila_troncos", "at": 0.7, "side": "right"}],
+    "resources": {"pino": 18, "ramas": 10, "arbusto": 8, "seta": 6, "roca": 3},
+    "creatures": [{"type": "infectado", "groups": 2, "size": [1, 2]}, {"type": "conejo", "groups": 2, "size": [1, 2]}, {"type": "ciervo", "groups": 1, "size": [2, 2]}],
+    "variations": {"obstacles": ["arbol_caido", "rocas_derrumbe"], "max": 2}
+  },
+  "r_refugio_cantera": {
+    "name": "Cuesta del Tajo",
+    "from": "refugio", "to": "cantera", "part": 1, "length": 280,
+    "biome": "roquedal", "road": "tierra",
+    "borders": {"left": "barranco", "right": "penas"},
+    "pois": [{"type": "caseta_peones", "at": 0.45, "side": "right"}, {"type": "vagoneta", "at": 0.8, "side": "left"}],
+    "resources": {"roca": 14, "piedras": 10, "veta_hierro": 4, "pino": 6, "hierba": 8},
+    "creatures": [{"type": "infectado", "groups": 2, "size": [1, 2]}, {"type": "vibora", "groups": 2, "size": [1, 1]}, {"type": "jabali", "groups": 1, "size": [1, 1]}],
+    "variations": {"obstacles": ["rocas_derrumbe", "arbol_caido"], "max": 2}
+  },
+  "r_pinar_atalaya": {
+    "name": "Camino de La Atalaya",
+    "from": "pinar", "to": "atalaya", "part": 2, "length": 320,
+    "biome": "campo", "road": "tierra",
+    "borders": {"left": "pinar_denso", "right": "vallado"},
+    "pois": [{"type": "casa_labranza", "at": 0.3, "side": "right"}, {"type": "control_coches", "at": 0.62, "side": "center"}, {"type": "carteles_aviso", "at": 0.9, "side": "center"}],
+    "resources": {"pino": 10, "arbusto": 10, "hierba": 12, "roca": 4, "chatarra": 3},
+    "creatures": [{"type": "infectado", "groups": 3, "size": [1, 3]}, {"type": "lobo", "groups": 1, "size": [2, 3]}, {"type": "corredora", "groups": 1, "size": [1, 1]}],
+    "variations": {"obstacles": ["arbol_caido", "coche_cruzado"], "max": 2}
+  },
+  "r_atalaya_marismas": {
+    "name": "Ribera del Guadal",
+    "from": "atalaya", "to": "marismas", "part": 2, "length": 300,
+    "biome": "ribera", "road": "tierra",
+    "borders": {"left": "rio", "right": "canaveral"},
+    "pois": [{"type": "molino", "at": 0.4, "side": "left"}, {"type": "barca", "at": 0.75, "side": "left"}],
+    "resources": {"arbusto": 10, "hierba": 16, "seta": 6, "piedras": 6, "ramas": 6},
+    "creatures": [{"type": "infectado", "groups": 3, "size": [1, 2]}, {"type": "conejo", "groups": 2, "size": [1, 2]}, {"type": "gritona", "groups": 1, "size": [1, 1]}],
+    "variations": {"obstacles": ["arbol_caido", "barro"], "max": 2}
+  },
+  "r_refugio_centinela": {
+    "name": "Carretera Vieja",
+    "from": "refugio", "to": "centinela", "part": 2, "length": 340,
+    "biome": "carretera", "road": "asfalto",
+    "borders": {"left": "terraplen", "right": "pinar_denso"},
+    "pois": [{"type": "gasolinera", "at": 0.35, "side": "right"}, {"type": "coches_abandonados", "at": 0.55, "side": "center"}, {"type": "tienda_carretera", "at": 0.78, "side": "left"}],
+    "resources": {"pino": 8, "arbusto": 8, "chatarra": 8, "roca": 4, "hierba": 10},
+    "creatures": [{"type": "infectado", "groups": 4, "size": [1, 3]}, {"type": "purulento", "groups": 1, "size": [1, 1]}, {"type": "jabali", "groups": 1, "size": [1, 1]}],
+    "variations": {"obstacles": ["coche_cruzado", "arbol_caido", "barricada"], "max": 3}
+  },
+  "r_centinela_puerto": {
+    "name": "Carretera de la Costa",
+    "from": "centinela", "to": "puerto", "part": 3, "length": 380,
+    "biome": "costa", "road": "asfalto",
+    "borders": {"left": "acantilado", "right": "pinar_denso"},
+    "pois": [{"type": "casa_playa", "at": 0.4, "side": "left"}, {"type": "furgoneta", "at": 0.7, "side": "center"}],
+    "resources": {"pino": 8, "roca": 8, "chatarra": 6, "arbusto": 6, "hierba": 10},
+    "creatures": [{"type": "infectado", "groups": 4, "size": [2, 3]}, {"type": "corredora", "groups": 1, "size": [1, 2]}],
+    "variations": {"obstacles": ["coche_cruzado", "rocas_derrumbe"], "max": 2}
+  },
+  "r_cantera_villamuralla": {
+    "name": "Paso de la Sierra",
+    "from": "cantera", "to": "villamuralla", "part": 3, "length": 360,
+    "biome": "montana", "road": "tierra",
+    "borders": {"left": "barranco", "right": "penas"},
+    "pois": [{"type": "refugio_montana", "at": 0.45, "side": "right"}, {"type": "puente", "at": 0.7, "side": "center"}],
+    "resources": {"roca": 14, "veta_cobre": 4, "veta_hierro": 4, "pino": 10, "piedras": 8},
+    "creatures": [{"type": "infectado", "groups": 3, "size": [1, 2]}, {"type": "lobo", "groups": 2, "size": [2, 3]}, {"type": "acorazado", "groups": 1, "size": [1, 1]}],
+    "variations": {"obstacles": ["rocas_derrumbe", "arbol_caido"], "max": 2}
+  },
+  "r_via_puerto_estacion": {
+    "name": "Vía del Litoral",
+    "from": "puerto", "to": "estacion", "part": 3, "length": 400,
+    "biome": "via", "road": "via",
+    "borders": {"left": "terraplen", "right": "vallado"},
+    "pois": [{"type": "pueblo_abandonado", "at": 0.5, "side": "right"}, {"type": "vagon_volcado", "at": 0.8, "side": "left"}],
+    "resources": {"chatarra": 10, "arbusto": 8, "hierba": 12, "roca": 6, "pino": 6},
+    "creatures": [{"type": "infectado", "groups": 5, "size": [2, 3]}, {"type": "gritona", "groups": 1, "size": [1, 1]}],
+    "variations": {"obstacles": ["vagoneta_suelta", "arbol_caido"], "max": 2}
+  },
+  "r_via_estacion_central": {
+    "name": "Vía de la Central",
+    "from": "estacion", "to": "central", "part": 3, "length": 380,
+    "biome": "via", "road": "via",
+    "borders": {"left": "vallado", "right": "terraplen"},
+    "pois": [{"type": "control_militar", "at": 0.45, "side": "center"}, {"type": "vagon_volcado", "at": 0.75, "side": "right"}],
+    "resources": {"chatarra": 12, "roca": 8, "hierba": 8, "arbusto": 6},
+    "creatures": [{"type": "infectado", "groups": 5, "size": [2, 3]}, {"type": "blindado", "groups": 1, "size": [1, 1]}, {"type": "purulento", "groups": 1, "size": [1, 1]}],
+    "variations": {"obstacles": ["coche_cruzado", "barricada"], "max": 2}
+  }
+}

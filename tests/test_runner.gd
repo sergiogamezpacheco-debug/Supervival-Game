@@ -41,6 +41,8 @@ func _ready() -> void:
 	await test_new_stations()
 	print("== Recolectar con herramienta, comida que caduca, desplazar listas y ventanas")
 	await test_fixes()
+	print("== Caminos entre zonas (tramos)")
+	await test_routes()
 	print("== Niveles y peso")
 	await test_levels_weight()
 	await test_crafting_tree()
@@ -1013,6 +1015,50 @@ func test_fixes() -> void:
 	world.hud.close_panels()
 	world.queue_free()
 	await _frames(2)
+
+
+func test_routes() -> void:
+	var routes: Dictionary = JSON.parse_string(FileAccess.get_file_as_string("res://data/routes.json"))
+	check(routes.size() >= 9, "tramos de camino definidos (%d)" % routes.size())
+	var bad := []
+	for rid in routes:
+		var r: Dictionary = routes[rid]
+		for k in r.get("resources", {}):
+			if not DB.resources.has(k):
+				bad.append("%s:%s" % [rid, k])
+		for c in r.get("creatures", []):
+			if not DB.creatures.has(str(c["type"])):
+				bad.append("%s:%s" % [rid, c["type"]])
+		if int(r.get("part", 0)) < 1 or int(r.get("part", 0)) > 3:
+			bad.append("%s:parte" % rid)
+	check(bad.is_empty(), "recursos, criaturas y parte de cada tramo existen %s" % str(bad))
+	var r0: Dictionary = routes["r_refugio_pinar"]
+	var a := Node3D.new()
+	add_child(a)
+	var t0 := Time.get_ticks_msec()
+	var ia := RouteBuilder.build(a, r0, 11)
+	var ms := Time.get_ticks_msec() - t0
+	check(ms < 3000, "un tramo se construye rápido (%d ms)" % ms)
+	var walls := a.get_children().filter(func(n): return n is StaticBody3D and str(n.name).begins_with("Frontera"))
+	check(walls.size() == 2 and walls[0].get_child_count() > 10, "paredes invisibles a los dos lados (%d)" % walls.size())
+	check(a.find_children("*", "MultiMeshInstance3D", true, false).size() >= 3, "decorado repetido con MultiMesh")
+	check(ia["spots"].size() >= 2 and ia["obstacles"].size() == ia["spots"].size(), "puntos de cambio en el tramo")
+	check(ia["obstacles"].any(func(o): return o[0] != ""), "cada visita pone al menos un obstáculo")
+	var seen := {}
+	var spots0: Array = ia["spots"]
+	for v in range(1, 30):
+		var b := Node3D.new()
+		var ib := RouteBuilder.build(b, r0, v * 7919)
+		seen[str(ib["obstacles"].map(func(o): return o[0]))] = true
+		check(ib["spots"] == spots0, "los puntos de cambio son siempre los mismos") if v == 1 else null
+		b.free()
+	check(seen.size() >= 4, "de una visita a otra cambian los obstáculos (%d combinaciones)" % seen.size())
+	var a2 := Node3D.new()
+	var ia2 := RouteBuilder.build(a2, r0, 12)
+	check(ia2["creatures"][0][1] != ia["creatures"][0][1], "los infectados cambian de sitio en cada visita")
+	a2.free()
+	a.queue_free()
+	await _frames(1)
 
 
 func test_crafting_tree() -> void:
