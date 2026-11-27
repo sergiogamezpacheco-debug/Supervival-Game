@@ -71,3 +71,13 @@ las paredes. Cada habitación tiene muebles que se registran:
 | Pueblo abandonado | Cocina, dormitorio, baño y garaje (banco, bidón, cajas); una casa en ruinas |
 
 Lo que dejas en un mueble se queda un día (reloj real); después se vuelve a llenar.
+
+## Parte II jugable
+
+| Zona | Qué tiene |
+|---|---|
+| La Atalaya | Poblado seguro: empalizada, 6 torres con arqueros que abaten a los infectados, Mercader y Armero (vales de La Atalaya), confianza que abre mejor género (botiquín, chaleco, hachas de hierro, traje de buzo, mapa de la costa) |
+| Base Centinela | Campamento militar: valla con un tramo caído (por ahí se entra), barracones y puesto de mando por dentro, tiendas, camión, helipuerto, soldados infectados con chaleco |
+| Marismas del Guadal | Agua poco honda (frena) y honda (solo con traje de buzo), islote con barca hundida, cofre en el fondo, palafito del pescador, ahogados |
+
+Al llegar andando al borde de cualquier zona se abre el mapa para seguir andando o viajar.

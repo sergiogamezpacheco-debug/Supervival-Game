@@ -326,6 +326,27 @@ func _build_water() -> void:
 	_keepout.append_array(w.get("deep", []).map(func(c): return [Vector3(float(c[0]), 0, float(c[1])), float(c[2]) + 1.0]))
 
 
+var _edge_cd := 0.0
+
+
+## Al llegar andando al borde de la zona se abre el mapa (para ir a otro sitio, andando o viajando);
+## el jugador vuelve un paso atrás para que no se abra otra vez sin querer.
+func _check_zone_edge(delta: float) -> void:
+	_edge_cd = maxf(_edge_cd - delta, 0.0)
+	var p: Vector3 = player.global_position
+	var lim := _half - 1.2
+	if _edge_cd > 0.0 or hud.any_panel_open() or build_mode != "":
+		return
+	if absf(p.x) < lim and absf(p.z) < lim:
+		return
+	_edge_cd = 2.5
+	var back := Vector3(-signf(p.x) if absf(p.x) >= lim else 0.0, 0, -signf(p.z) if absf(p.z) >= lim else 0.0)
+	player.global_position = p + back * 2.0
+	player.reset_physics_interpolation()
+	GS.trace("borde de la zona %s: se abre el mapa" % map_id)
+	hud.open_map()
+
+
 var _last_dry := Vector3.ZERO
 var _water_msg := 0.0
 
@@ -477,6 +498,8 @@ func _process(delta: float) -> void:
 			_update_houses()
 		if map.has("water"):
 			_update_water(delta)
+		if route.is_empty():
+			_check_zone_edge(delta)
 		if base:
 			player.floor_y = base.floor_height(player.global_position)
 		var t := find_target()

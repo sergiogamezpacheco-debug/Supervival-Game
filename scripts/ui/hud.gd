@@ -611,6 +611,13 @@ func _build_controls() -> void:
 	side.add_child(map_btn)
 
 
+## Abre el mapa (al llegar al borde de una zona).
+func open_map() -> void:
+	if not _map_panel.visible:
+		_toggle(_map_panel)
+		_refresh_map()
+
+
 ## Botón redondo del lateral con un icono (sin texto).
 func _big_button(icon_name: String, tip: String) -> Button:
 	var b := Button.new()

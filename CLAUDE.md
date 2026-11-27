@@ -91,6 +91,12 @@
 - Casas de los caminos (`RouteBuilder.house(..., layout)`, `LAYOUTS`): se entra por la puerta; dentro, `world._update_houses()`
   esconde "Tejado" y "Alto" (van aparte del `Builder.merge`, meta `no_merge`). Muebles = Marker3D con meta "tipo"
   (contenedores de `containers.json`); su contenido se recuerda en `GS.route_loot` un día (`house_refill_seconds`).
+- Zonas de la parte II (`maps.json`): `"settlement"` (La Atalaya: empalizada, torres con `Npc` arquero, casas sin saqueo;
+  `scripts/world/settlement.gd`), `"camp"` (Base Centinela: valla con tramo caído; `Settlement.build_camp`), `"houses"`
+  ([distribución, x, z, giro, pared, tejado] con muebles registrables), `"stations"` (puestos de comerciante: estaciones con
+  `"trader": true`, recetas con `time 0`, `"trust"` y `"trust_gain"`; `GS.trust`), `"water"` (círculos de agua honda/poco
+  honda e islotes; `world.water_depth`, `GS.can_dive()` = ropa con `"dive"`). Fotos: `tools/zone_shots.tscn -- <dir> <mapa> [x,z…]`.
+- Borde de zona: `world._check_zone_edge` abre el mapa (`hud.open_map`) y aparta al jugador un paso.
 - Almacenaje: cofre en el menú de construir; el resto (baúles, estanterías, armarios) se fabrica en la estación
   `almacenamiento` (diseños `docs/diseno_est_almacen_*.jpg`) como objeto `type: storage` con `"place"`, y se coloca desde
   la mochila (`world.place_furniture`, modo construir pagando el mueble). En `stations.json` llevan `"item"` (no salen en

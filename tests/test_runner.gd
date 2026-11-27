@@ -356,6 +356,12 @@ func test_atalaya() -> void:
 		if z.hp < hp0:
 			break
 	check(z.hp < hp0, "los arqueros de las torres disparan al infectado de la puerta")
+	# al llegar al borde de la zona se abre el mapa
+	w.player.global_position = Vector3(49.5, 0, 0)
+	w.player.reset_physics_interpolation()
+	await _pframes(2)
+	check(w.hud._map_panel.visible and w.player.global_position.x < 48.5, "al llegar al borde de la zona se abre el mapa (y vuelves un paso)")
+	w.hud.close_panels()
 	w.queue_free()
 	await _frames(3)
 	DirAccess.remove_absolute(ProjectSettings.globalize_path(GS.save_path))

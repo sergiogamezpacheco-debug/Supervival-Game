@@ -51,7 +51,9 @@ Plan completo por fases (offline primero, online preparado): **[docs/hoja-de-rut
       ✅ parte I: Refugio, La Arboleda (madera básica, superviviente muerto con el trozo II) y El Pedregal
       (1 de cada 10 rocas es hierro), coches abandonados con suministros, ✅ viaje rápido con energía
       (se recarga 20/h reales) o ir andando por el camino, ✅ parte II jugable: Pinar del Cuervo (troncos de pino)
-      y Cantera del Tajo (mitad minerales). Pendiente: La Atalaya, Base Centinela, Marismas, parte III,
+      y Cantera del Tajo (mitad minerales), ✅ La Atalaya (empalizada, arqueros, mercader y armero con
+      confianza), ✅ Base Centinela (campamento militar), ✅ Marismas (agua honda y traje de buzo),
+      ✅ al llegar al borde de una zona se abre el mapa. Pendiente: parte III,
       recarga de energía viendo vídeos ([docs/mapa_y_caminos.md](docs/mapa_y_caminos.md)).
 - [ ] **Fase 4 – Combate y equipo:** armas a distancia, munición, armaduras, más enemigos, tablas de botín.
 - [ ] **Fase 5 – Contenido grande:** búnker, granja, vehículos, mascota, eventos.
