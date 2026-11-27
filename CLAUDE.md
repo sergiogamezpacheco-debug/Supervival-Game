@@ -77,3 +77,7 @@
   tramos entre zonas en `data/routes.json` construidos por `RouteBuilder.build(root, tramo, semilla_visita)`
   (pasillo con fronteras naturales + paredes invisibles, decorado repetido en MultiMesh, puntos de cambio por visita).
   Fotos: `tools/route_shots.tscn -- /tmp/caminos` y láminas con `tools/mapa/laminas_caminos.py`.
+- Viaje: trozos de mapa (`GS.map_pieces`, objetos `type: map_piece` que no entran en la mochila) desbloquean zonas
+  (`"piece"` en `world_map.json`/`maps.json`). Viaje rápido gasta `GS.travel_energy` (`DB.travel_energy_cost`);
+  "Ir andando" pone `GS.current_map` = id del tramo y `GS.route_from`. El HUD recorta el mapa con `MAP_VIEWS`
+  (mismos rectángulos que `VISTAS` en `mapa.py`). Capturas de la fase 1: `tools/fase1_shots.tscn -- /tmp/fase1`.

@@ -158,6 +158,18 @@ static func resource_mesh(kind: String) -> Node3D:
 			t.scale = Vector3.ONE * randf_range(0.85, 1.2)
 			t.rotation.y = randf() * TAU
 			root.add_child(t)
+		"arbol":
+			# árbol pequeño de hoja (La Arboleda): da madera básica
+			var tr := Node3D.new()
+			Nature._trunk(tr, 1.7, 0.13, randf_range(-0.15, 0.15))
+			var greens := [Color("4f7d38"), Color("5d8c40"), Color("6a9a48")]
+			for k in 4:
+				var off := Vector3(randf_range(-0.45, 0.45), 1.8 + randf_range(0.0, 0.6), randf_range(-0.45, 0.45))
+				Nature._p(tr, Nature.blob(randi() % 50 + k * 7, 0.18, 7, 3, false), greens[k % 3], off,
+					Vector3(0, randf() * TAU, 0), Vector3.ONE * randf_range(0.55, 0.85))
+			tr.scale = Vector3.ONE * randf_range(0.85, 1.15)
+			tr.rotation.y = randf() * TAU
+			root.add_child(tr)
 		"roca":
 			# En la cantera, losas; en el resto, peñascos y rocas con musgo
 			var mixr := "bbba" if GS.current_map == "cantera" else "aacb"
@@ -422,6 +434,27 @@ static func container_mesh(id: String) -> Node3D:
 		"taquilla":
 			root.add_child(part(box(Vector3(0.8, 1.8, 0.5)), Color("6d7f8c"), Vector3(0, 0.9, 0)))
 			root.add_child(part(box(Vector3(0.02, 1.6, 0.02)), Color("3d4a52"), Vector3(0, 0.9, -0.26)))
+		"coche", "coche_bueno":
+			# coche abandonado: oxidado, con el maletero abierto
+			var col := Color("8a5a3a") if id == "coche" else Color("4f6a58")
+			RouteBuilder.car(root, col, Vector3.ZERO, 0.0)
+			var lid := part(box(Vector3(1.6, 0.06, 0.9)), col.darkened(0.15), Vector3(0, 1.35, 2.3))
+			lid.rotation.x = -1.0
+			root.add_child(lid)
+			for k in 4:   # óxido
+				root.add_child(part(box(Vector3(0.35, 0.02, 0.4)), Color("6b3a22"), Vector3(-0.5 + k * 0.33, 0.96, -1.2 + k * 0.7)))
+			if id == "coche_bueno":   # baca con bultos
+				root.add_child(part(box(Vector3(1.3, 0.35, 1.2)), Color("5f6a42"), Vector3(0, 1.7, 0.1)))
+		"cadaver":
+			# superviviente muerto boca abajo con su mochila
+			root.add_child(part(box(Vector3(1.6, 0.02, 1.2)), Color("4a1e18"), Vector3(0.1, 0.01, 0.1)))
+			root.add_child(part(box(Vector3(0.5, 0.25, 0.75)), Color("5a6a4a"), Vector3(0, 0.14, 0)))
+			root.add_child(part(sphere(0.15), Color("c8a07c"), Vector3(0, 0.15, -0.55)))
+			for x in [-0.13, 0.13]:
+				root.add_child(part(box(Vector3(0.17, 0.16, 0.8)), Color("3d4a5a"), Vector3(x, 0.09, 0.75)))
+			for x in [-0.36, 0.36]:
+				root.add_child(part(box(Vector3(0.14, 0.13, 0.6)), Color("5a6a4a"), Vector3(x, 0.08, -0.25)))
+			root.add_child(part(box(Vector3(0.42, 0.22, 0.4)), Color("7a5a32"), Vector3(0, 0.36, 0.05)))
 		_:
 			root.add_child(part(box(Vector3(1.1, 0.55, 0.65)), Color("4e3a26"), Vector3(0, 0.28, 0)))
 			root.add_child(part(box(Vector3(1.14, 0.2, 0.69)), Color("3b2c1d"), Vector3(0, 0.62, 0)))

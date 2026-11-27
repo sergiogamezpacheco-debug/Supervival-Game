@@ -8,7 +8,7 @@ const M := preload("res://scripts/world/station_models.gd")
 const IDS := ["hacha_hierro", "pico_hierro", "machete", "casco_obra", "chaqueta_piel", "chaleco",
 	"pantalon_cargo", "zapatillas", "botas", "guantes", "fibra", "piel", "baya", "carne_cruda",
 	"carne_asada", "seta", "carbon", "clavos", "tela_resistente", "botella_vacia", "lata_vacia", "cantimplora_vacia",
-	"conserva_bayas", "acido", "cable_cobre", "circuito", "bateria", "sal", "tarro_cristal", "tarro_esterilizado", "comida_podrida", "hortalizas", "tierra"]
+	"conserva_bayas", "acido", "cable_cobre", "circuito", "bateria", "sal", "tarro_cristal", "tarro_esterilizado", "comida_podrida", "hortalizas", "tierra", "madera_pino", "trozo_mapa_2", "trozo_mapa_3"]
 
 var vp: SubViewport
 var cam: Camera3D
@@ -498,3 +498,39 @@ func _tierra() -> float:
 		var a := float(k) * 1.3
 		_blob(110 + k, Color("9a9a92"), Vector3(cos(a) * 0.45, -0.3 + float(k % 2) * 0.15, sin(a) * 0.4), Vector3(0.08, 0.06, 0.07), 0.2)
 	return 1.8
+
+
+# ----------------------------------------------------------- madera de pino y trozos de mapa
+
+func _madera_pino() -> float:
+	# tres troncos de pino más gruesos y rojizos, con gotas de resina
+	for k in 3:
+		var g := _group(Vector3(-0.28 + k * 0.28, -0.2 + (1 if k == 1 else 0) * 0.4, 0.0 if k != 1 else -0.05), Vector3(0, 0, 90))
+		_p(_cyl(0.24, 0.24, 1.5, 9), Color("7a4a2c"), Vector3.ZERO, Vector3.ZERO, Vector3.ONE, g)
+		_p(_cyl(0.2, 0.2, 0.02, 9), Color("d8b07a"), Vector3(0, 0.76, 0), Vector3.ZERO, Vector3.ONE, g)
+		_p(_cyl(0.11, 0.11, 0.025, 9), Color("b88a52"), Vector3(0, 0.77, 0), Vector3.ZERO, Vector3.ONE, g)
+	for k in 3:
+		_blob(60 + k, Color("e0a83a"), Vector3(-0.3 + k * 0.3, 0.15 + (k % 2) * 0.2, -0.22), Vector3(0.05, 0.07, 0.04), 0.1)
+	return 1.9
+
+
+func _trozo_mapa() -> float:
+	# trozo de papel viejo rasgado con caminos y una cruz roja
+	var g := _group(Vector3.ZERO, Vector3(10, 25, 0))
+	_p(_box(Vector3(1.3, 0.02, 1.0)), Color("e0c896"), Vector3.ZERO, Vector3.ZERO, Vector3.ONE, g)
+	for k in 6:
+		_p(_box(Vector3(0.12, 0.022, 0.14)), Color("2c2620"), Vector3(-0.66 + 0.01, 0, -0.45 + k * 0.18), Vector3(0, 30 * (k % 2), 0), Vector3.ONE, g)
+	for k in 5:
+		_p(_box(Vector3(0.18, 0.025, 0.03)), Color("8a5a32"), Vector3(-0.4 + k * 0.2, 0.01, 0.1 * sin(k)), Vector3(0, 20 * k, 0), Vector3.ONE, g)
+	_p(_box(Vector3(0.9, 0.025, 0.05)), Color("6e9aa6"), Vector3(0.1, 0.01, -0.3), Vector3(0, -15, 0), Vector3.ONE, g)
+	_p(_box(Vector3(0.22, 0.03, 0.05)), Color("a8281e"), Vector3(0.35, 0.02, 0.25), Vector3(0, 45, 0), Vector3.ONE, g)
+	_p(_box(Vector3(0.22, 0.03, 0.05)), Color("a8281e"), Vector3(0.35, 0.02, 0.25), Vector3(0, -45, 0), Vector3.ONE, g)
+	return 1.8
+
+
+func _trozo_mapa_2() -> float:
+	return _trozo_mapa()
+
+
+func _trozo_mapa_3() -> float:
+	return _trozo_mapa()

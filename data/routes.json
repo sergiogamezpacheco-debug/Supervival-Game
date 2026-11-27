@@ -24,7 +24,7 @@
       }
     ],
     "resources": {
-      "pino": 6,
+      "arbol": 8,
       "ramas": 12,
       "arbusto": 10,
       "hierba": 10,
@@ -109,7 +109,7 @@
   "r_refugio_pinar": {
     "name": "Senda del Cuervo",
     "from": "refugio",
-    "to": "pinar",
+    "to": "bosque",
     "part": 2,
     "length": 260,
     "biome": "pinar",
@@ -238,7 +238,7 @@
   },
   "r_pinar_atalaya": {
     "name": "Camino de La Atalaya",
-    "from": "pinar",
+    "from": "bosque",
     "to": "atalaya",
     "part": 2,
     "length": 320,

@@ -2,16 +2,30 @@
   "pino": {
     "name": "Pino",
     "action": "Talar",
-    "yield": "madera",
+    "yield": "madera_pino",
     "amount": [
-      1,
-      2
+      2,
+      3
     ],
     "hits": 6,
     "tool": "axe",
     "hand_ok": false,
     "respawn": 60,
     "radius": 0.5
+  },
+  "arbol": {
+    "name": "Árbol",
+    "action": "Talar",
+    "yield": "madera",
+    "amount": [
+      1,
+      2
+    ],
+    "hits": 4,
+    "tool": "axe",
+    "hand_ok": false,
+    "respawn": 60,
+    "radius": 0.45
   },
   "roca": {
     "name": "Roca",

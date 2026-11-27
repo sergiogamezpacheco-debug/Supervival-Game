@@ -12,6 +12,7 @@ var creatures: Dictionary = {}
 var maps: Dictionary = {}
 var containers: Dictionary = {}
 var world_map: Dictionary = {}
+var routes: Dictionary = {}     # tramos de camino entre zonas (se recorren andando)
 var levels: Dictionary = {}
 var info: Dictionary = {}
 
@@ -31,6 +32,7 @@ func reload() -> void:
 	maps = _load_json("res://data/maps.json", {})
 	containers = _load_json("res://data/containers.json", {})
 	world_map = _load_json("res://data/world_map.json", {})
+	routes = _load_json("res://data/routes.json", {})
 	levels = _load_json("res://data/levels.json", {})
 	info = _load_json("res://data/info.json", {})
 
@@ -216,6 +218,28 @@ func recipe(id: String) -> Dictionary:
 
 
 ## Coste de viajar entre dos lugares del mapa del mundo: {"food", "water"}.
+## Tramo de camino que une dos zonas (en cualquier sentido), o "".
+func route_between(a: String, b: String) -> String:
+	for id in routes:
+		var r: Dictionary = routes[id]
+		if (r["from"] == a and r["to"] == b) or (r["from"] == b and r["to"] == a):
+			return str(id)
+	return ""
+
+
+## Pieza del mapa en la que está una zona (1 al empezar).
+func map_piece(id: String) -> int:
+	return int(world_map.get(id, {}).get("piece", maps.get(id, {}).get("piece", 1)))
+
+
+## Energía de viaje rápido entre dos zonas (según la distancia en el mapa).
+func travel_energy_cost(from_id: String, to_id: String) -> int:
+	var a: Array = world_map.get(from_id, {}).get("pos", [0.5, 0.5])
+	var b: Array = world_map.get(to_id, {}).get("pos", [0.5, 0.5])
+	var d := Vector2(float(a[0]), float(a[1])).distance_to(Vector2(float(b[0]), float(b[1])))
+	return maxi(int(bal("travel_energy_min", 10)), roundi(d * float(bal("travel_energy_per_unit", 120))))
+
+
 func travel_cost(from_id: String, to_id: String) -> Dictionary:
 	var a: Array = world_map.get(from_id, {}).get("pos", [0.5, 0.5])
 	var b: Array = world_map.get(to_id, {}).get("pos", [0.5, 0.5])

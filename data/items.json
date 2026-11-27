@@ -3,7 +3,7 @@
     "name": "Troncos",
     "type": "material",
     "stack": 50,
-    "desc": "Troncos de pino. Se trabajan en el banco de carpintería.",
+    "desc": "Troncos de árboles pequeños y ramas. Para herramientas, fuego y tablones.",
     "weight": 0.3,
     "tier": "bruto"
   },
@@ -753,5 +753,29 @@
     "desc": "Tierra suelta mezclada con compost. Base del abono orgánico.",
     "weight": 1.0,
     "tier": "procesado"
+  },
+  "madera_pino": {
+    "name": "Troncos de pino",
+    "type": "material",
+    "stack": 50,
+    "desc": "Pino grande del Pinar del Cuervo: rinde el doble en tablones y hace falta para las vigas.",
+    "weight": 0.4,
+    "tier": "bruto"
+  },
+  "trozo_mapa_2": {
+    "name": "Trozo de mapa (II)",
+    "type": "map_piece",
+    "piece": 2,
+    "stack": 1,
+    "desc": "Se cose a tu mapa: Pinar del Cuervo, Cantera del Tajo, La Atalaya y más.",
+    "weight": 0.01
+  },
+  "trozo_mapa_3": {
+    "name": "Trozo de mapa (III)",
+    "type": "map_piece",
+    "piece": 3,
+    "stack": 1,
+    "desc": "Se cose a tu mapa: la costa, la vía del tren y la central.",
+    "weight": 0.01
   }
 }

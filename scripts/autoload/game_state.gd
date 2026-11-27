@@ -36,6 +36,10 @@ var stamina := 100.0           # aguante para correr
 var level := 1                 # nivel del superviviente (1-100)
 var xp := 0                    # experiencia dentro del nivel actual
 var visited: Dictionary = {}   # zonas ya visitadas (dan XP la primera vez)
+var map_pieces := 1             # trozos del mapa cosidos (1 al empezar, 2 y 3 se encuentran)
+var travel_energy := 100.0      # energía de viaje rápido al guardar
+var travel_energy_t := 0.0      # hora (unix) de ese valor: se recarga con el tiempo real
+var route_from := ""            # andando por un camino: de qué zona saliste
 var train_ready: Dictionary = {} # ejercicio -> hora (unix) en que se puede volver a entrenar
 var testing := false           # los tests no muestran la pantalla de creación
 var pending_drop: Array = []
@@ -75,6 +79,10 @@ func new_game() -> void:
 	level = DB.max_level() if testing else 1
 	xp = 0
 	visited = {"refugio": true}
+	map_pieces = 3 if testing else 1
+	travel_energy = float(DB.bal("travel_energy_max", 100))
+	travel_energy_t = now()
+	route_from = ""
 	reset_stats()
 	inventory_changed.emit()
 
@@ -185,6 +193,9 @@ func add_item(id: String, qty: int, dur: int = -1, rot: float = -1.0) -> int:
 	var max_stack := DB.stack_size(id)
 	var left := qty
 	var data := DB.item(id)
+	if str(data.get("type", "")) == "map_piece":
+		add_map_piece(int(data.get("piece", 2)))   # no va a la mochila: se cose al mapa
+		return 0
 	if rot < 0.0 and data.has("spoil"):
 		rot = now() + float(data["spoil"])
 	if max_stack > 1:
@@ -215,6 +226,33 @@ func add_item(id: String, qty: int, dur: int = -1, rot: float = -1.0) -> int:
 
 func add_stack(it: Dictionary) -> int:
 	return add_item(str(it["id"]), int(it["qty"]), int(it.get("dur", -1)), float(it.get("rot", -1.0)))
+
+
+# ------------------------------------------------------------ mapa y viajes
+
+## Un trozo de mapa nuevo: se cose al tuyo y abre las zonas de esa parte.
+func add_map_piece(n: int) -> void:
+	if n <= map_pieces:
+		return
+	map_pieces = n
+	message.emit("Has encontrado un trozo del mapa (%s): ya está cosido al tuyo" % ["", "I", "II", "III"][clampi(n, 0, 3)])
+	inventory_changed.emit()
+
+
+## Energía de viaje ahora (se recarga sola con el tiempo real, también con el juego cerrado).
+func travel_energy_now() -> float:
+	var mx := float(DB.bal("travel_energy_max", 100))
+	var per_s := float(DB.bal("travel_energy_per_hour", 20)) / 3600.0
+	return minf(mx, travel_energy + maxf(now() - travel_energy_t, 0.0) * per_s)
+
+
+func spend_travel_energy(n: float) -> bool:
+	var e := travel_energy_now()
+	if e < n:
+		return false
+	travel_energy = e - n
+	travel_energy_t = now()
+	return true
 
 
 ## Comida caducada de una lista de casillas (mochila o cofre): se vuelve comida podrida.
@@ -919,6 +957,10 @@ func to_dict() -> Dictionary:
 		"level": level,
 		"xp": xp,
 		"visited": visited,
+		"map_pieces": map_pieces,
+		"travel_energy": travel_energy_now(),
+		"travel_energy_t": now(),
+		"route_from": route_from,
 	}
 
 
@@ -978,6 +1020,11 @@ func from_dict(d: Dictionary) -> void:
 	level = clampi(int(d.get("level", 12)), 1, DB.max_level())
 	xp = int(d.get("xp", 0))
 	visited = d.get("visited", {"refugio": true})
+	# Partidas de antes de las piezas: si ya habías ido al pinar o a la cantera, tienes la pieza II
+	map_pieces = clampi(int(d.get("map_pieces", 2 if (visited.has("bosque") or visited.has("cantera")) else 1)), 1, 3)
+	travel_energy = float(d.get("travel_energy", travel_energy))
+	travel_energy_t = float(d.get("travel_energy_t", now()))
+	route_from = str(d.get("route_from", ""))
 	_resize_bag()
 	_sync_outfit()
 	health = float(d.get("health", health))
@@ -1017,7 +1064,7 @@ func load_game() -> Dictionary:
 	if maps_state.is_empty() and parsed.has("world"):
 		maps_state = {"refugio": parsed["world"]}   # partidas de la versión 0.1.1
 	current_map = str(parsed.get("current_map", "refugio"))
-	if not DB.maps.has(current_map):
+	if not DB.maps.has(current_map) and not DB.routes.has(current_map):
 		current_map = "refugio"
 	# Al abrir el juego siempre se empieza en el refugio (la zona en la que estabas se guarda)
 	if not _launched:

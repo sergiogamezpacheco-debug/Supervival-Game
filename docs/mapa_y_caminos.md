@@ -50,7 +50,9 @@ Coches abandonados con suministros también por los caminos (2 en la parte I, m�
 
 ## Pendiente (siguiente paso)
 
-1. Pasar `data/world_map.json` y la pantalla del mapa al nuevo trazado (piezas I, II, III).
-2. Que el viaje entre zonas cargue el tramo (`world` con `RouteBuilder`) y energía de viaje con recarga por tiempo/vídeo.
+1. ✅ `data/world_map.json` y la pantalla del mapa con el nuevo trazado: el HUD muestra el recorte
+   `MAP_VIEWS` (igual que `VISTAS` en `mapa.py`) según `GS.map_pieces`.
+2. ✅ Viaje rápido con energía (`GS.travel_energy_now()`, 20/h reales, máx. 100) o "Ir andando" (`world.walk_to`),
+   que carga el tramo con `RouteBuilder` y llega al otro extremo. Falta la recarga viendo vídeos (SDK de anuncios).
 3. Nuevas zonas: La Atalaya (confianza y puertas), Base Centinela, Marismas (traje de buzo), Puerto, Estación,
    Central y Villamuralla.

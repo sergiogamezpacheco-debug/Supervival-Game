@@ -43,6 +43,8 @@ func _ready() -> void:
 	await test_fixes()
 	print("== Caminos entre zonas (tramos)")
 	await test_routes()
+	print("== Fase 1 del mapa: Arboleda, Pedregal, piezas y caminos a pie")
+	await test_phase1()
 	print("== Niveles y peso")
 	await test_levels_weight()
 	await test_crafting_tree()
@@ -215,10 +217,10 @@ func test_world() -> void:
 		z.home = Vector3(40, 0, 40)
 		z.global_position = Vector3(40, 0, 40)
 
-	# Recolectar de un pino.
+	# Recolectar de un árbol (en el refugio hay árboles pequeños: madera básica).
 	var tree: Node3D = null
 	for r in get_tree().get_nodes_in_group("resource"):
-		if r.kind == "pino":
+		if r.kind == "arbol":
 			tree = r
 			break
 	player.global_position = tree.global_position + Vector3(1.2, 0, 0)
@@ -1061,6 +1063,124 @@ func test_routes() -> void:
 	await _frames(1)
 
 
+func _ratio(map_id: String, kinds: Array) -> float:
+	var res: Dictionary = DB.maps[map_id]["resources"]
+	var rocks := 0.0
+	var n := 0.0
+	for k in res:
+		if str(k) == "roca" or str(k).begins_with("veta_"):
+			rocks += float(res[k])
+			if str(k) in kinds:
+				n += float(res[k])
+	return n / rocks
+
+
+func test_phase1() -> void:
+	# Datos de las zonas
+	check(DB.maps.has("arboleda") and DB.maps.has("pedregal"), "La Arboleda y El Pedregal existen")
+	check(DB.map_piece("arboleda") == 1 and DB.map_piece("pedregal") == 1 and DB.map_piece("bosque") == 2 and DB.map_piece("cantera") == 2, "Arboleda y Pedregal en la pieza I; Pinar y Cantera en la II")
+	check(is_equal_approx(_ratio("pedregal", ["veta_hierro"]), 0.1), "Pedregal: de cada 10 rocas, 1 de hierro")
+	check(is_equal_approx(_ratio("cantera", ["veta_hierro", "veta_carbon"]), 0.5) and is_equal_approx(_ratio("cantera", ["veta_cobre", "veta_azufre"]), 0.2), "Cantera: 5 de cada 10 vetas básicas y 2 mejores")
+	check(DB.resources["arbol"]["yield"] == "madera" and DB.resources["pino"]["yield"] == "madera_pino", "árbol pequeño: troncos; pino: troncos de pino")
+	check(int(DB.maps["arboleda"]["resources"].get("arbol", 0)) > 20 and not DB.maps["arboleda"]["resources"].has("pino"), "La Arboleda: árboles pequeños, sin pinos")
+	check(int(DB.maps["bosque"]["resources"]["pino"]) > int(DB.maps["arboleda"]["resources"]["arbol"]) * 2, "el Pinar tiene muchos más árboles")
+	check(DB.recipe("viga")["cost"].has("madera_pino") and int(DB.recipe("tablon_pino")["qty"]) * 2 > int(DB.recipe("tablon")["qty"]) * int(DB.recipe("tablon_pino")["cost"]["madera_pino"]), "la madera de pino rinde más tablones y hace las vigas")
+	for id in DB.world_map:
+		check(DB.world_map[id].has("piece"), "%s tiene su pieza del mapa" % id) if not DB.world_map[id].has("piece") else null
+	for n in [1, 2, 3]:
+		check(ResourceLoader.exists("res://assets/ui/mapa_piezas_%d.jpg" % n), "mapa del juego con %d pieza(s)" % n)
+
+	# Partida nueva de verdad: solo la pieza I
+	DirAccess.remove_absolute(ProjectSettings.globalize_path(GS.save_path))
+	GS.testing = false
+	GS.new_game()
+	GS.testing = true
+	GS.level = 20
+	GS.created = true
+	check(GS.map_pieces == 1, "al empezar solo tienes la pieza I")
+	var world := await _new_world()
+	_creatures_away()
+	check(world.travel_to("bosque") == "Te falta ese trozo del mapa", "sin la pieza II no se va al Pinar")
+	var hud: CanvasLayer = world.hud
+	hud.map_btn.pressed.emit()
+	await _pframes(2)
+	check(hud._map_area.texture.resource_path.ends_with("mapa_piezas_1.jpg") and hud.map_buttons.has("arboleda") and not hud.map_buttons.has("bosque"),
+		"en el mapa solo se ve la pieza I (%s)" % str(hud.map_buttons.keys()))
+	hud.map_buttons["arboleda"].pressed.emit()
+	await _pframes(1)
+	check(hud._map_walk.visible and not hud._map_travel.disabled, "a La Arboleda: viajar o ir andando")
+	hud.close_panels()
+
+	# Ir andando: el camino se carga como una zona más
+	check(world.walk_to("arboleda") == "", "salir andando hacia La Arboleda")
+	check(GS.current_map == "r_refugio_arboleda" and GS.route_from == "refugio", "vas por el Sendero de la Arboleda")
+	world.queue_free()
+	await _frames(3)
+	var path := await _new_world()
+	check(not path.route.is_empty() and path.base == null, "el camino es un pasillo, sin construcción")
+	check(path.player.global_position.z > -6.0, "empiezas al principio del camino")
+	check(get_tree().get_nodes_in_group("resource").size() > 10 and get_tree().get_nodes_in_group("creature").size() > 0, "en el camino hay recursos y bichos")
+	path.hud.map_btn.pressed.emit()
+	await _pframes(1)
+	check(path.hud._map_selected == "refugio", "en el mapa sigues marcado en el refugio mientras andas")
+	path.hud.close_panels()
+	path.player.global_position = Vector3(RouteBuilder.center_x(path.route, -float(path.route["length"]) - 3.0), 0, -float(path.route["length"]) - 3.0)
+	await _pframes(2)
+	check(GS.current_map == "arboleda" and GS.route_from == "", "al final del camino entras en La Arboleda")
+	path.queue_free()
+	await _frames(3)
+
+	# La Arboleda: el superviviente muerto lleva la pieza II
+	var grove := await _new_world()
+	check(grove.map_id == "arboleda", "carga La Arboleda")
+	var body: Node3D = null
+	var car: Node3D = null
+	for b in get_tree().get_nodes_in_group("container"):
+		if b.id == "cadaver":
+			body = b
+		elif b.id == "coche":
+			car = b
+	check(body != null and car != null, "en La Arboleda hay un superviviente muerto y un coche abandonado")
+	var piece_slot := -1
+	for i in body.storage.size():
+		if body.storage[i] != null and body.storage[i]["id"] == "trozo_mapa_2":
+			piece_slot = i
+	check(piece_slot >= 0, "el muerto lleva el trozo de mapa II")
+	body.chest_to_bag(piece_slot)
+	check(GS.map_pieces == 2 and GS.count("trozo_mapa_2") == 0, "al cogerlo se cose al mapa (no ocupa la mochila)")
+	_creatures_away()
+	grove.hud.map_btn.pressed.emit()
+	await _pframes(2)
+	check(grove.hud._map_area.texture.resource_path.ends_with("mapa_piezas_2.jpg") and grove.hud.map_buttons.has("bosque"), "el mapa ya enseña la pieza II")
+	grove.hud.close_panels()
+	var arbs := get_tree().get_nodes_in_group("resource").filter(func(r): return r.kind == "arbol")
+	check(arbs.size() > 20, "La Arboleda está llena de árboles pequeños (%d)" % arbs.size())
+	grove.save()
+	grove.queue_free()
+	await _frames(3)
+	var grove2 := await _new_world()
+	var again := false
+	for b in get_tree().get_nodes_in_group("container"):
+		if b.id == "cadaver":
+			for it in b.storage:
+				if it != null and it["id"] == "trozo_mapa_2":
+					again = true
+	check(not again, "el trozo de mapa no vuelve a salir")
+
+	# Viaje rápido: energía que se recarga con el tiempo
+	_creatures_away()
+	GS.travel_energy = 5.0
+	GS.travel_energy_t = GS.now()
+	check(grove2.travel_to("refugio").begins_with("Te falta energía de viaje"), "sin energía no hay viaje rápido")
+	GS.time_offset += 3600.0
+	check(int(GS.travel_energy_now()) == 25, "la energía se recarga con el tiempo (20 por hora)")
+	check(grove2.travel_to("refugio") == "", "con energía sí")
+	grove2.queue_free()
+	await _frames(3)
+	DirAccess.remove_absolute(ProjectSettings.globalize_path(GS.save_path))
+	GS.new_game()
+
+
 func test_crafting_tree() -> void:
 	print("== Fabricación: materias primas, procesados y bancos")
 	# a mano solo lo básico
@@ -1151,7 +1271,7 @@ func test_levels_weight() -> void:
 	check(GS.level == 6 and GS.xp == 3, "mucha XP de golpe sube varios niveles")
 	check(GS.count("cuerda") == cuerdas + 3, "el nivel 5 trae recompensa")
 	GS.leveled_up.disconnect(on_up)
-	check(DB.unlocks_at(3).has("Viaje: Bosque de Pino Negro") and DB.unlocks_at(8).has("Viaje: Cantera de Peñas Rojas"), "los viajes se desbloquean por nivel")
+	check(DB.unlocks_at(3).has("Viaje: Pinar del Cuervo") and DB.unlocks_at(8).has("Viaje: Cantera del Tajo"), "los viajes se desbloquean por nivel")
 	check(DB.next_unlock_level(25) == 0 or DB.next_unlock_level(25) > 25, "se sabe cuál es el próximo desbloqueo")
 
 	# Bloqueos
@@ -1395,27 +1515,28 @@ func test_travel() -> void:
 	await _frames(2)
 	check(hud._map_panel.visible and hud.map_buttons.size() == DB.world_map.size(), "el mapa muestra un marcador por zona (%d)" % hud.map_buttons.size())
 	check(hud._map_area.texture != null, "el mapa usa el papel antiguo")
-	for id in DB.world_map:
-		check(hud._map_icon(id) != null, "icono de mapa para %s" % id)
+	check(hud._map_area.texture.resource_path.ends_with("mapa_piezas_3.jpg"), "con las 3 piezas se ve el mapa entero")
 	check(hud._map_selected == "refugio" and hud._map_travel.disabled, "empieza marcando dónde estás")
 	hud.map_buttons["bosque"].pressed.emit()
 	await _frames(2)
-	check(hud._map_selected == "bosque" and not hud._map_travel.disabled and hud._map_name.text.contains("Bosque"), "tocar una zona abierta permite viajar")
+	check(hud._map_selected == "bosque" and not hud._map_travel.disabled and hud._map_name.text.contains("Pinar"), "tocar una zona abierta permite viajar")
+	check(hud._map_walk.visible, "y también ir andando por su camino")
 	hud.map_buttons["central"].pressed.emit()
 	await _frames(2)
 	check(hud._map_travel.disabled, "a una zona sin explorar no se puede viajar")
 	hud.close_panels()
 	check(world.travel_to("bosque") != "", "no se puede viajar con enemigos cerca")
 	_creatures_away()
-	var cost := DB.travel_cost("refugio", "bosque")
+	var cost := DB.travel_energy_cost("refugio", "bosque")
+	var e0 := GS.travel_energy_now()
 	check(world.travel_to("bosque") == "", "viajar al bosque")
-	check(is_equal_approx(GS.food, 100.0 - cost["food"]) and is_equal_approx(GS.water, 100.0 - cost["water"]), "el viaje gasta comida y agua")
+	check(absf(GS.travel_energy_now() - (e0 - cost)) < 0.5, "el viaje rápido gasta energía de viaje (%d)" % cost)
 	check(GS.current_map == "bosque", "la partida queda en el bosque")
 	world.queue_free()
 	await _frames(3)
 
 	var bosque := await _new_world()
-	check(bosque.map_id == "bosque", "carga el Bosque de Pino Negro")
+	check(bosque.map_id == "bosque", "carga el Pinar del Cuervo")
 	check(bosque.base == null, "en el bosque no se construye")
 	check(bosque.player.global_position.distance_to(bosque.SPAWN) < 0.5, "apareces en la entrada de la zona")
 	var kinds := {}
@@ -1428,7 +1549,7 @@ func test_travel() -> void:
 			setas += 1
 	check(setas > 0, "hay setas en el bosque")
 	var boxes := get_tree().get_nodes_in_group("container")
-	check(boxes.size() == 2, "cabaña y aserradero tienen contenedores")
+	check(boxes.size() == 3 and boxes.any(func(b): return b.id == "coche_bueno"), "cabaña, aserradero y un coche con botín")
 	var box: Node3D = boxes[0]
 	var full := -1
 	for i in box.storage.size():
@@ -1473,7 +1594,7 @@ func test_travel() -> void:
 	await _frames(3)
 
 	var cantera := await _new_world()
-	check(cantera.map_id == "cantera", "carga la Cantera de Peñas Rojas")
+	check(cantera.map_id == "cantera", "carga la Cantera del Tajo")
 	kinds = {}
 	for c in get_tree().get_nodes_in_group("creature"):
 		kinds[c.kind] = true
@@ -2098,7 +2219,7 @@ func test_dodge_audio() -> void:
 	SFX.played.clear()
 	GS.add_item("hacha_piedra", 1)
 	for r in get_tree().get_nodes_in_group("resource"):
-		if r.kind == "pino" and not r.depleted:
+		if r.kind in ["pino", "arbol"] and not r.depleted:
 			r.interact(player)
 			break
 	check(SFX.played.has("talar"), "talar suena")
@@ -2392,14 +2513,14 @@ func test_infected() -> void:
 	# Árboles y rocas nuevos
 	var meshes := 0
 	for res in get_tree().get_nodes_in_group("resource"):
-		if res.kind == "pino" or res.kind == "roca":
+		if res.kind in ["pino", "arbol"] or res.kind == "roca":
 			meshes += _count_verts(res._visual)
 			break
 	check(meshes >= 60, "los pinos y rocas usan los modelos facetados")
 	# Menos dibujos para el móvil: las piezas de cada árbol o roca van en una sola malla
 	var one_tree := -1
 	for res in get_tree().get_nodes_in_group("resource"):
-		if res.kind == "pino":
+		if res.kind in ["pino", "arbol"]:
 			one_tree = _count_meshes(res._visual)
 			break
 	check(one_tree == 1 or one_tree == -1, "cada pino se dibuja de una vez (%d mallas)" % one_tree)

@@ -19,14 +19,27 @@ func setup(p_id: String, rng: RandomNumberGenerator) -> void:
 	var shape := CollisionShape3D.new()
 	var b := BoxShape3D.new()
 	b.size = Vector3(1.1, 0.9, 0.7)
+	if id.begins_with("coche"):
+		b.size = Vector3(1.9, 1.4, 4.3)
+	elif id == "cadaver":
+		b.size = Vector3(0.9, 0.4, 1.8)
 	shape.shape = b
-	shape.position.y = 0.45
+	shape.position.y = b.size.y / 2.0
 	add_child(shape)
 	_visual = Builder.container_mesh(id)
 	add_child(_visual)
 
 
 func _roll_loot(rng: RandomNumberGenerator) -> void:
+	var slot := 0
+	# lo que siempre está (p. ej. el trozo de mapa del superviviente muerto, si aún no lo tienes)
+	for f in data.get("fixed", []):
+		var fd := DB.item(str(f["id"]))
+		if str(fd.get("type", "")) == "map_piece" and int(fd.get("piece", 2)) <= GS.map_pieces:
+			continue
+		if slot < storage.size():
+			storage[slot] = GS.make_item(str(f["id"]), int(f.get("qty", 1)))
+			slot += 1
 	var table: Array = data.get("loot", [])
 	if table.is_empty():
 		return
@@ -35,7 +48,6 @@ func _roll_loot(rng: RandomNumberGenerator) -> void:
 		total += float(e.get("weight", 1))
 	var rolls: Array = data.get("rolls", [1, 2])
 	var n := rng.randi_range(int(rolls[0]), int(rolls[1]))
-	var slot := 0
 	for i in n:
 		if slot >= storage.size():
 			break

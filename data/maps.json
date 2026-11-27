@@ -5,13 +5,12 @@
     "seed": 1337,
     "base_half": 18,
     "resources": {
-      "pino": 60,
-      "roca": 35,
-      "veta_hierro": 8,
-      "arbusto": 30,
-      "hierba": 40,
-      "ramas": 30,
-      "piedras": 24
+      "arbol": 10,
+      "roca": 6,
+      "arbusto": 20,
+      "hierba": 30,
+      "ramas": 24,
+      "piedras": 18
     },
     "creatures": [
       {
@@ -87,10 +86,171 @@
       "type": "infectado",
       "count": 2
     },
-    "unlock": 1
+    "unlock": 1,
+    "piece": 1
+  },
+  "arboleda": {
+    "name": "La Arboleda",
+    "size": 80,
+    "seed": 4242,
+    "spawn": [
+      0,
+      36
+    ],
+    "ground": "56723f",
+    "fog": 0.012,
+    "resources": {
+      "arbol": 34,
+      "ramas": 16,
+      "arbusto": 16,
+      "hierba": 18,
+      "seta": 8,
+      "piedras": 6
+    },
+    "prefabs": [
+      {
+        "type": "",
+        "pos": [
+          -18,
+          -14
+        ],
+        "containers": [
+          {
+            "type": "cadaver",
+            "offset": [
+              0,
+              0
+            ]
+          }
+        ]
+      },
+      {
+        "type": "",
+        "pos": [
+          22,
+          18
+        ],
+        "containers": [
+          {
+            "type": "coche",
+            "offset": [
+              0,
+              0
+            ]
+          }
+        ]
+      }
+    ],
+    "creatures": [
+      {
+        "type": "infectado",
+        "groups": 2,
+        "size": [
+          1,
+          1
+        ],
+        "min_dist": 18
+      },
+      {
+        "type": "conejo",
+        "groups": 4,
+        "size": [
+          1,
+          2
+        ],
+        "min_dist": 12
+      },
+      {
+        "type": "ciervo",
+        "groups": 1,
+        "size": [
+          1,
+          2
+        ],
+        "min_dist": 16
+      }
+    ],
+    "night": {
+      "type": "infectado",
+      "count": 3
+    },
+    "unlock": 1,
+    "piece": 1
+  },
+  "pedregal": {
+    "name": "El Pedregal",
+    "size": 80,
+    "seed": 5151,
+    "spawn": [
+      -36,
+      0
+    ],
+    "ground": "7d6e55",
+    "fog": 0.012,
+    "resources": {
+      "roca": 27,
+      "veta_hierro": 3,
+      "piedras": 14,
+      "hierba": 10,
+      "arbusto": 6,
+      "ramas": 6
+    },
+    "prefabs": [
+      {
+        "type": "",
+        "pos": [
+          16,
+          -16
+        ],
+        "containers": [
+          {
+            "type": "coche",
+            "offset": [
+              0,
+              0
+            ]
+          }
+        ]
+      }
+    ],
+    "creatures": [
+      {
+        "type": "infectado",
+        "groups": 2,
+        "size": [
+          1,
+          2
+        ],
+        "min_dist": 18
+      },
+      {
+        "type": "vibora",
+        "groups": 2,
+        "size": [
+          1,
+          1
+        ],
+        "min_dist": 10
+      },
+      {
+        "type": "conejo",
+        "groups": 2,
+        "size": [
+          1,
+          2
+        ],
+        "min_dist": 12
+      }
+    ],
+    "night": {
+      "type": "infectado",
+      "count": 3
+    },
+    "unlock": 1,
+    "piece": 1
   },
   "bosque": {
-    "name": "Bosque de Pino Negro",
+    "name": "Pinar del Cuervo",
     "size": 110,
     "seed": 2024,
     "spawn": [
@@ -139,6 +299,22 @@
             "offset": [
               -2.5,
               1.5
+            ]
+          }
+        ]
+      },
+      {
+        "type": "",
+        "pos": [
+          10,
+          30
+        ],
+        "containers": [
+          {
+            "type": "coche_bueno",
+            "offset": [
+              0,
+              0
             ]
           }
         ]
@@ -218,10 +394,11 @@
       ],
       "count": 4
     },
-    "unlock": 3
+    "unlock": 3,
+    "piece": 2
   },
   "cantera": {
-    "name": "Cantera de Peñas Rojas",
+    "name": "Cantera del Tajo",
     "size": 100,
     "seed": 777,
     "spawn": [
@@ -231,9 +408,9 @@
     "ground": "8a6248",
     "fog": 0.014,
     "resources": {
-      "roca": 50,
-      "veta_hierro": 20,
-      "veta_carbon": 15,
+      "roca": 30,
+      "veta_hierro": 30,
+      "veta_carbon": 20,
       "chatarra": 10,
       "hierba": 10,
       "veta_cobre": 12,
@@ -279,6 +456,22 @@
             "offset": [
               0,
               3.5
+            ]
+          }
+        ]
+      },
+      {
+        "type": "",
+        "pos": [
+          -20,
+          20
+        ],
+        "containers": [
+          {
+            "type": "coche_bueno",
+            "offset": [
+              0,
+              0
             ]
           }
         ]
@@ -364,6 +557,7 @@
     },
     "unlock": 8,
     "key_item": "pico_piedra|pico_hierro",
-    "key_text": "un pico (para abrirte paso entre las rocas del camino)"
+    "key_text": "un pico (para abrirte paso entre las rocas del camino)",
+    "piece": 2
   }
 }

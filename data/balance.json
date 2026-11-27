@@ -79,5 +79,9 @@
   "throw_range": 11.0,
   "trap_radius": 0.9,
   "trap_cooldown": 1.2,
-  "spoil_check_seconds": 2.0
+  "spoil_check_seconds": 2.0,
+  "travel_energy_max": 100,
+  "travel_energy_per_hour": 20,
+  "travel_energy_per_unit": 120,
+  "travel_energy_min": 10
 }

@@ -48,21 +48,20 @@ def P(x, y):
 
 # ------------------------------------------------------------------ lugares
 # parte: 1 al empezar, 2 trozo del muerto de La Arboleda, 3 trozo de la Base Centinela
-LUGARES = {
-    "refugio": {"name": "Refugio", "pos": (0.525, 0.53), "part": 1, "icon": "refugio"},
-    "arboleda": {"name": "La Arboleda", "pos": (0.43, 0.465), "part": 1, "icon": "arbol"},
-    "pedregal": {"name": "El Pedregal", "pos": (0.665, 0.515), "part": 1, "icon": "rocas"},
-    "pinar": {"name": "Pinar del Cuervo", "pos": (0.645, 0.335), "part": 2, "icon": "pino"},
-    "cantera": {"name": "Cantera del Tajo", "pos": (0.465, 0.29), "part": 2, "icon": "pico"},
-    "atalaya": {"name": "La Atalaya", "pos": (0.815, 0.235), "part": 2, "icon": "atalaya"},
-    "marismas": {"name": "Marismas del Guadal", "pos": (0.85, 0.5), "part": 2, "icon": "juncos"},
-    "centinela": {"name": "Base Centinela", "pos": (0.235, 0.42), "part": 2, "icon": "tienda"},
-    "villamuralla": {"name": "Villamuralla", "pos": (0.235, 0.165), "part": 3, "icon": "muralla"},
-    "puerto": {"name": "Puerto de la Caleta", "pos": (0.185, 0.835), "part": 3, "icon": "ancla"},
-    "valdecruces": {"name": "Valdecruces (abandonado)", "pos": (0.36, 0.735), "part": 3, "icon": "ruinas"},
-    "estacion": {"name": "Estación de tren", "pos": (0.535, 0.81), "part": 3, "icon": "tren"},
-    "central": {"name": "Central Nuclear", "pos": (0.7, 0.815), "part": 3, "icon": "radiacion"},
-}
+# Posición, nombre y pieza de cada lugar: data/world_map.json (lo mismo que usa el juego)
+ICONOS = {"refugio": "refugio", "arboleda": "arbol", "pedregal": "rocas", "pinar": "pino", "cantera": "pico", "atalaya": "atalaya", "marismas": "juncos", "centinela": "tienda", "villamuralla": "muralla", "puerto": "ancla", "valdecruces": "ruinas", "estacion": "tren", "central": "radiacion"}
+
+
+def _lugares():
+    wm = json.load(open(os.path.join(RAIZ, "data", "world_map.json")))
+    out = {}
+    for k, v in wm.items():
+        key = "pinar" if k == "bosque" else k
+        out[key] = {"name": v["name"], "pos": tuple(v["pos"]), "part": int(v.get("piece", 1)), "icon": ICONOS.get(key, "pino")}
+    return out
+
+
+LUGARES = _lugares()
 
 # Trazado de cada camino (puntos intermedios); nombre y parte salen de data/routes.json
 TRAZADOS = {
@@ -87,6 +86,8 @@ PIEZA1 = [(0.37, 0.42), (0.45, 0.38), (0.56, 0.405), (0.66, 0.43), (0.74, 0.48),
           (0.52, 0.64), (0.4, 0.62), (0.355, 0.54)]
 PIEZA2 = [(0.135, 0.33), (0.355, 0.27), (0.395, 0.11), (0.6, 0.095), (0.985, 0.1), (0.985, 0.665), (0.7, 0.685),
           (0.45, 0.675), (0.3, 0.665), (0.135, 0.63)]
+# Parte del papel que se ve en el juego según las piezas que tengas (x, y, ancho, alto)
+VISTAS = {1: (0.32, 0.28, 0.46, 0.46), 2: (0.12, 0.0, 0.88, 0.88), 3: (0.0, 0.0, 1.0, 1.0)}
 # Casas sueltas con provisiones por los caminos (parte 2 y 3)
 CASAS = [(0.335, 0.45, 2), (0.71, 0.255, 2), (0.84, 0.405, 2), (0.29, 0.475, 2), (0.21, 0.6, 3), (0.33, 0.2, 3)]
 GASOLINERA = (0.325, 0.545)
@@ -699,6 +700,14 @@ def main():
     final.convert("RGB").save(os.path.join(out_dir, "mapa_definitivo.jpg"), quality=90)
     for n in (1, 2):
         compose(full, masks, lines, n, routes).convert("RGB").save(os.path.join(out_dir, "mapa_parte%d.jpg" % n), quality=90)
+    # para el juego: una imagen por número de piezas (assets/ui/mapa_piezas_N.jpg, 1400 px)
+    # recortado a lo que tienes (hud.gd MAP_VIEWS usa los mismos rectángulos)
+    game = os.path.join(RAIZ, "assets", "ui")
+    for n in (1, 2, 3):
+        im = final if n == 3 else compose(full, masks, lines, n, routes)
+        x, y, w, h = VISTAS[n]
+        im = im.crop((int(x * W), int(y * H), int((x + w) * W), int((y + h) * H)))
+        im.convert("RGB").resize((1400, int(1400 * H / W)), Image.LANCZOS).save(os.path.join(game, "mapa_piezas_%d.jpg" % n), quality=85)
     print("mapa listo en", out_dir)
 
 

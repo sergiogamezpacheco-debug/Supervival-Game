@@ -47,9 +47,12 @@ Plan completo por fases (offline primero, online preparado): **[docs/hoja-de-rut
 - [x] **Cocina, destilería, química y electrónica:** fuego propio con leña/carbón/combustible, agua sucia →
       hervida/purificada, cantimplora rellenable, conservas, alcohol y combustible, medicinas, cóctel molotov
       (se lanza y deja fuego), trampa de pinchos colocable, cables, circuitos y baterías ([docs/fabricacion.md](docs/fabricacion.md)).
-- [~] **Fase 3 – Mapa global:** ✅ viaje entre zonas con coste de comida/agua, ✅ Bosque de Pino Negro,
-      ✅ Cantera de Peñas Rojas, contenedores saqueables, veneno. Pendiente: resto de zonas
-      (ver [docs/zonas.md](docs/zonas.md)), sigilo y ruido, mapa definitivo.
+- [~] **Fase 3 – Mapa global:** ✅ mapa definitivo en papel que crece con los trozos (I, II, III),
+      ✅ parte I: Refugio, La Arboleda (madera básica, superviviente muerto con el trozo II) y El Pedregal
+      (1 de cada 10 rocas es hierro), coches abandonados con suministros, ✅ viaje rápido con energía
+      (se recarga 20/h reales) o ir andando por el camino, ✅ parte II jugable: Pinar del Cuervo (troncos de pino)
+      y Cantera del Tajo (mitad minerales). Pendiente: La Atalaya, Base Centinela, Marismas, parte III,
+      recarga de energía viendo vídeos ([docs/mapa_y_caminos.md](docs/mapa_y_caminos.md)).
 - [ ] **Fase 4 – Combate y equipo:** armas a distancia, munición, armaduras, más enemigos, tablas de botín.
 - [ ] **Fase 5 – Contenido grande:** búnker, granja, vehículos, mascota, eventos.
 - [ ] **Fase 6 – Online (Firebase):** cuentas, nube, asaltos a otras bases, clanes, chat.
@@ -68,7 +71,7 @@ Plan completo por fases (offline primero, online preparado): **[docs/hoja-de-rut
 - `tools/survivor_shots.tscn` — capturas de la creación de personaje, el inventario y el gimnasio.
 - `tools/night_shots.tscn` — capturas de atardecer, noche, lluvia, sigilo y reparar.
 - `assets/audio/` — sonidos sintetizados con `tools/sonidos/generar.py` (numpy).
-- `assets/ui/mapa_valle.png` — papel del mapa (sale del diseño MapaAntiguo).
+- `assets/ui/mapa_piezas_{1,2,3}.jpg` — mapa en papel según los trozos que tengas (`tools/mapa/mapa.py`).
 - `assets/icons/` — iconos SVG de objetos y huecos; se generan con `tools/iconos/generar.py`.
 
 ## Mapas

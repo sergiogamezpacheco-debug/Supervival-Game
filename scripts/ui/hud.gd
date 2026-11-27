@@ -6,6 +6,7 @@ extends CanvasLayer
 signal build_selected(mode: String, id: String)   # mode: place | upgrade | demolish
 signal build_action(action: String)               # rotate | confirm | exit
 signal travel_requested(map_id: String)
+signal walk_requested(map_id: String)
 signal edit_look_requested
 signal new_game_requested
 
@@ -79,6 +80,7 @@ var _map_level: Label
 var map_buttons: Dictionary = {}
 var _map_info: Label
 var _map_travel: Button
+var _map_walk: Button
 var _map_selected := ""
 var _status: Label
 var build_btn: Button
@@ -1235,7 +1237,7 @@ func set_status(t: String) -> void:
 func set_location(id: String) -> void:
 	location = id
 	if location_label:
-		location_label.text = str(DB.maps.get(id, {}).get("name", id))
+		location_label.text = str(DB.maps.get(id, DB.routes.get(id, {})).get("name", id))
 	# Solo se construye en el refugio.
 	if build_btn:
 		build_btn.visible = DB.maps.get(id, {}).get("base_half", 0) > 0
@@ -1246,7 +1248,7 @@ const MAP_COLORS := {
 	"hogar": Color("a87c12"), "verde": Color("3f7d3a"), "amarilla": Color("b86a0c"),
 	"roja": Color("b3261e"), "radiactiva": Color("6b3fa0"), "segura": Color("1f5f99"),
 }
-const MAP_SIZE := Vector2(962, 680)     # el papel (990x700) ajustado a la pantalla
+const MAP_SIZE := Vector2(962, 664)     # el mapa en papel (2000x1380, tools/mapa/mapa.py) en la pantalla
 
 
 ## Mapa del Valle: papel antiguo a pantalla completa con un marcador por zona.
@@ -1262,9 +1264,9 @@ func _build_map_panel() -> void:
 	bg.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_map_panel.add_child(bg)
 	_map_area = TextureRect.new()
-	_map_area.texture = load("res://assets/ui/mapa_valle.png")
+	_map_area.texture = load("res://assets/ui/mapa_piezas_1.jpg")
 	_map_area.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
-	_map_area.position = Vector2(14, 20)
+	_map_area.position = Vector2(14, 28)
 	_map_area.size = MAP_SIZE
 	_map_area.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_map_panel.add_child(_map_area)
@@ -1312,7 +1314,7 @@ func _build_map_panel() -> void:
 	_map_travel = Button.new()
 	_map_travel.text = "Viajar"
 	_map_travel.custom_minimum_size = Vector2(0, 62)
-	_map_travel.add_theme_font_size_override("font_size", 24)
+	_map_travel.add_theme_font_size_override("font_size", 21)
 	for st in [["normal", Color("7a1d14")], ["hover", Color("8c2419")], ["pressed", Color("5e150e")], ["disabled", Color(0.35, 0.3, 0.24, 0.5)]]:
 		var bs := StyleBoxFlat.new()
 		bs.bg_color = st[1]
@@ -1323,6 +1325,17 @@ func _build_map_panel() -> void:
 		if _map_selected != "":
 			travel_requested.emit(_map_selected))
 	v.add_child(_map_travel)
+	_map_walk = _map_travel.duplicate()
+	_map_walk.text = "Ir andando"
+	for st in [["normal", Color("4a3a24")], ["hover", Color("5a4830")], ["pressed", Color("3a2c1a")], ["disabled", Color(0.35, 0.3, 0.24, 0.5)]]:
+		var ws := StyleBoxFlat.new()
+		ws.bg_color = st[1]
+		ws.set_corner_radius_all(8)
+		_map_walk.add_theme_stylebox_override(st[0], ws)
+	_map_walk.pressed.connect(func():
+		if _map_selected != "":
+			walk_requested.emit(_map_selected))
+	v.add_child(_map_walk)
 	var close := Button.new()
 	close.text = "X"
 	close.position = Vector2(1208, 16)
@@ -1331,16 +1344,28 @@ func _build_map_panel() -> void:
 	_map_panel.add_child(close)
 
 
+## Parte del papel que se ve según las piezas (igual que VISTAS en tools/mapa/mapa.py).
+const MAP_VIEWS := {1: Rect2(0.32, 0.28, 0.46, 0.46), 2: Rect2(0.12, 0.0, 0.88, 0.88), 3: Rect2(0.0, 0.0, 1.0, 1.0)}
+
+
 func _map_pos(id: String) -> Vector2:
 	var p: Array = DB.world_map[id]["pos"]
-	return (Vector2(40.0, 30.0) + Vector2(float(p[0]) * 900.0, float(p[1]) * 620.0)) * (MAP_SIZE.x / 990.0)
+	var v: Rect2 = MAP_VIEWS[clampi(GS.map_pieces, 1, 3)]
+	return (Vector2(float(p[0]), float(p[1])) - v.position) / v.size * MAP_SIZE
+
+
+## Dónde estás para el mapa (yendo por un camino, la zona de la que saliste).
+func _map_here() -> String:
+	if DB.routes.has(location):
+		return GS.route_from if GS.route_from != "" else str(DB.routes[location]["from"])
+	return location
 
 
 ## Ruta a lápiz rojo desde donde estás hasta la zona elegida.
 func _draw_map() -> void:
-	if _map_selected == "" or _map_selected == location or not DB.world_map.has(location):
+	if _map_selected == "" or _map_selected == _map_here() or not DB.world_map.has(_map_here()):
 		return
-	var a := _map_pos(location)
+	var a := _map_pos(_map_here())
 	var b := _map_pos(_map_selected)
 	var mid := (a + b) / 2.0 + (b - a).orthogonal().normalized() * 26.0
 	var pts := PackedVector2Array()
@@ -1354,65 +1379,33 @@ func _draw_map() -> void:
 func _refresh_map() -> void:
 	if _map_area == null:
 		return
+	# el papel con los trozos que llevas cosidos
+	var pieces := clampi(GS.map_pieces, 1, 3)
+	if _map_pieces_shown != pieces:
+		_map_pieces_shown = pieces
+		_map_area.texture = load("res://assets/ui/mapa_piezas_%d.jpg" % pieces)
 	for c in _map_marks.get_children():
 		c.queue_free()
 	map_buttons = {}
 	_map_route.queue_redraw()
+	var here_id := _map_here()
 	for id in DB.world_map:
-		var d: Dictionary = DB.world_map[id]
-		var playable := DB.maps.has(id)
-		var here: bool = id == location
+		if DB.map_piece(id) > pieces:
+			continue   # aún no tienes ese trozo
+		var here: bool = id == here_id
 		var picked: bool = id == _map_selected
-		var col: Color = MAP_COLORS.get(str(d.get("level", "verde")), MAP_INK)
-		var r := 30.0 if picked else 25.0
+		var r := 34.0
 		var b := Button.new()
 		b.size = Vector2(r, r) * 2.0
 		b.position = _map_pos(id) - Vector2(r, r)
-		b.tooltip_text = str(d["name"])
-		var sb := StyleBoxFlat.new()
-		sb.bg_color = Color("ead9b0") if playable else Color("d2c39c")
-		sb.border_color = Color("7a1d14") if picked else col
-		sb.set_border_width_all(5 if picked else 3)
+		b.tooltip_text = str(DB.world_map[id]["name"])
+		var sb := StyleBoxFlat.new()   # el lugar ya está dibujado: solo un aro al elegirlo
+		sb.bg_color = Color(0, 0, 0, 0)
+		sb.border_color = Color("8c1c12") if picked else Color(0, 0, 0, 0)
+		sb.set_border_width_all(5)
 		sb.set_corner_radius_all(int(r))
-		sb.shadow_color = Color(0, 0, 0, 0.4)
-		sb.shadow_size = 4
 		for st in ["normal", "hover", "pressed", "focus"]:
 			b.add_theme_stylebox_override(st, sb)
-		var ic := TextureRect.new()
-		ic.texture = _map_icon(id)
-		ic.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
-		ic.size = Vector2(r, r) * 1.36
-		ic.position = Vector2(r, r) * 0.32
-		ic.modulate = Color(1, 1, 1, 1.0 if playable else 0.6)
-		ic.mouse_filter = Control.MOUSE_FILTER_IGNORE
-		b.add_child(ic)
-		if not playable:   # zona aún sin explorar
-			var q := Label.new()
-			q.text = "?"
-			q.position = Vector2(r * 2.0 - 18.0, -8.0)
-			q.size = Vector2(22, 22)
-			q.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-			q.add_theme_font_size_override("font_size", 16)
-			q.add_theme_color_override("font_color", MAP_INK)
-			var qs := StyleBoxFlat.new()
-			qs.bg_color = Color("e9dcb8")
-			qs.border_color = MAP_INK
-			qs.set_border_width_all(2)
-			qs.set_corner_radius_all(11)
-			q.add_theme_stylebox_override("normal", qs)
-			q.mouse_filter = Control.MOUSE_FILTER_IGNORE
-			b.add_child(q)
-		var name_l := Label.new()
-		name_l.text = str(d["name"])
-		name_l.add_theme_font_size_override("font_size", 16 if picked else 14)
-		name_l.add_theme_color_override("font_color", MAP_INK)
-		name_l.add_theme_color_override("font_outline_color", Color("e6d3a6"))
-		name_l.add_theme_constant_override("outline_size", 6)
-		name_l.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-		name_l.size = Vector2(220, 20)
-		name_l.position = Vector2(clampf(r - 110.0, -b.position.x + 4.0, MAP_SIZE.x - b.position.x - 224.0), r * 2.0 + 1.0)
-		name_l.mouse_filter = Control.MOUSE_FILTER_IGNORE
-		b.add_child(name_l)
 		if here:   # «tú»: marca roja encima
 			var me := Label.new()
 			me.text = "Estás aquí"
@@ -1424,17 +1417,20 @@ func _refresh_map() -> void:
 			ms.content_margin_left = 8
 			ms.content_margin_right = 8
 			me.add_theme_stylebox_override("normal", ms)
-			me.position = Vector2(r - 42.0, -26.0)
+			me.position = Vector2(r - 42.0, -22.0)
 			me.mouse_filter = Control.MOUSE_FILTER_IGNORE
 			b.add_child(me)
 		var mid := str(id)
 		b.pressed.connect(func(): _select_map(mid))
 		_map_marks.add_child(b)
 		map_buttons[id] = b
-	if _map_selected == "":
-		_select_map(location)
+	if _map_selected == "" or not map_buttons.has(_map_selected):
+		_select_map(here_id)
 	else:
 		_update_map_info()
+
+
+var _map_pieces_shown := 0
 
 
 var _map_icons: Dictionary = {}
@@ -1458,18 +1454,28 @@ func _update_map_info() -> void:
 	_map_level.add_theme_color_override("font_color", MAP_COLORS.get(lvl, MAP_INK))
 	var txt := str(d.get("desc", ""))
 	var can := false
-	if _map_selected == location:
+	var walk := false
+	var here_id := _map_here()
+	var energy := int(GS.travel_energy_now())
+	if _map_selected == here_id:
 		txt += "\n\nEstás aquí."
 	elif not DB.maps.has(_map_selected):
-		txt += "\n\nAún no sabes llegar: te falta un trozo del mapa."
+		txt += "\n\nTodavía no se puede ir: próximamente."
 	else:
-		var cost := DB.travel_cost(location, _map_selected)
-		txt += "\n\nViaje: comida -%d, agua -%d" % [int(cost["food"]), int(cost["water"])]
-		can = true
+		var cost := DB.travel_energy_cost(here_id, _map_selected)
+		txt += "\n\nViaje rápido: %d de energía (tienes %d de %d)." % [cost, energy, int(DB.bal("travel_energy_max", 100))]
+		can = energy >= cost
+		var rid := DB.route_between(here_id, _map_selected)
+		walk = rid != "" and not DB.routes.has(location)
+		if walk:
+			txt += "\nAndando: %s (%d m)." % [str(DB.routes[rid]["name"]), int(DB.routes[rid]["length"])]
+		elif not can:
+			txt += "\nNo hay camino directo: viaja desde una zona vecina."
 		var need_lv := DB.map_unlock(_map_selected)
 		if GS.level < need_lv:
 			txt += "\nBloqueado: necesitas nivel %d." % need_lv
 			can = false
+			walk = false
 		var key := str(DB.maps[_map_selected].get("key_item", ""))
 		if key != "":
 			var has_key := false
@@ -1479,5 +1485,8 @@ func _update_map_info() -> void:
 			txt += "\n%s %s." % ["Llevas" if has_key else "Bloqueado: tienes que llevar", str(DB.maps[_map_selected].get("key_text", key))]
 			if not has_key:
 				can = false
+				walk = false
+	_map_travel.text = "Viajar (-%d energía)" % DB.travel_energy_cost(here_id, _map_selected) if can else "Viajar"
+	_map_walk.visible = walk
 	_map_info.text = txt
 	_map_travel.disabled = not can

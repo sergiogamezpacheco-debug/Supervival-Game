@@ -20,6 +20,8 @@ var SPAWN := Vector3(1, 0, 1)
 
 var map_id := "refugio"
 var map: Dictionary = {}
+var route: Dictionary = {}     # andando por un camino (data/routes.json); vacío en las zonas
+var _arriving := false
 var player: CharacterBody3D
 var hud: CanvasLayer
 var camera: Camera3D
@@ -63,7 +65,13 @@ func _ready() -> void:
 	randomize()
 	var world := GS.load_game()
 	map_id = GS.current_map
-	map = DB.maps.get(map_id, {})
+	route = DB.routes.get(map_id, {})
+	if route.is_empty():
+		map = DB.maps.get(map_id, {})
+	else:
+		# andando por un camino entre dos zonas (cada vez cambia: no se guarda)
+		map = {"name": route.get("name", map_id), "size": float(route["length"]) * 2.0 + 80.0, "seed": hash(map_id),
+			"spawn": [0, -4], "night": {"type": "infectado", "count": 2}}
 	var sp: Array = map.get("spawn", [1, 1])
 	SPAWN = Vector3(float(sp[0]), 0, float(sp[1]))
 	rng.seed = int(map.get("seed", 1337))
@@ -75,6 +83,7 @@ func _ready() -> void:
 	hud.build_selected.connect(_on_build_selected)
 	hud.build_action.connect(_on_build_action)
 	hud.travel_requested.connect(travel_to)
+	hud.walk_requested.connect(walk_to)
 	hud.edit_look_requested.connect(open_creator)
 	hud.new_game_requested.connect(new_game)
 	hud.set_location(map_id)
@@ -91,12 +100,15 @@ func _ready() -> void:
 		add_child(base)
 		base.drop_items.connect(func(pos: Vector3, items: Array): spawn_bag(pos, items, false))
 
-	_spawn_prefabs()
-	_spawn_resources(base_half + 2.0 if base_half > 0.0 else 5.0)
-	_spawn_creatures()
+	if route.is_empty():
+		_spawn_prefabs()
+		_spawn_resources(base_half + 2.0 if base_half > 0.0 else 5.0)
+		_spawn_creatures()
+	else:
+		_build_route()
 
 	GS.died.connect(_on_player_died)
-	if not world.is_empty():
+	if not world.is_empty() and route.is_empty():
 		_load_world(world)
 	daynight = DayNightScript.new()
 	add_child(daynight)
@@ -160,6 +172,12 @@ func _build_environment() -> void:
 	sun.shadow_enabled = true
 	add_child(sun)
 
+	if not route.is_empty():
+		camera = Camera3D.new()
+		camera.fov = 50
+		camera.far = 120
+		add_child(camera)
+		return   # el camino trae su propio suelo (RouteBuilder)
 	var ground := MeshInstance3D.new()
 	var plane := PlaneMesh.new()
 	plane.size = Vector2(_half * 2.0 + 30.0, _half * 2.0 + 30.0)
@@ -221,12 +239,13 @@ func _spawn_prefabs() -> void:
 		if kind == "pozo":
 			node = WellScript.new()
 			node.add_to_group("obstacle")
-		else:
+		elif kind != "":   # "" = solo contenedores sueltos (coche abandonado, superviviente muerto)
 			node = Builder.prefab(kind)
-		node.position = pos
-		node.rotation_degrees.y = rot * 90.0
-		add_child(node)
-		_keepout.append([pos, 2.5 if kind == "pozo" else 6.5])
+		if node:
+			node.position = pos
+			node.rotation_degrees.y = rot * 90.0
+			add_child(node)
+		_keepout.append([pos, 2.5 if kind == "pozo" else (6.5 if kind != "" else 4.0)])
 		for c in pf.get("containers", []):
 			var off: Array = c.get("offset", [0, 0])
 			var local := Vector3(float(off[0]), 0, float(off[1])).rotated(Vector3.UP, deg_to_rad(rot * 90.0))
@@ -291,6 +310,8 @@ func _process(delta: float) -> void:
 		player.action_held = hud.action_button.held and not hud.any_panel_open()
 		player.position.x = clampf(player.position.x, -_half, _half)
 		player.position.z = clampf(player.position.z, -_half, _half)
+		if not route.is_empty():
+			_check_route_exit()
 		if base:
 			player.floor_y = base.floor_height(player.global_position)
 		var t := find_target()
@@ -514,6 +535,10 @@ func spawn_night() -> void:
 		var pos := player.global_position + Vector3(cos(ang), 0.0, sin(ang)) * dist
 		pos.x = clampf(pos.x, -_half + 1.0, _half - 1.0)
 		pos.z = clampf(pos.z, -_half + 1.0, _half - 1.0)
+		if not route.is_empty():   # dentro del pasillo
+			var cx := RouteBuilder.center_x(route, pos.z)
+			pos.x = clampf(pos.x, cx - RouteBuilder.HALF + 1.5, cx + RouteBuilder.HALF - 1.5)
+			pos.z = clampf(pos.z, -float(route["length"]) + 6.0, -6.0)
 		var c := CreatureScript.new()
 		c.setup(kind)
 		c.home = player.global_position.lerp(pos, 0.4)
@@ -688,33 +713,120 @@ func has_key_item(id: String) -> bool:
 	return false
 
 
-func travel_to(id: String) -> String:
-	var why := ""
+## Zona de la que "estás" a efectos del mapa (en un camino, la de salida).
+func here_id() -> String:
+	return map_id if route.is_empty() else (GS.route_from if GS.route_from != "" else str(route["from"]))
+
+
+## Lo que impide ir a una zona (vale para el viaje rápido y para ir andando), o "".
+func _travel_block(id: String) -> String:
 	if id == map_id:
-		why = "Ya estás aquí"
-	elif not DB.maps.has(id):
-		why = "Aún no se puede ir a ese lugar"
-	elif GS.dead:
-		why = "Estás muerto"
-	elif GS.level < DB.map_unlock(id):
-		why = "Necesitas nivel %d para ir allí" % DB.map_unlock(id)
-	elif not has_key_item(id):
-		why = "Para ir allí necesitas %s" % str(DB.maps[id].get("key_text", DB.maps[id].get("key_item", "")))
-	elif enemies_near(10.0):
-		why = "Hay enemigos cerca: aléjate antes de viajar"
+		return "Ya estás aquí"
+	if not DB.maps.has(id):
+		return "Aún no se puede ir a ese lugar"
+	if GS.dead:
+		return "Estás muerto"
+	if DB.map_piece(id) > GS.map_pieces:
+		return "Te falta ese trozo del mapa"
+	if GS.level < DB.map_unlock(id):
+		return "Necesitas nivel %d para ir allí" % DB.map_unlock(id)
+	if not has_key_item(id):
+		return "Para ir allí necesitas %s" % str(DB.maps[id].get("key_text", DB.maps[id].get("key_item", "")))
+	if enemies_near(10.0):
+		return "Hay enemigos cerca: aléjate antes de viajar"
+	return ""
+
+
+## Ir andando a una zona vecina por su camino (sin gastar energía).
+func walk_to(id: String) -> String:
+	var why := _travel_block(id)
+	var rid := DB.route_between(here_id(), id)
+	if why == "" and rid == "":
+		why = "No hay camino directo hasta allí"
+	if why == "" and not route.is_empty():
+		why = "Ya vas por un camino"
 	if why != "":
-		GS.message.emit(why)
-		return why
-	var cost := DB.travel_cost(map_id, id)
-	if GS.food < float(cost["food"]) or GS.water < float(cost["water"]):
-		why = "No tienes comida o agua suficiente para el viaje"
 		GS.message.emit(why)
 		return why
 	if build_mode != "":
 		exit_build()
 	save()
-	GS.food -= float(cost["food"])
-	GS.water -= float(cost["water"])
+	GS.route_from = map_id
+	GS.current_map = rid
+	GS.save_game({})
+	travelled.emit(rid)
+	if get_tree().current_scene == self:
+		get_tree().change_scene_to_file.call_deferred("res://scenes/main.tscn")
+	return ""
+
+
+func _build_route() -> void:
+	var root := Node3D.new()
+	root.name = "Camino"
+	add_child(root)
+	var info := RouteBuilder.build(root, route, randi())
+	# si vienes del final del camino, apareces allí
+	SPAWN = info["exit"] if GS.route_from == str(route["to"]) else info["spawn"]
+	player.position = SPAWN
+	player.reset_physics_interpolation()
+	for r in info["resources"]:
+		if not DB.resources.has(str(r[0])):
+			continue
+		var node := ResourceScript.new()
+		node.setup(str(r[0]))
+		node.position = r[1]
+		node.rotation.y = rng.randf_range(0, TAU)
+		add_child(node)
+	for c in info["creatures"]:
+		if not DB.creatures.has(str(c[0])):
+			continue
+		var cr := CreatureScript.new()
+		cr.setup(str(c[0]))
+		cr.home = c[1]
+		cr.position = c[1]
+		cr.killed.connect(_on_creature_killed)
+		add_child(cr)
+
+
+## Al llegar a un extremo del camino entras en esa zona.
+func _check_route_exit() -> void:
+	var L := float(route["length"])
+	if player.position.z > 1.5:
+		_route_arrive(str(route["from"]))
+	elif player.position.z < -L - 1.5:
+		_route_arrive(str(route["to"]))
+
+
+func _route_arrive(dest: String) -> void:
+	if _arriving:
+		return
+	_arriving = true
+	var st: Dictionary = GS.maps_state.get(dest, {})
+	st.erase("player")   # apareces en la entrada de la zona
+	GS.route_from = ""
+	GS.current_map = dest
+	GS.save_game(st)
+	travelled.emit(dest)
+	if get_tree().current_scene == self:
+		get_tree().change_scene_to_file.call_deferred("res://scenes/main.tscn")
+
+
+## Viaje rápido desde el mapa: gasta energía de viaje (se recarga con el tiempo).
+func travel_to(id: String) -> String:
+	var why := _travel_block(id)
+	if why != "":
+		GS.message.emit(why)
+		return why
+	var cost := DB.travel_energy_cost(here_id(), id)
+	if not GS.spend_travel_energy(cost):
+		why = "Te falta energía de viaje (%d de %d): ve andando por el camino o espera a que se recargue" % [int(GS.travel_energy_now()), cost]
+		GS.message.emit(why)
+		return why
+	if build_mode != "":
+		exit_build()
+	if route.is_empty():
+		save()
+	GS.route_from = ""
 	var dest: Dictionary = GS.maps_state.get(id, {})
 	dest.erase("player")   # al llegar apareces en la entrada de la zona
 	GS.current_map = id
@@ -812,7 +924,7 @@ func _load_world(w: Dictionary) -> void:
 
 
 func save() -> void:
-	GS.save_game(world_dict())
+	GS.save_game(world_dict() if route.is_empty() else {})
 
 
 func _notification(what: int) -> void:

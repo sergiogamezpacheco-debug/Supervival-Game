@@ -76,6 +76,18 @@
     "unlock": 3
   },
   {
+    "id": "tablon_pino",
+    "result": "tablon",
+    "qty": 2,
+    "station": "carpinteria",
+    "level": 1,
+    "time": 6,
+    "cost": {
+      "madera_pino": 2
+    },
+    "unlock": 3
+  },
+  {
     "id": "mango",
     "result": "mango",
     "qty": 1,
@@ -96,7 +108,7 @@
     "level": 1,
     "time": 20,
     "cost": {
-      "tablon": 3,
+      "madera_pino": 3,
       "chatarra": 1
     },
     "unlock": 8,
