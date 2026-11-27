@@ -8,7 +8,8 @@ const M := preload("res://scripts/world/station_models.gd")
 const IDS := ["hacha_hierro", "pico_hierro", "machete", "casco_obra", "chaqueta_piel", "chaleco",
 	"pantalon_cargo", "zapatillas", "botas", "guantes", "fibra", "piel", "baya", "carne_cruda",
 	"carne_asada", "seta", "carbon", "clavos", "tela_resistente", "botella_vacia", "lata_vacia", "cantimplora_vacia",
-	"conserva_bayas", "acido", "cable_cobre", "circuito", "bateria", "sal", "tarro_cristal", "tarro_esterilizado", "comida_podrida", "hortalizas", "tierra", "madera_pino", "trozo_mapa_2", "trozo_mapa_3"]
+	"conserva_bayas", "acido", "cable_cobre", "circuito", "bateria", "sal", "tarro_cristal", "tarro_esterilizado", "comida_podrida", "hortalizas", "tierra", "madera_pino", "trozo_mapa_2", "trozo_mapa_3",
+	"placa_metal", "tornillos"]
 
 var vp: SubViewport
 var cam: Camera3D
@@ -308,6 +309,31 @@ func _clavos() -> float:
 		_p(_cyl(0.09, 0.09, 0.04, 8), STEEL_D, Vector3(0, 0.46, 0), Vector3.ZERO, Vector3.ONE, g)
 		_p(_cyl(0.0, 0.035, 0.12, 6), Color("dfe5e8"), Vector3(0, -0.51, 0), Vector3(180, 0, 0), Vector3.ONE, g)
 	return 1.9
+
+
+func _placa_metal() -> float:
+	# tres chapas apiladas algo torcidas, con agujeros en las esquinas
+	for k in 3:
+		var g := _group(Vector3(0.05 * k, 0.1 * k, -0.05 * k), Vector3(38, -8 + k * 9, -25))
+		_p(_box(Vector3(1.1, 0.05, 0.75)), Color("a9a59c").darkened(0.1 * k), Vector3.ZERO, Vector3.ZERO, Vector3.ONE, g)
+		for x in [-0.46, 0.46]:
+			for z in [-0.29, 0.29]:
+				_p(_cyl(0.035, 0.035, 0.06, 8), Color("2b2f33"), Vector3(x, 0.01, z), Vector3.ZERO, Vector3.ONE, g)
+	return 2.6
+
+
+func _tornillos() -> float:
+	# tornillos con cabeza hexagonal y rosca, y un par de tuercas
+	for k in 5:
+		var a := float(k) * 2.5
+		var g := _group(Vector3(cos(a) * 0.3, 0, sin(a) * 0.28), Vector3(80 + k * 4, k * 61, 0))
+		_p(_cyl(0.05, 0.05, 0.7, 8), STEEL, Vector3.ZERO, Vector3.ZERO, Vector3.ONE, g)
+		for t in 6:
+			_p(_cyl(0.058, 0.058, 0.025, 8), STEEL_D, Vector3(0, -0.3 + t * 0.09, 0), Vector3.ZERO, Vector3.ONE, g)
+		_p(_cyl(0.12, 0.12, 0.1, 6), STEEL_D, Vector3(0, 0.38, 0), Vector3.ZERO, Vector3.ONE, g)
+	for k in 2:
+		_p(_cyl(0.11, 0.11, 0.08, 6), STEEL_D, Vector3(-0.45 + k * 0.85, -0.1, 0.35 - k * 0.6))
+	return 1.8
 
 
 func _tela_resistente() -> float:

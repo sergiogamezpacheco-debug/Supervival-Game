@@ -290,6 +290,8 @@ func upgrade(n: Node3D) -> bool:
 
 
 func refund_of(n: Node3D) -> Dictionary:
+	if n.is_in_group("station") and DB.stations.get(n.id, {}).has("item"):
+		return {str(DB.stations[n.id]["item"]): 1}   # el mueble entero vuelve a la mochila
 	var cost: Dictionary
 	if n.is_in_group("structure"):
 		cost = DB.structure_tier(n.id, n.tier).get("cost", {})

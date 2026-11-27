@@ -100,6 +100,16 @@ static func make(kind: String, level: int) -> Node3D:
 		"destileria": _destileria(root, level)
 		"mesa_quimica": _mesa_quimica(root)
 		"banco_electronica": _banco_electronica(root)
+		"almacenamiento": _almacenamiento(root)
+		"caja_suministros": _caja_suministros(root)
+		"baul_madera": _baul(root, false)
+		"cofre_reforzado": _baul(root, true)
+		"estanteria_madera": _estanteria_madera(root)
+		"estanteria_taller": _estanteria_metal(root, true)
+		"estanteria_industrial": _estanteria_metal(root, false)
+		"armario_madera": _armario_madera(root)
+		"armario_metal": _armario_metal(root)
+		"armario_reforzado": _armario_reforzado(root)
 		_:
 			return null
 	_fase = 0
@@ -251,6 +261,187 @@ static func _compostadora(r: Node3D) -> void:
 	# montón de compost caído delante, en una esquina (como en el diseño)
 	_p(r, Nature.blob(62, 0.25, 7, 4), Color("3b2a1e"), Vector3(0.45, 0.08, -0.72), Vector3.ZERO, Vector3(0.32, 0.18, 0.24))
 	_p(r, Nature.blob(63, 0.25, 6, 3), Color("4a3424"), Vector3(0.62, 0.05, -0.62), Vector3.ZERO, Vector3(0.14, 0.08, 0.12))
+
+
+# ------------------------------------------------------------ almacenaje
+# Según las láminas docs/diseno_est_almacen_*.jpg (baúles, estanterías, armarios).
+const IRON := Color("4a4c4f")
+const RIVET := Color("8c8f92")
+const CARD := Color("c79a62")
+
+
+## Taller de almacenamiento: banco con un baúl a medio hacer, tablones y una estantería detrás.
+static func _almacenamiento(r: Node3D) -> void:
+	_p(r, _box(Vector3(1.75, 0.1, 0.85)), WOOD, Vector3(0, 0.82, 0.02))
+	_legs(r, 1.7, 0.8, 0.8, 0.09, WOOD_D)
+	_p(r, _box(Vector3(1.6, 0.05, 0.7)), WOOD_D, Vector3(0, 0.25, 0.02))
+	# baúl a medio hacer: la caja sin tapa y la tapa curva apoyada al lado
+	_p(r, _box(Vector3(0.62, 0.34, 0.42)), PLANK, Vector3(-0.35, 1.04, 0.05))
+	_p(r, _box(Vector3(0.54, 0.3, 0.34)), WOOD_D.darkened(0.3), Vector3(-0.35, 1.07, 0.05))
+	for x in [-0.6, -0.1]:
+		_p(r, _box(Vector3(0.05, 0.36, 0.44)), IRON, Vector3(x, 1.05, 0.05))
+	_p(r, _cyl(0.22, 0.22, 0.6, 10), PLANK.darkened(0.1), Vector3(0.35, 0.92, -0.2), Vector3(0, 0, 90), Vector3(0.55, 1, 1))
+	# tablones apilados en el suelo y un martillo
+	for k in 3:
+		_p(r, _box(Vector3(0.9, 0.06, 0.16)), WOOD_L if k % 2 == 0 else PLANK, Vector3(0.3, 0.03 + k * 0.065, -0.55 + k * 0.02), Vector3(0, 6 * k, 0))
+	_p(r, _box(Vector3(0.05, 0.05, 0.32)), WOOD_D, Vector3(0.6, 0.9, 0.15), Vector3(0, 30, 0))
+	_p(r, _box(Vector3(0.12, 0.06, 0.05)), IRON, Vector3(0.66, 0.92, 0.04), Vector3(0, 30, 0))
+	# estantería baja detrás con cajas
+	_p(r, _box(Vector3(1.7, 0.06, 0.3)), WOOD, Vector3(0, 1.5, 0.3))
+	for x in [-0.83, 0.83]:
+		_p(r, _box(Vector3(0.06, 0.75, 0.06)), WOOD_D, Vector3(x, 1.25, 0.3))
+	_p(r, _box(Vector3(0.3, 0.24, 0.24)), CARD, Vector3(-0.5, 1.65, 0.3))
+	_p(r, _box(Vector3(0.26, 0.2, 0.22)), CARD.darkened(0.1), Vector3(0.1, 1.63, 0.3))
+	_p(r, _box(Vector3(0.22, 0.18, 0.2)), WOOD_L, Vector3(0.55, 1.62, 0.3))
+
+
+## Caja de suministros: tablones con travesaños en diagonal y cuerda cruzada.
+static func _caja_suministros(r: Node3D) -> void:
+	var c := Color("a0703f")
+	_p(r, _box(Vector3(0.96, 0.76, 0.76)), c, Vector3(0, 0.38, 0))
+	for k in 3:   # juntas de los tablones
+		_p(r, _box(Vector3(0.97, 0.015, 0.77)), c.darkened(0.35), Vector3(0, 0.13 + k * 0.25, 0))
+	for z in [-0.385, 0.385]:   # marco y diagonal de las caras
+		for y in [0.03, 0.73]:
+			_p(r, _box(Vector3(0.98, 0.07, 0.03)), c.darkened(0.15), Vector3(0, y, z))
+		for x in [-0.46, 0.46]:
+			_p(r, _box(Vector3(0.07, 0.76, 0.03)), c.darkened(0.15), Vector3(x, 0.38, z))
+		_p(r, _box(Vector3(1.12, 0.07, 0.03)), c.darkened(0.15), Vector3(0, 0.38, z), Vector3(0, 0, 37))
+	var rope := Color("c9b27a")
+	for x in [-0.15, 0.15]:   # cuerda: dos vueltas en cada sentido
+		_p(r, _box(Vector3(0.03, 0.8, 0.8)), rope, Vector3(x, 0.38, 0))
+	for z in [-0.12, 0.12]:
+		_p(r, _box(Vector3(1.0, 0.8, 0.03)), rope, Vector3(0, 0.38, z))
+	_p(r, _box(Vector3(0.12, 0.05, 0.1)), rope.darkened(0.1), Vector3(0.15, 0.79, -0.12))
+
+
+## Baúl de madera (tapa curva, flejes, esquinas y remaches) y cofre reforzado (más oscuro, más flejes).
+static func _baul(r: Node3D, reforzado: bool) -> void:
+	var wood := Color("6e4626") if reforzado else Color("a06a3a")
+	var w := 1.3 if not reforzado else 1.36
+	_p(r, _box(Vector3(w, 0.56, 0.76)), wood, Vector3(0, 0.3, 0))
+	for k in 3:
+		_p(r, _box(Vector3(w + 0.01, 0.015, 0.77)), wood.darkened(0.35), Vector3(0, 0.14 + k * 0.15, 0))
+	_p(r, _cyl(0.38, 0.38, w, 12), wood.lightened(0.05), Vector3(0, 0.58, 0), Vector3(0, 0, 90), Vector3(0.6, 1, 1))
+	var bands := [-w / 2.0 + 0.04, w / 2.0 - 0.04]
+	if reforzado:
+		bands += [-w / 6.0, w / 6.0]
+	for x in bands:
+		_p(r, _box(Vector3(0.08, 0.58, 0.8)), IRON, Vector3(x, 0.3, 0))
+		_p(r, _cyl(0.395, 0.395, 0.08, 12), IRON, Vector3(x, 0.58, 0), Vector3(0, 0, 90), Vector3(0.6, 1, 1))
+		for y in [0.1, 0.3, 0.5]:   # remaches
+			_p(r, _box(Vector3(0.03, 0.03, 0.02)), RIVET, Vector3(x, y, -0.405))
+	_p(r, _box(Vector3(w + 0.02, 0.07, 0.8)), IRON, Vector3(0, 0.57, 0))
+	_p(r, _box(Vector3(w + 0.02, 0.06, 0.8)), IRON, Vector3(0, 0.03, 0))
+	_p(r, _box(Vector3(0.2, 0.24, 0.05)), IRON.lightened(0.15), Vector3(0, 0.5, -0.41))
+	_p(r, _box(Vector3(0.05, 0.08, 0.03)), Color("1c1c1c"), Vector3(0, 0.48, -0.44))
+	for x in [-1.0, 1.0]:   # asas laterales
+		_p(r, _box(Vector3(0.04, 0.08, 0.26)), IRON, Vector3(x * (w / 2.0 + 0.03), 0.4, 0))
+
+
+static func _boxes_on(r: Node3D, y: float, w: float, seed_: int) -> void:
+	var cols := [CARD, CARD.darkened(0.12), Color("5f6b3a"), Color("6a6f73"), Color("8a3b2a"), CARD.lightened(0.08)]
+	var x := -w / 2.0 + 0.08
+	var k := seed_
+	while x < w / 2.0 - 0.2:
+		var bw := 0.18 + float(k % 3) * 0.07
+		var bh := 0.14 + float((k * 7) % 4) * 0.035
+		_p(r, _box(Vector3(bw, bh, 0.3)), cols[k % cols.size()], Vector3(x + bw / 2.0, y + bh / 2.0, 0.02))
+		x += bw + 0.05
+		k += 1
+
+
+## Estantería de madera: cuatro baldas con cajas y botes, y tres cajas de madera encima.
+static func _estanteria_madera(r: Node3D) -> void:
+	var w := 1.3
+	for x in [-w / 2.0, w / 2.0]:
+		for z in [-0.22, 0.22]:
+			_p(r, _box(Vector3(0.06, 2.0, 0.06)), WOOD_D, Vector3(x, 1.0, z))
+	for k in 4:
+		var y := 0.12 + k * 0.5
+		_p(r, _box(Vector3(w + 0.06, 0.05, 0.5)), WOOD, Vector3(0, y, 0))
+		if k < 3:
+			_boxes_on(r, y + 0.025, w, k * 3 + 1)
+	for k in 3:   # cajas de madera arriba
+		var c := _p(r, _box(Vector3(0.36, 0.3, 0.36)), Color("9a6a3a"), Vector3(-0.42 + k * 0.42, 1.8, 0))
+		_p(r, _box(Vector3(0.37, 0.04, 0.37)), Color("6e4626"), Vector3(-0.42 + k * 0.42, 1.95, 0))
+		c.rotation_degrees.y = (k - 1) * 4.0
+
+
+## Estanterías de metal: la industrial (gris, con aspas laterales y una caja naranja) y la de taller
+## (bastidor oscuro con rojo, balda de chapa y madera y herramientas abajo).
+static func _estanteria_metal(r: Node3D, taller: bool) -> void:
+	var w := 1.4
+	var post := Color("3c4044") if taller else Color("767c80")
+	var shelf := Color("9aa0a4")
+	var h := 1.6 if taller else 1.9
+	for x in [-w / 2.0, w / 2.0]:
+		for z in [-0.25, 0.25]:
+			_p(r, _box(Vector3(0.07, h, 0.07)), post, Vector3(x, h / 2.0, z))
+			if taller:
+				_p(r, _box(Vector3(0.075, 0.08, 0.075)), Color("a2312a"), Vector3(x, 0.04, z))
+		# aspa del lateral
+		_stick(r, Vector3(x, 0.2, -0.25), Vector3(x, h - 0.3, 0.25), 0.015, post)
+		_stick(r, Vector3(x, 0.2, 0.25), Vector3(x, h - 0.3, -0.25), 0.015, post)
+	var levels := [0.25, 0.85, 1.45] if taller else [0.2, 0.75, 1.3, 1.85]
+	for k in levels.size():
+		var y: float = levels[k]
+		var mat := shelf if (not taller or k == levels.size() - 1) else Color("8a6440")
+		_p(r, _box(Vector3(w + 0.08, 0.05, 0.56)), mat, Vector3(0, y, 0))
+		if taller:
+			_p(r, _box(Vector3(w + 0.1, 0.06, 0.03)), Color("a2312a"), Vector3(0, y, -0.29))
+	if taller:
+		for k in 3:   # tablones y herramientas
+			_p(r, _box(Vector3(0.9, 0.05, 0.14)), WOOD_L, Vector3(-0.15, 0.3 + k * 0.05, -0.05 + k * 0.03), Vector3(0, k * 5, 0))
+		_p(r, _box(Vector3(0.3, 0.16, 0.2)), Color("6a6f73"), Vector3(0.1, 0.95, 0))
+		_p(r, _box(Vector3(0.04, 0.04, 0.3)), WOOD_D, Vector3(-0.45, 0.9, 0), Vector3(0, 70, 0))
+	else:
+		_p(r, _box(Vector3(0.36, 0.26, 0.3)), Color("d08a2e"), Vector3(-0.35, 2.0, 0))
+		_p(r, _box(Vector3(0.36, 0.03, 0.3)), Color("8a5a1e"), Vector3(-0.35, 2.13, 0))
+
+
+## Armario de madera: tablones verticales, dos puertas con tiradores y tapa que sobresale.
+static func _armario_madera(r: Node3D) -> void:
+	var wood := Color("8e6238")
+	_p(r, _box(Vector3(1.1, 1.86, 0.58)), wood, Vector3(0, 0.95, 0))
+	_p(r, _box(Vector3(1.24, 0.08, 0.68)), wood.lightened(0.06), Vector3(0, 1.92, -0.02))
+	for k in 6:   # tablones de las puertas
+		var x := -0.46 + k * 0.184
+		_p(r, _box(Vector3(0.17, 1.74, 0.03)), wood.lightened(0.04 * (k % 2)), Vector3(x, 0.96, -0.3))
+	_p(r, _box(Vector3(0.02, 1.74, 0.04)), wood.darkened(0.4), Vector3(0, 0.96, -0.31))
+	for x in [-0.08, 0.08]:
+		_p(r, _box(Vector3(0.03, 0.2, 0.04)), IRON, Vector3(x, 1.0, -0.34))
+	for x in [-0.5, 0.5]:
+		_p(r, _box(Vector3(0.08, 0.1, 0.5)), wood.darkened(0.3), Vector3(x, 0.05, 0))
+
+
+## Armario de metal: dos taquillas grises con rejillas y tiradores.
+static func _armario_metal(r: Node3D) -> void:
+	var paint := Color("8c9399")
+	_p(r, _box(Vector3(1.1, 1.86, 0.52)), paint, Vector3(0, 0.96, 0))
+	_p(r, _box(Vector3(1.12, 0.06, 0.54)), paint.darkened(0.3), Vector3(0, 0.03, 0))
+	for x in [-0.275, 0.275]:
+		_p(r, _box(Vector3(0.51, 1.74, 0.03)), paint.lightened(0.08), Vector3(x, 0.97, -0.265))
+		for k in 4:
+			_p(r, _box(Vector3(0.28, 0.022, 0.02)), paint.darkened(0.45), Vector3(x, 1.6 + k * 0.06, -0.285))
+		_p(r, _box(Vector3(0.035, 0.18, 0.04)), METAL_D, Vector3(x + (0.19 if x < 0 else -0.19), 1.0, -0.29))
+
+
+## Armario reforzado: madera gruesa con marco y esquinas de hierro, bisagras y patas.
+static func _armario_reforzado(r: Node3D) -> void:
+	var wood := Color("7a5030")
+	_p(r, _box(Vector3(1.3, 1.8, 0.68)), wood, Vector3(0, 1.02, 0))
+	for k in 7:
+		_p(r, _box(Vector3(0.17, 1.66, 0.03)), wood.lightened(0.05 * (k % 2)), Vector3(-0.54 + k * 0.18, 1.02, -0.35))
+	for x in [-0.66, 0.66]:   # marco de hierro y patas
+		for z in [-0.35, 0.35]:
+			_p(r, _box(Vector3(0.08, 2.0, 0.08)), IRON, Vector3(x, 1.0, z))
+	for y in [0.14, 1.0, 1.9]:
+		_p(r, _box(Vector3(1.4, 0.08, 0.04)), IRON, Vector3(0, y, -0.37))
+	for y in [0.5, 1.5]:   # bisagras y cierre
+		_p(r, _box(Vector3(0.16, 0.06, 0.03)), RIVET, Vector3(-0.56, y, -0.38))
+		_p(r, _box(Vector3(0.16, 0.06, 0.03)), RIVET, Vector3(0.56, y, -0.38))
+	_p(r, _box(Vector3(0.12, 0.16, 0.05)), IRON.lightened(0.2), Vector3(0, 1.05, -0.4))
 
 
 # ---------------------------------------------------------------- huerto

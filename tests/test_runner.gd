@@ -503,6 +503,41 @@ func test_base() -> void:
 	check(GS.count("piedra") == stones, "sacar del cofre")
 	chest.bag_to_chest(slot if GS.slots[slot] != null else 0)
 
+	# Almacenamiento: baúles, estanterías y armarios se fabrican en su taller y se colocan desde la mochila
+	var furn := {"caja_suministros": 18, "baul_madera": 24, "cofre_reforzado": 36, "estanteria_madera": 32, "estanteria_taller": 36,
+		"estanteria_industrial": 40, "armario_madera": 48, "armario_metal": 56, "armario_reforzado": 64}
+	for fid in furn:
+		var r := DB.recipe(fid)
+		check(str(r.get("station", "")) == "almacenamiento" and str(DB.item(fid).get("type", "")) == "storage", "%s se fabrica en Almacenamiento" % fid)
+		check(int(DB.station_level(fid, 1).get("storage", 0)) == int(furn[fid]), "%s guarda %d" % [fid, furn[fid]])
+	check(str(DB.recipe("baul_madera").get("cat", "")) == "Baúles" and str(DB.recipe("estanteria_madera").get("cat", "")) == "Estanterías" and str(DB.recipe("armario_madera").get("cat", "")) == "Armarios", "pestañas Baúles, Estanterías y Armarios")
+	GS.add_item("baul_madera", 1)
+	world.place_furniture("baul_madera")
+	check(world.build_mode == "place" and world.build_id == "baul_madera", "Colocar el baúl desde la mochila abre el modo construir")
+	world.exit_build()
+	var trunk: Node3D = base.place("baul_madera", Vector2i(-8, 8), 0, 0, pp)
+	check(trunk != null and trunk.is_chest() and trunk.storage.size() == 24 and GS.count("baul_madera") == 0, "el baúl se coloca gastando el mueble de la mochila (24 huecos)")
+	check(trunk.action_label() == "Abrir", "el baúl se abre como un cofre")
+	world.hud.open_station(trunk)
+	await _pframes(2)
+	check(world.hud._chest_left.text.begins_with("Baúl de madera  0/24"), "la ventana dice cuánto cabe (%s)" % world.hud._chest_left.text)
+	world.hud.close_panels()
+	world.hud._refresh_build_menu()
+	var listed := false
+	for row in world.hud._build_list.get_children():
+		for l in row.find_children("*", "Label", true, false):
+			if (l as Label).text.begins_with("Baúl de madera"):
+				listed = true
+	check(not listed, "los muebles no salen en el menú de construir (se fabrican)")
+	GS.add_item("piedra", 1)
+	var p_i := -1
+	for i in GS.slots.size():
+		if GS.slots[i] != null and GS.slots[i]["id"] == "piedra":
+			p_i = i
+	trunk.bag_to_chest(p_i)
+	check(base.demolish(trunk) and GS.count("baul_madera") == 1, "al desmontarlo el baúl vuelve entero a la mochila")
+	trunk = base.place("baul_madera", Vector2i(-8, 8), 0, 0, pp)
+
 	# Guardar y volver a cargar el refugio entero
 	carp.start("tablon")
 	var n_found: int = base.foundations.size()
@@ -519,6 +554,8 @@ func test_base() -> void:
 	check(loaded_carp != null and not loaded_carp.job.is_empty(), "la estación sigue fabricando tras cargar")
 	var loaded_chest: Node3D = base2.objects.get(Base_key(-8, 6))
 	check(loaded_chest != null and loaded_chest.storage[0] != null, "se carga el contenido del cofre")
+	var loaded_trunk: Node3D = base2.objects.get(Base_key(-8, 8))
+	check(loaded_trunk != null and loaded_trunk.id == "baul_madera" and loaded_trunk.storage.size() == 24, "se carga el baúl colocado")
 	var loaded_bench: Node3D = base2.objects.get(Base_key(-6, 4))
 	check(loaded_bench != null and loaded_bench.level == 2, "se carga el nivel del banco")
 	world2.queue_free()
@@ -1105,6 +1142,24 @@ func test_fixes() -> void:
 func test_routes() -> void:
 	var routes: Dictionary = JSON.parse_string(FileAccess.get_file_as_string("res://data/routes.json"))
 	check(routes.size() >= 9, "tramos de camino definidos (%d)" % routes.size())
+	var hrng := RandomNumberGenerator.new()
+	var casa: Node3D = RouteBuilder.poi_mesh("casa_labranza", hrng)
+	RouteBuilder._solidify(casa)
+	check(not casa.find_children("*", "CollisionShape3D", true, false).is_empty(), "las casas de los caminos no se atraviesan")
+	var roof_y := 0.0
+	for m in casa.find_children("*", "MeshInstance3D", true, false):
+		roof_y = maxf(roof_y, (m as MeshInstance3D).position.y)
+	check(roof_y > 2.9, "el tejado queda por encima de la pared (tejado a dos aguas)")
+	var front_slab_ok := false
+	for m in casa.get_children():
+		if m is MeshInstance3D and m.position.y > 2.7 and m.position.z < -0.5:
+			front_slab_ok = m.rotation.x < 0.0
+	check(front_slab_ok, "el faldón de delante baja hacia la fachada (no está invertido)")
+	casa.free()
+	var tienda: Node3D = RouteBuilder.poi_mesh("gasolinera", hrng)
+	RouteBuilder._solidify(tienda)
+	check(not tienda.find_children("*", "CollisionShape3D", true, false).is_empty(), "los surtidores y postes de la gasolinera son sólidos")
+	tienda.free()
 	var bad := []
 	for rid in routes:
 		var r: Dictionary = routes[rid]

@@ -12,6 +12,7 @@ ICONOS = {  # id: (lámina, x, y, w, h, tolerancia)
     "mesa_costura": ("costura", 18, 16, 70, 60, 30),
     "banco_armas": ("armas", 18, 20, 60, 55, 30),
     "compostadora": ("compostadora", 22, 14, 66, 66, 30),
+    "almacenamiento": ("almacen_baules", 20, 14, 70, 64, 30),
     "llama": ("destileria", 40, 795, 60, 60, 60),
     "progreso": ("destileria", 45, 680, 70, 55, 45),
     "bateria": ("horno", 44, 672, 50, 60, 60),

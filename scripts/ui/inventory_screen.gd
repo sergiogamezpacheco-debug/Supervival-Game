@@ -542,6 +542,8 @@ func _refresh_detail() -> void:
 		stats.append("Se estropea en %s" % left)
 	elif data.has("food") and id != "comida_podrida":
 		stats.append("No caduca")
+	if str(data.get("type", "")) == "storage":
+		stats.append("Capacidad: %d huecos · se coloca en el refugio" % int(DB.station_level(str(data.get("place", "")), 1).get("storage", 0)))
 	_show(DB.item_icon(id), DB.item_name(id), str(data.get("desc", "")), " · ".join(stats), "x%d" % int(it["qty"]) if int(it.get("qty", 1)) > 1 else "")
 	var q := int(it.get("qty", 1))
 	_d_weight.text = ("   %s" % _kg(DB.weight(id))) if q <= 1 else ("   %s c/u · %s" % [_kg(DB.weight(id)), _kg(DB.weight(id) * q)])
@@ -563,6 +565,9 @@ func _refresh_detail() -> void:
 				acts.append(["Ponerse", func(): GS.wear_slot(i)])
 			"trap":
 				acts.append(["Colocar", func(): get_tree().call_group("world", "place_trap", i)])
+			"storage":
+				var pid := str(data.get("place", ""))
+				acts.append(["Colocar", func(): get_tree().call_group("world", "place_furniture", pid)])
 		acts.append(["Tirar", func(): GS.drop_slot(i)])
 	for k in acts.size():
 		var b := Button.new()

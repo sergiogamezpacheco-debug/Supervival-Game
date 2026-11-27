@@ -16,7 +16,7 @@ const ROW_BG := Color(0.13, 0.12, 0.095, 0.84)
 const ROW_LINE := Color("4d4536")
 const PANEL_BG := Color(0.07, 0.065, 0.05, 0.8)
 const W := 1280.0
-const TAB_ORDER := ["Obra", "Herramientas", "Armas", "Trampas", "Ropa", "Mochilas", "Platos", "Comida", "Conservas",
+const TAB_ORDER := ["Obra", "Baúles", "Estanterías", "Armarios", "Herramientas", "Armas", "Trampas", "Ropa", "Mochilas", "Platos", "Comida", "Conservas",
 	"Medicamentos", "Medicinas", "Explosivos", "Alquimia", "Líquidos", "Circuitos", "Energía", "Dispositivos",
 	"Componentes", "Recursos", "Compost", "Residuos", "Suelo", "Combustible", "Agua", "Fuego", "Reparar"]
 
@@ -597,7 +597,11 @@ func _select(i: int) -> void:
 	var e: Dictionary = entries[selected]
 	_name.text = str(e["name"]).to_upper()
 	_desc.text = str(e["desc"])
-	if e["kind"] == "recipe":
+	if e["kind"] == "recipe" and str(DB.item(str(e["r"].get("result", ""))).get("type", "")) == "storage":
+		# muebles de almacenaje: como en el diseño, la capacidad junto al nombre
+		var cap := int(DB.station_level(str(DB.item(str(e["r"]["result"])).get("place", "")), 1).get("storage", 0))
+		_time.text = "Capacidad: %d slots" % cap
+	elif e["kind"] == "recipe":
 		_time.text = "Tiempo: %s" % _clock(station.recipe_time(e["r"]))
 	else:
 		_time.text = ""
@@ -684,6 +688,8 @@ func tick() -> void:
 		_prog_bar.value = 0.0
 		_prog_text.text = "0%"
 		_prog_time.text = "Libre"
+		if kind == "recipe" and station.id == "almacenamiento":
+			_prog_time.text = "Tiempo: %s" % _clock(station.recipe_time(e["r"]))
 	else:
 		_prog_bar.value = station.progress()
 		_prog_text.text = "%d%%" % int(floor(station.progress() * 100.0))

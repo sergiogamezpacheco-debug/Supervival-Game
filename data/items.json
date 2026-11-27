@@ -777,5 +777,91 @@
     "stack": 1,
     "desc": "Se cose a tu mapa: la costa, la vía del tren y la central.",
     "weight": 0.01
+  },
+  "caja_suministros": {
+    "name": "Caja de suministros",
+    "type": "storage",
+    "stack": 1,
+    "place": "caja_suministros",
+    "desc": "Caja de tablones atada con cuerda: ligera y fácil de mover.",
+    "weight": 4
+  },
+  "baul_madera": {
+    "name": "Baúl de madera",
+    "type": "storage",
+    "stack": 1,
+    "place": "baul_madera",
+    "desc": "Almacena materiales básicos, herramientas y suministros recolectados en el refugio.",
+    "weight": 6
+  },
+  "cofre_reforzado": {
+    "name": "Cofre reforzado",
+    "type": "storage",
+    "stack": 1,
+    "place": "cofre_reforzado",
+    "desc": "Baúl con flejes y remaches de hierro: más hueco y más resistente.",
+    "weight": 9
+  },
+  "estanteria_madera": {
+    "name": "Estantería de madera",
+    "type": "storage",
+    "stack": 1,
+    "place": "estanteria_madera",
+    "desc": "Organiza cajas, piezas y materiales en estantes de varios niveles para aprovechar el espacio.",
+    "weight": 8
+  },
+  "estanteria_taller": {
+    "name": "Estantería de taller",
+    "type": "storage",
+    "stack": 1,
+    "place": "estanteria_taller",
+    "desc": "Baldas de madera sobre bastidor de hierro, para herramientas y piezas pesadas.",
+    "weight": 10
+  },
+  "estanteria_industrial": {
+    "name": "Estantería industrial",
+    "type": "storage",
+    "stack": 1,
+    "place": "estanteria_industrial",
+    "desc": "Estantes de chapa atornillados: aguanta lo que le eches.",
+    "weight": 12
+  },
+  "armario_madera": {
+    "name": "Armario de madera",
+    "type": "storage",
+    "stack": 1,
+    "place": "armario_madera",
+    "desc": "Armario alto de madera para guardar ropa, armaduras y objetos personales de forma ordenada.",
+    "weight": 12
+  },
+  "armario_metal": {
+    "name": "Armario de metal",
+    "type": "storage",
+    "stack": 1,
+    "place": "armario_metal",
+    "desc": "Taquillas de chapa con cerradura: mucho sitio y bien cerrado.",
+    "weight": 18
+  },
+  "armario_reforzado": {
+    "name": "Armario reforzado",
+    "type": "storage",
+    "stack": 1,
+    "place": "armario_reforzado",
+    "desc": "Madera gruesa con marco de hierro y cuero: el que más guarda.",
+    "weight": 20
+  },
+  "placa_metal": {
+    "name": "Placas de metal",
+    "type": "material",
+    "stack": 30,
+    "desc": "Chapa de hierro cortada y aplanada. Para estanterías y armarios de metal.",
+    "weight": 0.4
+  },
+  "tornillos": {
+    "name": "Tornillos",
+    "type": "material",
+    "stack": 50,
+    "desc": "Tornillos de hierro con su tuerca: uniones que no se aflojan.",
+    "weight": 0.02
   }
 }

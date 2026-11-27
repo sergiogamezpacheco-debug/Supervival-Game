@@ -11,6 +11,16 @@ const SIZES := {
 	"horno": Vector3(1.4, 1.4, 1.2),
 	"mesa_costura": Vector3(1.4, 1.0, 0.8),
 	"cofre": Vector3(1.2, 0.8, 0.7),
+	"almacenamiento": Vector3(1.8, 1.0, 0.9),
+	"caja_suministros": Vector3(1.0, 0.8, 0.8),
+	"baul_madera": Vector3(1.3, 0.95, 0.8),
+	"cofre_reforzado": Vector3(1.4, 1.0, 0.85),
+	"estanteria_madera": Vector3(1.4, 2.1, 0.55),
+	"estanteria_taller": Vector3(1.5, 1.7, 0.6),
+	"estanteria_industrial": Vector3(1.5, 2.0, 0.6),
+	"armario_madera": Vector3(1.2, 2.0, 0.65),
+	"armario_metal": Vector3(1.2, 1.95, 0.55),
+	"armario_reforzado": Vector3(1.4, 2.0, 0.75),
 	"gimnasio": Vector3(2.2, 1.9, 1.0),
 	"banco_armas": Vector3(1.8, 1.0, 0.9),
 	"recolector_agua": Vector3(1.1, 1.4, 1.1),
@@ -58,8 +68,9 @@ func setup(p_id: String, p_level: int, p_key: String, p_rot: int) -> void:
 	_rebuild()
 
 
+## Almacenaje: cofre, baúles, estanterías y armarios (los que tienen "storage" en stations.json).
 func is_chest() -> bool:
-	return id == "cofre"
+	return DB.station_level(id, 1).has("storage")
 
 
 func is_gym() -> bool:
@@ -301,7 +312,7 @@ static func max_times(r: Dictionary) -> int:
 func start(recipe_id: String, count := 1) -> String:
 	count = maxi(count, 1)
 	if is_chest():
-		return "Esto es un cofre"
+		return "Esto es para guardar cosas"
 	if not is_built():
 		return "Termina antes la obra"
 	if GS.level < DB.recipe_unlock(DB.recipe(recipe_id)):
@@ -393,7 +404,7 @@ func bag_to_chest(i: int) -> void:
 		GS.slots[i] = null
 	else:
 		s["qty"] = left
-		GS.message.emit("Cofre lleno")
+		GS.message.emit("%s: no cabe más" % DB.station_name(id))
 	GS.inventory_changed.emit()
 
 

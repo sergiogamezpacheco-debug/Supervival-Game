@@ -66,6 +66,7 @@ var _build_confirm: Button
 var _station_panel: Control
 var _chest_panel: PanelContainer
 var _chest_title: Label
+var _chest_left: Label
 var _chest_grid: GridContainer
 var _chest_bag_grid: GridContainer
 var station: Node3D = null       # estación o cofre abierto
@@ -900,6 +901,8 @@ func _refresh_build_menu() -> void:
 	_section(_build_list, "Estaciones y almacenaje")
 	for id in DB.stations:
 		var d: Dictionary = DB.stations[id]
+		if d.has("item"):
+			continue   # baúles, estanterías y armarios: se fabrican en Almacenamiento y se colocan desde la mochila
 		var nph := DB.station_phases(str(id)).size()
 		var extra := ("  (obra en %d fases)" % nph) if nph > 1 else ""
 		_build_row(str(id), "%s%s — %s" % [d.get("name", id), extra, d.get("desc", "")], DB.station_build_cost(str(id)))
@@ -1171,9 +1174,9 @@ func _build_chest_panel() -> void:
 	h.add_theme_constant_override("separation", 24)
 	v.add_child(h)
 	var left := VBoxContainer.new()
-	var lt := Label.new()
-	lt.text = "Cofre"
-	left.add_child(lt)
+	_chest_left = Label.new()
+	_chest_left.text = "Cofre"
+	left.add_child(_chest_left)
 	_chest_grid = GridContainer.new()
 	_chest_grid.columns = 8   # 8 x 56 px: caben cofre y mochila táctica enteros en pantalla
 	left.add_child(_chest_grid)
@@ -1232,6 +1235,11 @@ func _refresh_chest() -> void:
 	if station == null or not is_instance_valid(station) or not station.is_chest():
 		return
 	_chest_title.text = station.display_name()
+	var used := 0
+	for it in station.storage:
+		if it != null:
+			used += 1
+	_chest_left.text = "%s  %d/%d" % [DB.station_name(station.id), used, station.storage.size()]
 	for c in _chest_grid.get_children():
 		c.queue_free()
 	for c in _chest_bag_grid.get_children():

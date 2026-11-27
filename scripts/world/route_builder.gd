@@ -63,6 +63,7 @@ static func build(root: Node3D, route: Dictionary, visit_seed: int) -> Dictionar
 		var off := 0.0 if side == "center" else (7.5 if side == "right" else -7.5)
 		var pos := Vector3(center_x(route, z) + off, 0, z)
 		var node := poi_mesh(str(poi.get("type", "")), rng)
+		_solidify(node)
 		node.position = pos
 		node.rotation.y = 0.0 if side == "center" else (PI / 2.0 if side == "right" else -PI / 2.0)
 		stat.add_child(node)
@@ -396,16 +397,33 @@ static func _box(r: Node3D, size: Vector3, pos: Vector3, col: Color, rot_y := 0.
 
 static func house(r: Node3D, w: float, d: float, wall: Color, roof: Color, broken := false) -> void:
 	_box(r, Vector3(w, 2.6, d), Vector3(0, 1.3, 0), wall)
-	var rf := _box(r, Vector3(w + 0.4, 0.2, d * 0.6), Vector3(0, 2.95, -d * 0.24), roof)
-	rf.rotation.x = 0.45
-	var rb := _box(r, Vector3(w + 0.4, 0.2, d * 0.6), Vector3(0, 2.95, d * 0.24), roof)
-	rb.rotation.x = -0.45
+	# tejado a dos aguas: cada faldón baja hacia su fachada (delante, -Z: giro -0,45; detrás +0,45)
+	# y su borde bajo queda justo encima de la pared
+	var slope := 0.45
+	var half := d * 0.3
+	var rise := half * sin(slope)
+	var rf := _box(r, Vector3(w + 0.4, 0.2, d * 0.6), Vector3(0, 2.7 + rise, -d * 0.25), roof)
+	rf.rotation.x = -slope
+	var rb := _box(r, Vector3(w + 0.4, 0.2, d * 0.6), Vector3(0, 2.7 + rise, d * 0.25), roof)
+	rb.rotation.x = slope
+	# hastiales: el triángulo de pared bajo el tejado (un prisma girado 45º y aplastado)
+	var gable := Node3D.new()
+	gable.position = Vector3(0, 2.6, 0)
+	gable.scale = Vector3(1, (rise * 2.0 + 0.2) / d, 1)
+	var g := _box(gable, Vector3(w - 0.02, d / sqrt(2.0), d / sqrt(2.0)), Vector3.ZERO, wall)
+	g.rotation.x = PI / 4.0
+	r.add_child(gable)
 	_box(r, Vector3(0.9, 1.8, 0.08), Vector3(w * 0.2, 0.9, -d / 2.0 - 0.02), Color("3b2a1a"))
 	for k in [-1.0, 1.0]:
 		_box(r, Vector3(0.7, 0.6, 0.08), Vector3(-w * 0.25 + k * 0.3 - 0.3, 1.6, -d / 2.0 - 0.03), Color("2a3238") if not broken else Color("6b4a2c"))
 	if broken:
-		var hole := _box(r, Vector3(w * 0.4, 0.25, d * 0.3), Vector3(w * 0.15, 3.0, 0), Color("2a2620"))
-		hole.rotation.x = 0.45
+		var hole := _box(r, Vector3(w * 0.4, 0.25, d * 0.3), Vector3(w * 0.15, 2.75 + rise, -d * 0.2), Color("2a2620"))
+		hole.rotation.x = -slope
+	# no se puede atravesar
+	var body := StaticBody3D.new()
+	body.name = "Muros"
+	_coll(body, Vector3(w, 2.6, d), Vector3(0, 1.3, 0))
+	r.add_child(body)
 
 
 static func car(r: Node3D, col: Color, pos: Vector3, rot_y: float, tipped := false) -> void:
@@ -522,6 +540,32 @@ static func poi_mesh(kind: String, rng: RandomNumberGenerator) -> Node3D:
 			r.add_child(tent)
 			_box(r, Vector3(2.4, 2.4, 6.0), Vector3(5.0, 1.2, 5.0), Color("4f6a58"))
 	return r
+
+
+## Lo que está apoyado en el suelo (paredes, postes, coches, cajas...) de un punto de interés se
+## vuelve sólido si no trae ya sus propias colisiones: cajas con la forma de cada pieza.
+static func _solidify(node: Node3D) -> void:
+	if not node.find_children("*", "CollisionShape3D", true, false).is_empty():
+		return
+	var body := StaticBody3D.new()
+	body.name = "Solido"
+	for m in node.find_children("*", "MeshInstance3D", true, false):
+		var mi := m as MeshInstance3D
+		if mi.mesh == null:
+			continue
+		var xf := Transform3D.IDENTITY
+		var n: Node = mi
+		while n != null and n != node:
+			xf = (n as Node3D).transform * xf
+			n = n.get_parent()
+		var bb: AABB = xf * mi.mesh.get_aabb()
+		if bb.position.y > 0.6 or bb.size.y < 0.4 or bb.size.x * bb.size.z < 0.04:
+			continue   # tejados, letreros, cosas planas o muy pequeñas: se pasa por encima o por debajo
+		_coll(body, bb.size, bb.get_center())
+	if body.get_child_count() > 0:
+		node.add_child(body)
+	else:
+		body.free()
 
 
 static func _coll(body: StaticBody3D, size: Vector3, pos: Vector3) -> void:

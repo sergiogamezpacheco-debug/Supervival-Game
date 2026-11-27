@@ -28,7 +28,7 @@ func _ready() -> void:
 	var pp := Vector3(30, 0, 30)
 	var spots := [Vector2i(-6, 2), Vector2i(-2, 2), Vector2i(2, 2), Vector2i(6, 2), Vector2i(-6, 6), Vector2i(-2, 6), Vector2i(2, 6), Vector2i(6, 6), Vector2i(-6, -2), Vector2i(-2, -2), Vector2i(2, -2), Vector2i(6, -2), Vector2i(-6, -6), Vector2i(-2, -6)]
 	var made := {}
-	for id in ["carpinteria", "horno", "banco_trabajo", "mesa_costura", "generador", "recicladora", "mesa_medica", "cocina", "destileria", "mesa_quimica", "banco_electronica", "compostadora"]:
+	for id in ["carpinteria", "horno", "banco_trabajo", "mesa_costura", "generador", "recicladora", "mesa_medica", "cocina", "destileria", "mesa_quimica", "banco_electronica", "compostadora", "almacenamiento"]:
 		for c in spots:
 			if not made.has(id) and base.check_place(id, c, 0, pp) == "":
 				for ph in DB.station_phases(id):
@@ -104,4 +104,12 @@ func _ready() -> void:
 	world.hud.open_station(made["compostadora"])
 	made["compostadora"].start("compost")
 	await _shot(out + "/estacion_compostadora.png")
+	# Almacenamiento (docs/diseno_est_almacen_*.jpg): una captura por pestaña, y el baúl colocado abierto
+	GS.add_item("clavos", 20)
+	world.hud.open_station(made["almacenamiento"])
+	for t in ["Baúles", "Estanterías", "Armarios"]:
+		sc.tab = t
+		sc.refresh()
+		await _shot(out + "/estacion_almacen_%s.png" % t.to_lower().replace("ú", "u").replace("í", "i"))
+	world.hud.close_panels()
 	get_tree().quit()

@@ -453,6 +453,17 @@ func spawn_trap(pos: Vector3, uses: int, rot_y := 0.0) -> Node3D:
 
 
 ## Coloca en el suelo, delante de ti, la trampa de la casilla i del inventario.
+## Baúles, estanterías y armarios: se colocan desde la mochila con el modo construir (gastan el mueble).
+func place_furniture(station_id: String) -> String:
+	hud.close_panels()
+	if base == null:
+		GS.message.emit("Solo se puede colocar en el refugio")
+		return "Solo se puede colocar en el refugio"
+	_on_build_selected("place", station_id)
+	GS.message.emit("Elige dónde poner %s y confirma" % DB.station_name(station_id).to_lower())
+	return ""
+
+
 func place_trap(i: int) -> String:
 	var s = GS.slots[i] if i >= 0 and i < GS.slots.size() else null
 	var why := ""

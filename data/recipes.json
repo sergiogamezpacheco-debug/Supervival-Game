@@ -1124,5 +1124,160 @@
     },
     "unlock": 8,
     "cat": "Trampas"
+  },
+  {
+    "id": "placa_metal",
+    "result": "placa_metal",
+    "qty": 2,
+    "station": "banco_trabajo",
+    "level": 1,
+    "time": 30,
+    "cost": {
+      "lingote_hierro": 1
+    },
+    "unlock": 8,
+    "cat": "Recursos"
+  },
+  {
+    "id": "tornillos",
+    "result": "tornillos",
+    "qty": 8,
+    "station": "banco_trabajo",
+    "level": 1,
+    "time": 20,
+    "cost": {
+      "lingote_hierro": 1
+    },
+    "unlock": 12,
+    "cat": "Recursos"
+  },
+  {
+    "id": "baul_madera",
+    "result": "baul_madera",
+    "qty": 1,
+    "station": "almacenamiento",
+    "level": 1,
+    "time": 120,
+    "cost": {
+      "tablon": 6,
+      "clavos": 4
+    },
+    "unlock": 4,
+    "cat": "Baúles"
+  },
+  {
+    "id": "cofre_reforzado",
+    "result": "cofre_reforzado",
+    "qty": 1,
+    "station": "almacenamiento",
+    "level": 1,
+    "time": 300,
+    "cost": {
+      "tablon": 10,
+      "lingote_hierro": 6
+    },
+    "unlock": 10,
+    "cat": "Baúles"
+  },
+  {
+    "id": "caja_suministros",
+    "result": "caja_suministros",
+    "qty": 1,
+    "station": "almacenamiento",
+    "level": 1,
+    "time": 90,
+    "cost": {
+      "tablon": 8,
+      "cuerda": 3
+    },
+    "unlock": 5,
+    "cat": "Baúles"
+  },
+  {
+    "id": "estanteria_madera",
+    "result": "estanteria_madera",
+    "qty": 1,
+    "station": "almacenamiento",
+    "level": 1,
+    "time": 180,
+    "cost": {
+      "tablon": 8,
+      "clavos": 6
+    },
+    "unlock": 6,
+    "cat": "Estanterías"
+  },
+  {
+    "id": "estanteria_industrial",
+    "result": "estanteria_industrial",
+    "qty": 1,
+    "station": "almacenamiento",
+    "level": 1,
+    "time": 420,
+    "cost": {
+      "lingote_hierro": 8,
+      "placa_metal": 4
+    },
+    "unlock": 15,
+    "cat": "Estanterías"
+  },
+  {
+    "id": "estanteria_taller",
+    "result": "estanteria_taller",
+    "qty": 1,
+    "station": "almacenamiento",
+    "level": 1,
+    "time": 240,
+    "cost": {
+      "tablon": 6,
+      "lingote_hierro": 4
+    },
+    "unlock": 9,
+    "cat": "Estanterías"
+  },
+  {
+    "id": "armario_madera",
+    "result": "armario_madera",
+    "qty": 1,
+    "station": "almacenamiento",
+    "level": 1,
+    "time": 300,
+    "cost": {
+      "tablon": 12,
+      "clavos": 8,
+      "cuerda": 4
+    },
+    "unlock": 8,
+    "cat": "Armarios"
+  },
+  {
+    "id": "armario_metal",
+    "result": "armario_metal",
+    "qty": 1,
+    "station": "almacenamiento",
+    "level": 1,
+    "time": 600,
+    "cost": {
+      "lingote_hierro": 15,
+      "placa_metal": 8,
+      "tornillos": 10
+    },
+    "unlock": 18,
+    "cat": "Armarios"
+  },
+  {
+    "id": "armario_reforzado",
+    "result": "armario_reforzado",
+    "qty": 1,
+    "station": "almacenamiento",
+    "level": 1,
+    "time": 600,
+    "cost": {
+      "tablon": 20,
+      "lingote_hierro": 12,
+      "cuero": 6
+    },
+    "unlock": 20,
+    "cat": "Armarios"
   }
 ]

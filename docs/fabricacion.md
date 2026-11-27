@@ -20,8 +20,9 @@ Datos: `data/recipes.json` (`station` vacío = a mano) y `"tier"` en `data/items
 | Resultado | Ingredientes | Nivel |
 |---|---|---|
 | Tablón | Troncos 2 | 3 |
+| Tablón x2 | Troncos de pino 2 | 3 |
 | Mango de herramienta | Troncos 2 | 3 |
-| Viga reforzada | Tablón 3, Chatarra 1 | 8 |
+| Viga reforzada | Troncos de pino 3, Chatarra 1 | 8 |
 | Trampa de pinchos | Tablón 4, Clavos 10, Cuerda 2 | 8 |
 
 ## Hoguera
@@ -49,6 +50,8 @@ Datos: `data/recipes.json` (`station` vacío = a mano) y `"tier"` en `data/items
 | Hacha de hierro (estación nv 2) | Mango de herramienta 1, Lingote de hierro 2, Cuerda 1 | 10 |
 | Pico de hierro (estación nv 2) | Mango de herramienta 1, Lingote de hierro 3, Cuerda 1 | 10 |
 | Componentes (estación nv 2) | Chatarra 4 | 18 |
+| Placas de metal x2 | Lingote de hierro 1 | 8 |
+| Tornillos x8 | Lingote de hierro 1 | 12 |
 
 ## Banco de armas
 | Resultado | Ingredientes | Nivel |
@@ -157,6 +160,19 @@ Datos: `data/recipes.json` (`station` vacío = a mano) y `"tier"` en `data/items
 | Estimulante | Agua purificada 1, Bayas 3, Azufre 1 | 21 |
 | Cóctel molotov | Botella vacía 1, Combustible 1, Tela 1 | 21 |
 | Ácido | Azufre 2, Agua purificada 1 | 21 |
+
+## Almacenamiento
+| Resultado | Ingredientes | Nivel |
+|---|---|---|
+| Baúl de madera | Tablón 6, Clavos 4 | 4 |
+| Cofre reforzado | Tablón 10, Lingote de hierro 6 | 10 |
+| Caja de suministros | Tablón 8, Cuerda 3 | 5 |
+| Estantería de madera | Tablón 8, Clavos 6 | 6 |
+| Estantería industrial | Lingote de hierro 8, Placas de metal 4 | 15 |
+| Estantería de taller | Tablón 6, Lingote de hierro 4 | 9 |
+| Armario de madera | Tablón 12, Clavos 8, Cuerda 4 | 8 |
+| Armario de metal | Lingote de hierro 15, Placas de metal 8, Tornillos 10 | 18 |
+| Armario reforzado | Tablón 20, Lingote de hierro 12, Cuero curtido 6 | 20 |
 
 ## Mecánicas
 - **Fuego propio** (cocina de campo y destilería): pestaña *Fuego* para echar troncos (1 min), carbón (3 min) o

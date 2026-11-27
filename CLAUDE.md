@@ -88,6 +88,10 @@
 - Registro: `GS.trace("...")` apunta en `user://logs/godot.log` (file logging + flush activados); el usuario lo ve en
   Ajustes > REGISTRO DE ERRORES (partida actual y anterior) y nos manda captura. Los cambios de zona pasan por
   `world._change_zone()` (pantalla «Cargando…» y apunte en el registro).
+- Almacenaje: cofre en el menú de construir; el resto (baúles, estanterías, armarios) se fabrica en la estación
+  `almacenamiento` (diseños `docs/diseno_est_almacen_*.jpg`) como objeto `type: storage` con `"place"`, y se coloca desde
+  la mochila (`world.place_furniture`, modo construir pagando el mueble). En `stations.json` llevan `"item"` (no salen en
+  el menú; al desmontar vuelve el mueble entero) y `"storage"` (huecos). `station.is_chest()` = tiene `storage`.
 - Guardado: cada cambio en la mochila se guarda en <3 s (`world._dirty`) y también al perder el foco (Android cierra
   la app sin dar tiempo a PAUSED).
 - Reaparición lenta: `"respawn": [mín, máx]` (segundos reales) en un grupo de criaturas de `maps.json`; se guarda en
