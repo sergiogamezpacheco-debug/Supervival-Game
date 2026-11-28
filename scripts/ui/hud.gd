@@ -692,6 +692,7 @@ func show_death(v: bool) -> void:
 
 
 func _process(delta: float) -> void:
+	GS.mark(GS.STEP_UI)
 	_refresh_stamina()
 	# Con cualquier ventana abierta (también cofre, gimnasio, construir o niveles) se ocultan los
 	# controles: si no, el botón de acción tapaba la ventana y la volvía a abrir sin parar.
@@ -771,6 +772,7 @@ func _build_inventory() -> void:
 
 
 func _refresh_inventory() -> void:
+	GS.mark(GS.STEP_INVENTORY)
 	if inv_btn:
 		inv_btn.queue_redraw()
 	if _inv_panel == null:

@@ -53,6 +53,7 @@ func _ready() -> void:
 
 
 func _physics_process(delta: float) -> void:
+	GS.mark(GS.STEP_PLAYER)
 	if GS.dead:
 		velocity = Vector3.ZERO
 		return

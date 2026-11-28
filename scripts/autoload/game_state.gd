@@ -78,6 +78,95 @@ func now() -> float:
 
 func _ready() -> void:
 	new_game()
+	RenderingServer.frame_pre_draw.connect(func(): mark(STEP_DRAW))
+	RenderingServer.frame_post_draw.connect(func(): mark(STEP_FRAME))
+	_watchdog = Thread.new()
+	_watchdog.start(_watch)
+
+
+# ------------------------------------------------------------ vigilante de cuelgues
+# Cada parte del bucle apunta en qué está (mark). Si un paso tarda mucho se apunta un «tirón» en el
+# registro con su nombre, y un hilo aparte avisa si el juego lleva varios segundos sin avanzar
+# (y si luego se recupera): así la captura del registro dice dónde se queda pillado el móvil.
+const STEP_FRAME := 0
+const STEP_DRAW := 1
+const STEP_TICK := 2
+const STEP_TARGET := 3
+const STEP_NIGHT := 4
+const STEP_SAVE := 5
+const STEP_CAMERA := 6
+const STEP_PLAYER := 7
+const STEP_PHYSICS := 8
+const STEP_UI := 9
+const STEP_INVENTORY := 10
+const STEP_ZONE := 11
+const STEP_MINIMAP := 12
+const STEP_CREATURES := 13
+const STEP_NAMES := ["física y scripts", "dibujar la pantalla", "reloj, hambre y sed", "buscar con qué interactuar",
+	"día y noche", "guardar la partida", "cámara", "jugador", "física (criaturas y choques)", "interfaz",
+	"interfaz: mochila y ventanas", "cambio de zona", "minimapa", "criaturas"]
+
+var step := STEP_FRAME
+var last_hitch := ""        # último tirón apuntado (lo miran los tests)
+var hangs := 0              # veces que el vigilante ha visto el juego parado
+var _step_t := 0
+var _watchdog: Thread
+var _watch_run := true
+var _away := false          # app en segundo plano: no avanza y no es un cuelgue
+var loading := false        # montando una zona (world._ready / cambio de zona)
+
+
+func mark(code: int) -> void:
+	var t := Time.get_ticks_usec()
+	if loading:   # cargar una zona tarda lo suyo: no es un tirón (ya lo dice «zona … lista en N ms»)
+		step = STEP_ZONE
+		_step_t = t
+		return
+	var took := (t - _step_t) / 1000
+	if _step_t > 0 and took >= 700 and not _away:
+		last_hitch = "tirón de %d ms en: %s" % [took, STEP_NAMES[step]]
+		trace(last_hitch)
+	step = code
+	_step_t = t
+
+
+func loaded() -> void:
+	loading = false
+	step = STEP_FRAME
+	_step_t = Time.get_ticks_usec()
+
+
+func _watch() -> void:
+	var last := Engine.get_process_frames()
+	var still := 0
+	var reported := false
+	while _watch_run:
+		OS.delay_msec(250)
+		var f := Engine.get_process_frames()
+		if f != last or _away:
+			if reported:
+				print("[%s] el juego vuelve a moverse tras %.1f s parado" % [Time.get_time_string_from_system(), still * 0.25])
+			last = f
+			still = 0
+			reported = false
+			continue
+		still += 1
+		if still == 16:   # 4 s sin un solo fotograma
+			reported = true
+			hangs += 1
+			print("[%s] CUELGUE: el juego lleva 4 s parado en: %s" % [Time.get_time_string_from_system(), STEP_NAMES[step]])
+
+
+func _notification(what: int) -> void:
+	if what == NOTIFICATION_APPLICATION_FOCUS_OUT or what == NOTIFICATION_APPLICATION_PAUSED:
+		_away = true
+	elif what == NOTIFICATION_APPLICATION_FOCUS_IN or what == NOTIFICATION_APPLICATION_RESUMED:
+		_away = false
+		_step_t = 0
+	elif what == NOTIFICATION_PREDELETE or what == NOTIFICATION_EXIT_TREE:
+		_watch_run = false
+		if _watchdog and _watchdog.is_started():
+			_watchdog.wait_to_finish()
 
 
 func new_game() -> void:

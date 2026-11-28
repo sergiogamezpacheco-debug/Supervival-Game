@@ -53,6 +53,8 @@ func _ready() -> void:
 	await test_marismas()
 	print("== Refugio: casi sin infectados")
 	await test_refugio_infectados()
+	print("== Vigilante de cuelgues y coche del Pedregal")
+	await test_vigilante()
 	print("== Niveles y peso")
 	await test_levels_weight()
 	await test_crafting_tree()
@@ -430,6 +432,49 @@ func test_marismas() -> void:
 	await _pframes(2)
 	check(w.water_depth(w.player.global_position) == 2 and w.player.terrain_mult < 0.7, "con el traje nadas por lo hondo, despacio")
 	check(DB.recipe("traje_buzo").get("station", "") == "mesa_costura", "el traje se cose en la mesa de costura")
+	w.queue_free()
+	await _frames(3)
+	DirAccess.remove_absolute(ProjectSettings.globalize_path(GS.save_path))
+
+
+func test_vigilante() -> void:
+	await get_tree().process_frame
+	GS.mark(GS.STEP_SAVE)
+	OS.delay_msec(760)
+	GS.mark(GS.STEP_UI)
+	check(GS.last_hitch.begins_with("tirón de") and GS.last_hitch.ends_with("guardar la partida"), "un paso lento se apunta en el registro con su nombre (%s)" % GS.last_hitch)
+	var h := GS.hangs
+	OS.delay_msec(4700)   # el hilo vigilante ve el juego parado
+	check(GS.hangs == h + 1, "si el juego se queda parado unos segundos el vigilante lo apunta")
+	await _frames(2)
+	GS.last_hitch = ""
+	# El coche abandonado del Pedregal: sacar la chatarra no deja el juego pillado
+	DirAccess.remove_absolute(ProjectSettings.globalize_path(GS.save_path))
+	GS.new_game()
+	GS.current_map = "pedregal"
+	GS.add_item("agua", 3)
+	var w := await _new_world()
+	var car: Node3D = null
+	for b in get_tree().get_nodes_in_group("container"):
+		if b.id == "coche":
+			car = b
+	check(car != null, "en El Pedregal hay un coche abandonado")
+	car.storage[0] = {"id": "chatarra", "qty": 3}
+	w.player.global_position = car.global_position + Vector3(1.6, 0, 0)
+	w.player.reset_physics_interpolation()
+	await _pframes(2)
+	w.hud.open_station(car)
+	await _frames(2)
+	(w.hud._chest_grid.get_child(0) as Button).pressed.emit()
+	await _frames(2)
+	w.hud.close_panels()
+	var f0 := Engine.get_process_frames()
+	var t0 := Time.get_ticks_msec()
+	while Time.get_ticks_msec() - t0 < 4000:
+		await get_tree().process_frame
+	check(GS.count("chatarra") == 3 and car.storage[0] == null, "la chatarra del coche pasa a la mochila")
+	check(Engine.get_process_frames() - f0 > 30 and GS.hangs == h + 1, "y el juego sigue andando después (guarda y no se para)")
+	check(FileAccess.get_file_as_string(GS.save_path).contains("chatarra"), "lo sacado del coche queda guardado")
 	w.queue_free()
 	await _frames(3)
 	DirAccess.remove_absolute(ProjectSettings.globalize_path(GS.save_path))

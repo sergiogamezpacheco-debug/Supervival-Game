@@ -53,6 +53,7 @@ func setup(w: Node3D) -> void:
 
 
 func _process(_delta: float) -> void:
+	GS.mark(GS.STEP_MINIMAP)
 	if world == null or not is_instance_valid(world) or world.player == null:
 		return
 	_frame += 1

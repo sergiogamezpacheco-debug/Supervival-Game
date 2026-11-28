@@ -66,6 +66,8 @@ func _ready() -> void:
 	# (cámara, interfaz, efectos) no se interpola.
 	physics_interpolation_mode = Node.PHYSICS_INTERPOLATION_MODE_OFF
 	randomize()
+	GS.mark(GS.STEP_ZONE)
+	GS.loading = true
 	var t0 := Time.get_ticks_msec()
 	var world := GS.load_game()
 	map_id = GS.current_map
@@ -134,6 +136,7 @@ func _ready() -> void:
 	GS.message.emit(str(map.get("name", "")))
 	GS.visit(map_id)
 	GS.trace("zona %s lista en %d ms" % [map_id, Time.get_ticks_msec() - t0])
+	GS.loaded()
 	if not GS.created and not GS.testing:
 		open_creator()
 
@@ -513,6 +516,7 @@ func spawn_bag(pos: Vector3, items: Array, is_player: bool) -> Node3D:
 # ------------------------------------------------------------------- bucle
 
 func _process(delta: float) -> void:
+	GS.mark(GS.STEP_TICK)
 	GS.tick(delta)
 
 	if GS.dead:
@@ -534,6 +538,7 @@ func _process(delta: float) -> void:
 			_check_zone_edge(delta)
 		if base:
 			player.floor_y = base.floor_height(player.global_position)
+		GS.mark(GS.STEP_TARGET)
 		var t := find_target()
 		player.target = t
 		hud.set_action("" if t == null else t.action_label(), player.action_info())
@@ -542,6 +547,7 @@ func _process(delta: float) -> void:
 	if build_mode != "":
 		_update_build()
 
+	GS.mark(GS.STEP_NIGHT)
 	daynight.update(delta)
 	_night_check -= delta
 	if _night_check <= 0.0:
@@ -577,7 +583,9 @@ func _process(delta: float) -> void:
 		_autosave = 0.0
 		save()
 
+	GS.mark(GS.STEP_CAMERA)
 	_update_camera(delta)
+	GS.mark(GS.STEP_UI)
 
 
 func find_target() -> Node3D:
@@ -1046,6 +1054,8 @@ func _build_route() -> void:
 ## Cambio de zona: aviso de «Cargando…» (se dibuja antes de que el móvil se ponga a montar la
 ## zona nueva) y queda apuntado en el registro.
 func _change_zone() -> void:
+	GS.mark(GS.STEP_ZONE)
+	GS.loading = true
 	GS.trace("cambio de zona -> %s" % GS.current_map)
 	set_process(false)
 	set_physics_process(false)
@@ -1200,6 +1210,7 @@ func _load_world(w: Dictionary) -> void:
 
 
 func save() -> void:
+	GS.mark(GS.STEP_SAVE)
 	if not route.is_empty():
 		_save_route_loot()
 	GS.save_game(world_dict() if route.is_empty() else {})

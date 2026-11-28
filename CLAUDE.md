@@ -87,7 +87,9 @@
   (`"pick": "waist"` en el recurso para cogerlo a la altura de la cintura, como el arbusto); `character_sheet ... pickup`.
 - Registro: `GS.trace("...")` apunta en `user://logs/godot.log` (file logging + flush activados); el usuario lo ve en
   Ajustes > REGISTRO DE ERRORES (partida actual y anterior) y nos manda captura. Los cambios de zona pasan por
-  `world._change_zone()` (pantalla «Cargando…» y apunte en el registro).
+  `world._change_zone()` (pantalla «Cargando…» y apunte en el registro). Vigilante de cuelgues: `GS.mark(GS.STEP_*)` en cada
+  parte del bucle; un paso de ≥0,7 s apunta «tirón de N ms en: …» y un hilo aparte apunta «CUELGUE: … parado en: …» si no
+  avanza un fotograma en 4 s (y «vuelve a moverse tras N s»). Mientras carga una zona `GS.loading` (lo cierra `GS.loaded()`).
 - Casas de los caminos (`RouteBuilder.house(..., layout)`, `LAYOUTS`): se entra por la puerta; dentro, `world._update_houses()`
   esconde "Tejado" y "Alto" (van aparte del `Builder.merge`, meta `no_merge`). Muebles = Marker3D con meta "tipo"
   (contenedores de `containers.json`); su contenido se recuerda en `GS.route_loot` un día (`house_refill_seconds`).

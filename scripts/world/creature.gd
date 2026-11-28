@@ -160,6 +160,7 @@ var _lod_skip := 0
 
 
 func _physics_process(delta: float) -> void:
+	GS.step = GS.STEP_CREATURES
 	if hp <= 0.0:
 		return
 	if _player == null or not is_instance_valid(_player):
