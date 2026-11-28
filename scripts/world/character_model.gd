@@ -1224,24 +1224,39 @@ func animate_pickup(t: float, kind: String) -> void:
 		var ln := clip_length("PickUp_Table")
 		pose("PickUp_Table", (0.1 + 0.7 * t) * ln, w, [] if still else UPPER, false)
 		return
-	# abajo hasta 0,45, la mano en el suelo hasta 0,6 y vuelta arriba
-	var w := smoothstep(0.0, 0.45, t) * (1.0 - smoothstep(0.6, 1.0, t))
+	# hincar una rodilla y agacharse (hasta 0,35), coger (0,35-0,5), levantarse guardándolo en la
+	# mochila por encima del hombro (0,5-0,85) y volver. Así se ve bien desde la cámara de arriba.
+	var w := smoothstep(0.0, 0.3, t) * (1.0 - smoothstep(0.55, 0.85, t))
 	if still:
-		pose("Crouch_Idle_Loop", 0.0, w)
-	var reach := smoothstep(0.15, 0.5, t) * (1.0 - smoothstep(0.65, 1.0, t))
-	var target := {
-		"spine": Vector3(-1.0, 0.0, 0.0), "head": Vector3(-0.1, 0.0, 0.0),
-		"arm_r": Vector3(0.75, 0.0, -0.1), "elbow_r": Vector3(0.05, 0.0, 0.0), "hand_r": Vector3(0.3, 0.0, 0.0),
-		"arm_l": Vector3(0.35, 0.0, -0.4), "elbow_l": Vector3(0.6, 0.0, 0.0),
+		pose("Fixing_Kneeling", 0.4 * clip_length("Fixing_Kneeling"), w, ["hips", "leg_l", "knee_l", "foot_l", "leg_r", "knee_r", "foot_r"])
+	var reach := smoothstep(0.1, 0.35, t) * (1.0 - smoothstep(0.5, 0.65, t))
+	var stash := smoothstep(0.5, 0.68, t) * (1.0 - smoothstep(0.82, 1.0, t))
+	var down := {
+		"spine": Vector3(-0.85, 0.0, 0.0), "head": Vector3(-0.15, 0.0, 0.0),
+		"arm_r": Vector3(0.95, 0.0, -0.15), "elbow_r": Vector3(0.05, 0.0, 0.0), "hand_r": Vector3(0.35, 0.0, 0.0),
+		"arm_l": Vector3(0.45, 0.0, -0.4), "elbow_l": Vector3(0.7, 0.0, 0.0),
 	}
-	for jn in target:
+	# guardar: la mano derecha sube por encima del hombro hacia la mochila
+	var up := {
+		"spine": Vector3(0.05, -0.25, 0.0), "head": Vector3(0.0, 0.2, 0.0),
+		"arm_r": Vector3(2.4, 0.0, 0.35), "elbow_r": Vector3(2.1, 0.0, 0.0), "hand_r": Vector3(-0.3, 0.0, 0.0),
+	}
+	for jn in down:
 		if not still and (jn == "spine" or jn == "head"):
 			continue
-		var e: Vector3 = target[jn]
+		var e: Vector3 = down[jn]
 		if jn.begins_with("arm_"):
 			e.z += -0.22 if jn == "arm_l" else 0.22
 		var node: Node3D = j[jn]
 		node.quaternion = node.quaternion.slerp(Quaternion.from_euler(e), reach)
+	for jn in up:
+		if not still and (jn == "spine" or jn == "head"):
+			continue
+		var e2: Vector3 = up[jn]
+		if jn.begins_with("arm_"):
+			e2.z += 0.22
+		var node2: Node3D = j[jn]
+		node2.quaternion = node2.quaternion.slerp(Quaternion.from_euler(e2), stash)
 
 
 ## Reposo: respiración y pequeños movimientos (w 0..1). t en segundos.

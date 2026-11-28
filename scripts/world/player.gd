@@ -115,7 +115,7 @@ func _physics_process(delta: float) -> void:
 		_visual.animate_swing(fmod(training, 0.75) / 0.75)
 	if _swing_t >= 0.0:
 		# lo que dura el gesto (solo visual): picar y talar llevan carga y son algo más lentos
-		_swing_t += delta / (0.45 if _swing_kind == "" else 0.6 if _swing_kind.begins_with("pick_") else 0.55)
+		_swing_t += delta / (0.45 if _swing_kind == "" else 0.9 if _swing_kind == "pick_ground" else 0.6 if _swing_kind.begins_with("pick_") else 0.55)
 		if _swing_t >= 1.0:
 			_swing_t = -1.0
 			_grip(0.0)

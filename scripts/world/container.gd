@@ -38,6 +38,52 @@ func setup(p_id: String, rng: RandomNumberGenerator, saved: Variant = null) -> v
 	add_child(shape)
 	_visual = Builder.container_mesh(id)
 	add_child(_visual)
+	if data.has("fixed"):
+		_build_flare()
+	else:
+		set_process(false)
+
+
+# Bengala roja encendida junto al superviviente muerto mientras lleva un trozo de mapa: se ve de lejos.
+var _flare: Node3D = null
+var _flare_t := 0.0
+
+
+func _build_flare() -> void:
+	_flare = Node3D.new()
+	_flare.position = Vector3(0.7, 0, -0.5)
+	add_child(_flare)
+	var stick := Builder.part(Builder.cyl(0.035, 0.035, 0.35), Color("b8322a"), Vector3(0, 0.12, 0))
+	stick.rotation.z = 0.4
+	_flare.add_child(stick)
+	var glow := Builder.part(Builder.cyl(0.0, 0.09, 0.22), Color(1.0, 0.25, 0.15), Vector3(0.09, 0.32, 0), 4.0)
+	_flare.add_child(glow)
+	var smoke := Builder.part(Builder.cyl(0.25, 0.08, 2.2), Color(0.85, 0.35, 0.3, 0.35), Vector3(0.15, 1.5, 0))
+	_flare.add_child(smoke)
+	var l := OmniLight3D.new()
+	l.light_color = Color(1.0, 0.3, 0.2)
+	l.omni_range = 5.0
+	l.light_energy = 1.6
+	l.position = Vector3(0.1, 0.5, 0)
+	_flare.add_child(l)
+	_update_flare()
+
+
+func _update_flare() -> void:
+	if _flare == null:
+		return
+	var has_piece := false
+	for it in storage:
+		if it != null and str(DB.item(str(it["id"])).get("type", "")) == "map_piece":
+			has_piece = true
+	_flare.visible = has_piece
+
+
+func _process(delta: float) -> void:
+	_flare_t += delta
+	if _flare_t >= 0.5:
+		_flare_t = 0.0
+		_update_flare()
 
 
 func _roll_loot(rng: RandomNumberGenerator) -> void:

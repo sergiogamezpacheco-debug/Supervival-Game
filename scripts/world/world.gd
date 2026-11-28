@@ -326,6 +326,38 @@ func _build_water() -> void:
 	_keepout.append_array(w.get("deep", []).map(func(c): return [Vector3(float(c[0]), 0, float(c[1])), float(c[2]) + 1.0]))
 
 
+## Lo recogido sale volando del suelo a la mochila (icono del objeto y cantidad).
+func fly_icon(item_id: String, from: Vector3, qty := 1) -> void:
+	var tex := DB.item_icon(item_id)
+	if tex == null or player == null:
+		return
+	var sp := Sprite3D.new()
+	sp.texture = tex
+	sp.billboard = BaseMaterial3D.BILLBOARD_ENABLED
+	sp.no_depth_test = true
+	sp.pixel_size = 0.55 / float(maxi(tex.get_width(), 1))
+	sp.render_priority = 10
+	add_child(sp)
+	sp.global_position = from + Vector3(0, 0.4, 0)
+	if qty > 1:
+		var l := Label3D.new()
+		l.text = "+%d" % qty
+		l.billboard = BaseMaterial3D.BILLBOARD_ENABLED
+		l.no_depth_test = true
+		l.font_size = 48
+		l.pixel_size = 0.006
+		l.outline_size = 10
+		l.position = Vector3(0.3, -0.2, 0)
+		sp.add_child(l)
+	var tw := sp.create_tween()
+	tw.tween_property(sp, "global_position", from + Vector3(0, 1.4, 0), 0.25).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+	tw.tween_method(func(k: float):
+		if is_instance_valid(player):
+			sp.global_position = (from + Vector3(0, 1.4, 0)).lerp(player.global_position + Vector3(0, 1.2, 0), k)
+			sp.scale = Vector3.ONE * lerpf(1.0, 0.4, k), 0.0, 1.0, 0.35)
+	tw.tween_callback(sp.queue_free)
+
+
 var _edge_cd := 0.0
 
 

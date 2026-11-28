@@ -1136,6 +1136,7 @@ func test_fixes() -> void:
 	await _pframes(1)
 	world.hud.action_button.held = false
 	check(player._swing_kind == "pick_ground", "las piedras sueltas: se agacha a cogerlas")
+	check(world.find_children("*", "Sprite3D", false, false).size() > 0, "lo recogido sale volando hacia la mochila")
 	var cmp := CharacterModel.new({"sex": "m"}, {}, {})
 	add_child(cmp)
 	cmp.animate_walk(0.0, 0.0)
@@ -1451,6 +1452,9 @@ func test_phase1() -> void:
 		if body.storage[i] != null and body.storage[i]["id"] == "trozo_mapa_2":
 			piece_slot = i
 	check(piece_slot >= 0, "el muerto lleva el trozo de mapa II")
+	await _pframes(1)
+	check(body._flare != null and body._flare.visible, "el muerto con el trozo de mapa tiene una bengala encendida al lado")
+	check(body.global_position.distance_to(Vector3(0, 0, 36)) < 20.0, "y está cerca de la entrada de La Arboleda")
 	grove.hud.open_station(body)
 	await _pframes(1)
 	check(grove.hud._chest_panel.visible and grove.hud._chest_left.text.begins_with("Superviviente muerto"), "registrar el cadáver abre su ventana")

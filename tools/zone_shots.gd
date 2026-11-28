@@ -13,7 +13,7 @@ func _shot(path: String) -> void:
 
 
 func _ready() -> void:
-	var args := OS.get_cmdline_user_args()
+	var args: Array = Array(OS.get_cmdline_user_args())
 	var out: String = args[0]
 	var map_id: String = args[1]
 	GS.save_path = "user://zone_shots.json"
@@ -23,6 +23,9 @@ func _ready() -> void:
 	DirAccess.remove_absolute(ProjectSettings.globalize_path(GS.save_path))
 	get_window().size = Vector2i(1280, 720)
 	GS.new_game()
+	if args.has("pieza1"):   # como al empezar: sin el trozo II (el muerto de La Arboleda lo lleva)
+		GS.map_pieces = 1
+		args.erase("pieza1")
 	GS.current_map = map_id
 	var w: Node3D = load("res://scenes/main.tscn").instantiate()
 	add_child(w)
